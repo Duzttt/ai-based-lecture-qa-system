@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useDocumentStore } from '../stores/documentStore'
+import { useDocumentStore } from '../../stores/documentStore'
 import RetrievalChunks from './RetrievalChunks.vue'
-import PdfViewer from './PdfViewer.vue'
-import BidirectionalCitations from './BidirectionalCitations.vue'
+import PdfViewer from '../documents/PdfViewer.vue'
+import BidirectionalCitations from '../shared/BidirectionalCitations.vue'
 import QuestionSuggestions from './QuestionSuggestions.vue'
 import CitationAnswer from './CitationAnswer.vue'
 

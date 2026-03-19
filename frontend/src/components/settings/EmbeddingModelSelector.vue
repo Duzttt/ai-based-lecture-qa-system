@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useEmbeddingStore } from '../stores/embeddingStore'
+import { useEmbeddingStore } from '../../stores/embeddingStore'
 
 const props = defineProps({
   compact: {

@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useDocumentStore } from '../stores/documentStore'
-import { useSummaryStore } from '../stores/summaryStore'
-import EmbeddingModelSelector from './settings/EmbeddingModelSelector.vue'
-import ModelComparison from './dashboard/ModelComparison.vue'
-import SummaryModal from './studio/SummaryModal.vue'
-import SummaryViewer from './studio/SummaryViewer.vue'
+import { useDocumentStore } from '../../stores/documentStore'
+import { useSummaryStore } from '../../stores/summaryStore'
+import EmbeddingModelSelector from '../settings/EmbeddingModelSelector.vue'
+import ModelComparison from '../dashboard/ModelComparison.vue'
+import SummaryModal from '../studio/SummaryModal.vue'
+import SummaryViewer from '../studio/SummaryViewer.vue'
 
 const documentStore = useDocumentStore()
 const summaryStore = useSummaryStore()

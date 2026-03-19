@@ -14,7 +14,7 @@ import {
   Legend,
   Filler
 } from 'chart.js'
-import { getDashboardStats, getDashboardMetrics, getDashboardChunksDistribution, getDashboardSimilarityDistribution, getDashboardDocumentsTimeline, updateRagConfig, reindexDocuments } from '../services/api'
+import { getDashboardStats, getDashboardMetrics, getDashboardChunksDistribution, getDashboardSimilarityDistribution, getDashboardDocumentsTimeline, updateRagConfig, reindexDocuments } from '../../services/api'
 
 ChartJS.register(
   CategoryScale,
@@ -139,7 +139,7 @@ const loadDashboardData = async () => {
       retrieval_time_ms: metricsData?.performance?.avg_retrieval_time_ms ?? 0,
       embedding_time_ms: metricsData?.performance?.avg_embedding_time_ms ?? 0,
       // Use similarity distribution mean if available, otherwise 0
-      avg_similarity_score: metricsData?.quality?.mean ?? 0,
+      avg_similarity_score: similarityData?.statistics?.mean ?? 0,
     }
 
     // Map chunks distribution (histogram -> labels/data)
