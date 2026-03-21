@@ -26,20 +26,20 @@ const error = ref('')
 const selectedCount = computed(() => props.selectedDocs.length)
 
 const lengthOptions = [
-  { value: 'short', label: '简短', desc: '3-5 句，约 150 词' },
-  { value: 'medium', label: '中等', desc: '8-12 句，约 300 词' },
-  { value: 'detailed', label: '详细', desc: '15-20 句，约 600 词' },
+  { value: 'short', label: 'Short', desc: '3-5 sentences, about 150 words' },
+  { value: 'medium', label: 'Medium', desc: '8-12 sentences, about 300 words' },
+  { value: 'detailed', label: 'Detailed', desc: '15-20 sentences, about 600 words' },
 ]
 
 const styleOptions = [
-  { value: 'bullets', label: '要点式', desc: '用要点形式列出核心内容' },
-  { value: 'narrative', label: '叙述式', desc: '用连贯的叙述方式概括' },
-  { value: 'academic', label: '学术式', desc: '学术语言，包含主要论点' },
-  { value: 'executive', label: '行政式', desc: '突出关键发现和建议' },
+  { value: 'bullets', label: 'Bulleted', desc: 'List core content in bullet points' },
+  { value: 'narrative', label: 'Narrative', desc: 'Summarize in a coherent narrative style' },
+  { value: 'academic', label: 'Academic', desc: 'Use academic language with key arguments' },
+  { value: 'executive', label: 'Executive', desc: 'Highlight key findings and recommendations' },
 ]
 
 const languageOptions = [
-  { value: 'zh', label: '中文' },
+  { value: 'zh', label: 'Chinese' },
   { value: 'en', label: 'English' },
 ]
 
@@ -51,7 +51,7 @@ const handleClose = () => {
 
 const handleGenerate = async () => {
   if (props.selectedDocs.length === 0) {
-    error.value = '请至少选择一个文档'
+    error.value = 'Please select at least one document'
     return
   }
 
@@ -83,7 +83,7 @@ const resetConfig = () => {
     <div v-if="show" class="modal-overlay" @click.self="handleClose">
       <div class="modal-container">
         <div class="modal-header">
-          <h3>📝 文档摘要</h3>
+          <h3>📝 Document Summary</h3>
           <button class="modal-close" @click="handleClose">✕</button>
         </div>
         <div class="modal-body">
@@ -91,7 +91,7 @@ const resetConfig = () => {
           <div class="selected-docs-info">
             <div class="info-header">
               <span class="info-icon">📄</span>
-              <span class="info-text">已选择 {{ selectedCount }} 个文档</span>
+              <span class="info-text">{{ selectedCount }} document(s) selected</span>
             </div>
             <div class="doc-list">
               <div v-for="doc in selectedDocs" :key="doc" class="doc-item">
@@ -103,11 +103,11 @@ const resetConfig = () => {
 
           <!-- Configuration Options -->
           <div class="config-section">
-            <h4>摘要配置</h4>
+            <h4>Summary Configuration</h4>
             
             <!-- Length -->
             <div class="config-item">
-              <label class="config-label">摘要长度</label>
+              <label class="config-label">Summary Length</label>
               <div class="option-grid">
                 <button
                   v-for="opt in lengthOptions"
@@ -124,7 +124,7 @@ const resetConfig = () => {
 
             <!-- Style -->
             <div class="config-item">
-              <label class="config-label">摘要风格</label>
+              <label class="config-label">Summary Style</label>
               <div class="option-grid">
                 <button
                   v-for="opt in styleOptions"
@@ -141,7 +141,7 @@ const resetConfig = () => {
 
             <!-- Language -->
             <div class="config-item">
-              <label class="config-label">输出语言</label>
+              <label class="config-label">Output Language</label>
               <div class="option-row">
                 <button
                   v-for="opt in languageOptions"
@@ -162,14 +162,14 @@ const resetConfig = () => {
                   type="checkbox"
                   v-model="config.include_citations"
                 />
-                <span>包含关键引用</span>
+                <span>Include key citations</span>
               </label>
               <label v-if="selectedCount > 1" class="checkbox-label">
                 <input
                   type="checkbox"
                   v-model="config.include_comparison"
                 />
-                <span>生成对比表格</span>
+                <span>Generate comparison table</span>
               </label>
             </div>
           </div>
@@ -181,18 +181,18 @@ const resetConfig = () => {
         </div>
         <div class="modal-footer">
           <button class="btn-reset" @click="resetConfig" :disabled="isGenerating">
-            🔄 重置
+            🔄 Reset
           </button>
           <div class="modal-actions">
             <button class="btn-cancel" @click="handleClose" :disabled="isGenerating">
-              取消
+              Cancel
             </button>
             <button 
               class="btn-generate" 
               @click="handleGenerate"
               :disabled="isGenerating || selectedCount === 0"
             >
-              {{ isGenerating ? '生成中...' : '✨ 生成摘要' }}
+              {{ isGenerating ? 'Generating...' : '✨ Generate Summary' }}
             </button>
           </div>
         </div>

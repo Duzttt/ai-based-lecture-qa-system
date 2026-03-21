@@ -14,20 +14,20 @@ const showComparison = ref(true)
 const copied = ref(false)
 
 const lengthLabels = {
-  short: '简短',
-  medium: '中等',
-  detailed: '详细',
+  short: 'Short',
+  medium: 'Medium',
+  detailed: 'Detailed',
 }
 
 const styleLabels = {
-  bullets: '要点式',
-  narrative: '叙述式',
-  academic: '学术式',
-  executive: '行政式',
+  bullets: 'Bulleted',
+  narrative: 'Narrative',
+  academic: 'Academic',
+  executive: 'Executive',
 }
 
 const languageLabels = {
-  zh: '中文',
+  zh: 'Chinese',
   en: 'English',
 }
 
@@ -49,18 +49,18 @@ const copySummary = async () => {
 
 const exportAsMarkdown = () => {
   const docList = props.summary?.documents?.join(', ') || 'Unknown'
-  const content = `# 文档摘要
+  const content = `# Document Summary
 
-**生成时间**: ${new Date().toLocaleString('zh-CN')}
-**文档**: ${docList}
-**配置**: ${lengthLabels[props.config?.length || 'medium']} | ${styleLabels[props.config?.style || 'narrative']} | ${languageLabels[props.config?.language || 'zh']}
+**Generated At**: ${new Date().toLocaleString('en-US')}
+**Documents**: ${docList}
+**Config**: ${lengthLabels[props.config?.length || 'medium']} | ${styleLabels[props.config?.style || 'narrative']} | ${languageLabels[props.config?.language || 'zh']}
 
 ---
 
 ${props.summary?.text || ''}
 
 ${showCitations.value && hasCitations.value ? `
-## 关键引用
+## Key Citations
 
 ${props.summary.citations.map(c => `- **${c.point}**\n  > "${c.citation}"\n  — ${c.source}${c.page ? ` p.${c.page}` : ''}`).join('\n\n')}
 ` : ''}
@@ -87,8 +87,8 @@ const handleFeedback = (rating) => {
     <!-- Loading State -->
     <div v-if="isLoading" class="summary-loading">
       <div class="loading-spinner"></div>
-      <div class="loading-text">正在生成摘要...</div>
-      <div class="loading-sub">这可能需要几分钟时间</div>
+      <div class="loading-text">Generating summary...</div>
+      <div class="loading-sub">This may take a few minutes</div>
     </div>
 
     <!-- Summary Content -->
@@ -97,20 +97,20 @@ const handleFeedback = (rating) => {
       <div class="summary-header">
         <div class="summary-meta">
           <span class="meta-badge">
-            📄 {{ documentCount }} 个文档
+            📄 {{ documentCount }} documents
           </span>
           <span class="meta-badge">
-            {{ lengthLabels[config?.length || 'medium'] }}摘要
+            {{ lengthLabels[config?.length || 'medium'] }} summary
           </span>
           <span class="meta-badge">
-            {{ styleLabels[config?.style || 'narrative'] }}风格
+            {{ styleLabels[config?.style || 'narrative'] }} style
           </span>
         </div>
         <div class="summary-actions">
-          <button @click="copySummary" class="action-btn" title="复制摘要">
+          <button @click="copySummary" class="action-btn" title="Copy summary">
             {{ copied ? '✓' : '📋' }}
           </button>
-          <button @click="exportAsMarkdown" class="action-btn" title="导出 Markdown">
+          <button @click="exportAsMarkdown" class="action-btn" title="Export Markdown">
             📥
           </button>
           <button 
@@ -118,7 +118,7 @@ const handleFeedback = (rating) => {
             @click="showCitations = !showCitations" 
             class="action-btn"
             :class="{ active: showCitations }"
-            title="显示引用"
+            title="Show citations"
           >
             📌
           </button>
@@ -127,7 +127,7 @@ const handleFeedback = (rating) => {
             @click="showComparison = !showComparison" 
             class="action-btn"
             :class="{ active: showComparison }"
-            title="显示对比"
+            title="Show comparison"
           >
             ⚖
           </button>
@@ -137,15 +137,15 @@ const handleFeedback = (rating) => {
       <!-- Comparison Table -->
       <div v-if="showComparison && hasComparison" class="comparison-section">
         <div class="section-header">
-          <h4>📊 文档对比</h4>
+          <h4>📊 Document Comparison</h4>
         </div>
         <div class="comparison-table-wrapper">
           <table class="comparison-table">
             <thead>
               <tr>
-                <th>文档</th>
-                <th>核心观点</th>
-                <th>关键词</th>
+                <th>Document</th>
+                <th>Main Points</th>
+                <th>Keywords</th>
               </tr>
             </thead>
             <tbody>
@@ -169,7 +169,7 @@ const handleFeedback = (rating) => {
       <!-- Summary Text -->
       <div class="summary-text-wrapper">
         <div class="section-header">
-          <h4>📝 摘要内容</h4>
+          <h4>📝 Summary Content</h4>
         </div>
         <div class="summary-text" v-html="summary.text.replace(/\n/g, '<br>')"></div>
       </div>
@@ -177,7 +177,7 @@ const handleFeedback = (rating) => {
       <!-- Citations -->
       <div v-if="showCitations && hasCitations" class="citations-section">
         <div class="section-header">
-          <h4>📌 关键引用</h4>
+          <h4>📌 Key Citations</h4>
         </div>
         <div class="citations-list">
           <div v-for="(cite, idx) in summary.citations" :key="idx" class="citation-item">
@@ -191,7 +191,7 @@ const handleFeedback = (rating) => {
               <span class="quote-mark">"</span>
             </div>
             <div class="citation-source">
-              — {{ cite.source }}<span v-if="cite.page"> 第{{ cite.page }}页</span>
+              — {{ cite.source }}<span v-if="cite.page"> p.{{ cite.page }}</span>
             </div>
           </div>
         </div>
@@ -200,15 +200,15 @@ const handleFeedback = (rating) => {
       <!-- Footer -->
       <div class="summary-footer">
         <button class="regenerate-btn" @click="$emit('regenerate')">
-          🔄 重新生成
+          🔄 Regenerate
         </button>
         <div class="feedback-section">
-          <span class="feedback-label">摘要质量？</span>
+          <span class="feedback-label">Summary quality?</span>
           <div class="feedback-buttons">
-            <button @click="handleFeedback('good')" class="feedback-btn" title="有用">
+            <button @click="handleFeedback('good')" class="feedback-btn" title="Helpful">
               👍
             </button>
-            <button @click="handleFeedback('bad')" class="feedback-btn" title="需改进">
+            <button @click="handleFeedback('bad')" class="feedback-btn" title="Needs improvement">
               👎
             </button>
           </div>
@@ -219,8 +219,8 @@ const handleFeedback = (rating) => {
     <!-- Empty State -->
     <div v-else class="summary-empty">
       <div class="empty-icon">📝</div>
-      <div class="empty-text">暂无摘要</div>
-      <div class="empty-sub">选择文档并点击生成摘要</div>
+      <div class="empty-text">No summary yet</div>
+      <div class="empty-sub">Select documents and click Generate Summary</div>
     </div>
   </div>
 </template>
