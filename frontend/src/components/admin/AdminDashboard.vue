@@ -842,13 +842,14 @@ onMounted(async () => {
               </div>
             </div>
             
-            <div class="top-queries">
+            <div v-if="docAnalytics" class="top-queries">
               <h4>Top Queries</h4>
               <div v-for="q in docAnalytics.top_queries" :key="q.query" class="query-item">
                 <span class="query-text">{{ q.query }}</span>
                 <span class="query-count">{{ q.count }} times</span>
               </div>
             </div>
+            <div v-else class="empty-state">Failed to load document analytics</div>
           </div>
           
           <div v-else class="select-doc">
