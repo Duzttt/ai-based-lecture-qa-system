@@ -1,0 +1,23 @@
+// This is a simplified .pen file representation of the main page layout
+// Generated from pencil operations
+
+// Main application frame
+appFrame=I(document, {type: "frame", layout: "vertical", width: 1280, height: 720, fill: "#1E293B"})
+
+// Top bar
+topBar=I(appFrame, {type: "frame", layout: "horizontal", width: "fill_container", height: 60, fill: "#0F172A"})
+
+// Main content area (horizontal split) - takes remaining vertical space
+mainContent=I(appFrame, {type: "frame", layout: "horizontal", width: "fill_container", height: "fill_container"})
+
+// Left panel - SourcesPanel (fixed width)
+sourcesPanel=I(mainContent, {type: "frame", layout: "vertical", width: 260, height: "fill_container", fill: "#0F172A"})
+
+// Center panel - ChatPanel (flexible width)
+centerPanel=I(mainContent, {type: "frame", layout: "vertical", width: "fill_container", height: "fill_container", fill: "#1E293B"})
+
+// Right panel - StudioPanel (fixed width)
+studioPanel=I(mainContent, {type: "frame", layout: "vertical", width: 270, height: "fill_container", fill: "#0F172A"})
+
+// ChatPanel (default view in center)
+chatPanel=I(centerPanel, {type: "frame", layout: "vertical", width: "fill_container", height: "fill_container", fill: "#1E293B"})
