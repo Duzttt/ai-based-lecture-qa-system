@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useDocumentStore } from '../stores/documentStore'
-import { uploadPDF, getFiles, deleteFile } from '../services/api'
+import { useDocumentStore } from '../../stores/documentStore'
+import { uploadPDF, getFiles, deleteFile } from '../../services/api'
 
 const documentStore = useDocumentStore()
 

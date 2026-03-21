@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, defineEmits } from 'vue'
-import { compareDocuments as compareDocumentsApi } from '../services/api'
+import { compareDocuments as compareDocumentsApi } from '../../services/api'
 
 const emit = defineEmits(['close', 'save-comparison'])
 
@@ -93,16 +93,16 @@ const exportAsMarkdown = () => {
   
   if (analysis.value) {
     md += `## Analysis\n\n`
-    if (analysis.value.common_points) {
+    if (analysis.value.common) {
       md += `### Common Points\n`
-      analysis.value.common_points.forEach((point, i) => {
+      analysis.value.common.forEach((point, i) => {
         md += `${i + 1}. ${point}\n`
       })
       md += `\n`
     }
-    if (analysis.value.different_points) {
+    if (analysis.value.different) {
       md += `### Different Points\n`
-      analysis.value.different_points.forEach((point, i) => {
+      analysis.value.different.forEach((point, i) => {
         md += `${i + 1}. ${point}\n`
       })
       md += `\n`

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { getQuestionSuggestions, recordSuggestionClick } from '../services/api'
+import { getQuestionSuggestions, recordSuggestionClick } from '../../services/api'
 
 const props = defineProps({
   selectedDocuments: {

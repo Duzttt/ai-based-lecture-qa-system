@@ -396,7 +396,7 @@ class ConfigHistory(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.category} config by {self.changed_by} @ {self.timestamp}"
+        return f"{self.category} config by {self.changed_by} @ {self.created_at}"
 
     @classmethod
     def get_active_config(cls, category: str) -> dict:

@@ -25,6 +25,9 @@ venv/
 data/documents/
 data/faiss_index/
 data/settings.json
+data/db.sqlite3
+data/alerts.json
+data/reports.json
 *.pdf
 .pytest_cache/
 .coverage

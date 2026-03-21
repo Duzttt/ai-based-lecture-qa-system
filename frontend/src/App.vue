@@ -1,10 +1,10 @@
 <script setup>
-import Topbar from './components/Topbar.vue'
-import SourcesPanel from './components/SourcesPanel.vue'
-import ChatPanel from './components/ChatPanel.vue'
-import StudioPanel from './components/StudioPanel.vue'
-import ComparisonView from './components/ComparisonView.vue'
-import SettingsModal from './components/SettingsModal.vue'
+import Topbar from './components/layout/Topbar.vue'
+import SourcesPanel from './components/layout/SourcesPanel.vue'
+import ChatPanel from './components/chat/ChatPanel.vue'
+import StudioPanel from './components/layout/StudioPanel.vue'
+import ComparisonView from './components/documents/ComparisonView.vue'
+import SettingsModal from './components/settings/SettingsModal.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
 import { ref, computed } from 'vue'
 
