@@ -1,4 +1,6 @@
 <script setup>
+import ProviderSwitcher from '../settings/ProviderSwitcher.vue'
+
 const emit = defineEmits(['open-settings', 'open-admin', 'open-chunkviz'])
 </script>
 
@@ -14,6 +16,7 @@ const emit = defineEmits(['open-settings', 'open-admin', 'open-chunkviz'])
       </div>
     </div>
     <div class="topbar-center">
+      <ProviderSwitcher />
       <button class="pill-btn admin-btn" @click="emit('open-admin')">
         <span class="icon">🛠️</span>
         Admin

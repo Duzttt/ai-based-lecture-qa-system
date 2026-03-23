@@ -7,7 +7,14 @@ import ComparisonView from './components/documents/ComparisonView.vue'
 import SettingsModal from './components/settings/SettingsModal.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
 import ChunkViz from './components/shared/ChunkViz.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useLlmSettingsStore } from './stores/llmSettingsStore'
+
+const llmStore = useLlmSettingsStore()
+
+onMounted(() => {
+  llmStore.loadProviders()
+})
 
 const showSettings = ref(false)
 const showAdmin = ref(false)
