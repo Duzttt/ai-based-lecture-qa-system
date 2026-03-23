@@ -32,6 +32,8 @@ urlpatterns = [
     path("api/chat/citations/", views.ask_with_citations),
     path("api/settings", views.settings_handler),
     path("api/settings/", views.settings_handler),
+    path("api/settings/providers", views.providers_handler),
+    path("api/settings/providers/", views.providers_handler),
     path("api/rag-config", views.get_rag_config),
     path("api/rag-config/", views.get_rag_config),
     path("api/rag-config/update", views.update_rag_config),

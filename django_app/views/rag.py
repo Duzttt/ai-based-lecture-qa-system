@@ -311,6 +311,76 @@ def settings_handler(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"success": True, "message": "Settings updated"})
 
 
+LLM_PROVIDERS_CATALOG = [
+    {
+        "id": "gemini",
+        "name": "Google Gemini",
+        "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+        "requires_api_key": True,
+    },
+    {
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "models": [
+            "openrouter/free",
+            "anthropic/claude-3-haiku",
+            "meta-llama/llama-3-70b-instruct",
+            "google/gemma-2-9b-it:free",
+        ],
+        "requires_api_key": True,
+    },
+    {
+        "id": "local_qwen",
+        "name": "Local Qwen (Ollama)",
+        "models": ["qwen2.5:0.5b", "qwen2.5:1.5b", "qwen2.5:3b", "qwen2.5:7b"],
+        "requires_api_key": False,
+    },
+]
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def providers_handler(request: HttpRequest) -> JsonResponse:
+    from app.config import settings as app_settings
+
+    stored_settings = _load_persisted_settings()
+    current_provider = stored_settings.get("provider") or app_settings.LLM_PROVIDER
+    if current_provider not in VALID_PROVIDERS:
+        current_provider = app_settings.LLM_PROVIDER
+
+    current_model = stored_settings.get("model") or ""
+    if not current_model:
+        if current_provider == "gemini":
+            current_model = app_settings.GEMINI_MODEL
+        elif current_provider == "local_qwen":
+            current_model = app_settings.LOCAL_QWEN_MODEL
+        else:
+            current_model = "anthropic/claude-3-haiku"
+
+    has_gemini_key = bool(app_settings.GEMINI_API_KEY or stored_settings.get("api_key"))
+    has_openrouter_key = bool(
+        app_settings.OPENROUTER_API_KEY or stored_settings.get("api_key")
+    )
+
+    providers = []
+    for p in LLM_PROVIDERS_CATALOG:
+        entry = {**p}
+        if p["id"] == "gemini":
+            entry["has_api_key"] = has_gemini_key
+        elif p["id"] == "openrouter":
+            entry["has_api_key"] = has_openrouter_key
+        else:
+            entry["has_api_key"] = False
+        providers.append(entry)
+
+    return JsonResponse(
+        {
+            "current": {"provider": current_provider, "model": current_model},
+            "providers": providers,
+        }
+    )
+
+
 @require_http_methods(["GET"])
 def get_rag_config(request: HttpRequest) -> JsonResponse:
     config = _load_rag_config()
