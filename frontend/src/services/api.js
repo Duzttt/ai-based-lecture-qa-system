@@ -45,6 +45,11 @@ export const saveSettings = async (settings) => {
   return response.data
 }
 
+export const getProviders = async () => {
+  const response = await api.get('/settings/providers')
+  return response.data
+}
+
 export const getRagConfig = async () => {
   const response = await api.get('/rag-config')
   return response.data
