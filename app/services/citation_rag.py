@@ -20,13 +20,14 @@ from app.services.vector_store import VectorStore
 
 class CitationRAGError(Exception):
     """Custom exception for citation RAG errors."""
+
     pass
 
 
 class CitationRAGPipeline:
     """
     RAG Pipeline that generates answers with sentence-level citations.
-    
+
     The LLM is prompted to output structured JSON where each sentence
     includes an array of citation IDs referencing the source chunks.
     """
@@ -55,12 +56,12 @@ class CitationRAGPipeline:
     ) -> List[Dict[str, Any]]:
         """
         Retrieve relevant chunks for the query.
-        
+
         Args:
             query: The user's question
             top_k: Number of chunks to retrieve
             source_filter: Optional list of source filenames to filter by
-            
+
         Returns:
             List of chunks with text, source, page, and chunk_id
         """
@@ -68,10 +69,12 @@ class CitationRAGPipeline:
             raise CitationRAGError("Query cannot be empty")
 
         query_embedding = self.embedding_service.embed_query(query)
-        
+
         # Retrieve more candidates if filtering is needed
         search_k = top_k * 10 if source_filter else top_k
-        results = self.vector_store.search_with_metadata(query_embedding, top_k=search_k)
+        results = self.vector_store.search_with_metadata(
+            query_embedding, top_k=search_k
+        )
 
         if source_filter:
             normalized_filters = [str(s).lower().strip() for s in source_filter]
@@ -92,16 +95,14 @@ class CitationRAGPipeline:
 
         return results
 
-    def _build_citation_prompt(
-        self, query: str, chunks: List[Dict[str, Any]]
-    ) -> str:
+    def _build_citation_prompt(self, query: str, chunks: List[Dict[str, Any]]) -> str:
         """
         Build the prompt that instructs the LLM to output structured JSON with citations.
-        
+
         Args:
             query: The user's question
             chunks: Retrieved chunks with chunk_id, text, source, page
-            
+
         Returns:
             Formatted prompt string
         """
@@ -112,9 +113,7 @@ class CitationRAGPipeline:
             source = chunk.get("source", "unknown")
             page = chunk.get("page", "unknown")
             text = chunk.get("text", "")
-            context_lines.append(
-                f"[{chunk_id}] Source: {source}, Page: {page}\n{text}"
-            )
+            context_lines.append(f"[{chunk_id}] Source: {source}, Page: {page}\n{text}")
         context_text = "\n\n".join(context_lines)
 
         # Prompt that enforces structured JSON output with sentence-level citations
@@ -146,20 +145,27 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
 
         return prompt
 
-    def _generate_with_qwen(self, prompt: str) -> str:
+    def _generate_with_qwen(
+        self, prompt: str, model: Optional[str] = None
+    ) -> str:
         """
         Generate response using local Qwen model.
-        
+
         Args:
             prompt: The formatted prompt
-            
+            model: Optional model override (used during provider fallback).
+
         Returns:
             Raw response text from the model
         """
+        resolved_model = model or self.model
         payload = {
-            "model": self.model,
+            "model": resolved_model,
             "messages": [
-                {"role": "system", "content": "You are a helpful assistant that outputs valid JSON."},
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that outputs valid JSON.",
+                },
                 {"role": "user", "content": prompt},
             ],
             "stream": False,
@@ -183,18 +189,92 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
 
         return str(message).strip()
 
+    def _generate_with_openrouter(self, prompt: str) -> str:
+        """
+        Generate response using OpenRouter API.
+
+        Args:
+            prompt: The formatted prompt
+
+        Returns:
+            Raw response text from the model
+        """
+        api_key = settings.OPENROUTER_API_KEY
+        if not api_key:
+            raise CitationRAGError("OPENROUTER_API_KEY is not configured")
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "model": settings.OPENROUTER_MODEL,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that outputs valid JSON.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.3,
+            "stream": False,
+        }
+
+        response = requests.post(
+            f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=self.timeout_seconds,
+        )
+        response.raise_for_status()
+
+        data = response.json()
+        choices = data.get("choices", [])
+        if not choices:
+            raise CitationRAGError("Invalid response format from OpenRouter API")
+
+        message = choices[0].get("message", {}).get("content")
+        if not message:
+            raise CitationRAGError("Empty response from OpenRouter API")
+
+        return str(message).strip()
+
+    def _generate(self, prompt: str) -> str:
+        """Dispatch to the configured LLM provider."""
+        provider = settings.LLM_PROVIDER
+
+        if provider == "openrouter":
+            try:
+                return self._generate_with_openrouter(prompt)
+            except (requests.exceptions.RequestException, CitationRAGError) as exc:
+                # OpenRouter failures (e.g. 402 Payment Required) should not
+                # prevent answering when local Qwen is available.
+                try:
+                    return self._generate_with_qwen(
+                        prompt, model=settings.LOCAL_QWEN_MODEL
+                    )
+                except Exception as local_exc:  # noqa: BLE001
+                    raise CitationRAGError(
+                        f"OpenRouter failed ({exc}) and local Qwen also failed ({local_exc})"
+                    ) from local_exc
+        elif provider == "local_qwen":
+            return self._generate_with_qwen(prompt)
+        else:
+            raise CitationRAGError(f"Unsupported LLM_PROVIDER: {provider}")
+
     def _parse_llm_response(self, raw_response: str) -> Dict[str, Any]:
         """
         Parse the LLM's JSON response and validate structure.
-        
+
         Args:
             raw_response: Raw text response from LLM
-            
+
         Returns:
             Parsed and validated JSON structure
         """
         # Try to extract JSON from the response (handle markdown code blocks)
-        json_match = re.search(r'\{[\s\S]*\}', raw_response)
+        json_match = re.search(r"\{[\s\S]*\}", raw_response)
         if json_match:
             raw_response = json_match.group()
 
@@ -234,11 +314,11 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
     ) -> Dict[str, Any]:
         """
         Build the final response format with source metadata.
-        
+
         Args:
             sentences_data: Parsed sentences with citation IDs
             chunks: Retrieved chunks with source information
-            
+
         Returns:
             Formatted response with sentences and sources map
         """
@@ -266,12 +346,12 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
     ) -> Dict[str, Any]:
         """
         Execute a complete RAG query with citation support.
-        
+
         Args:
             question: The user's question
             top_k: Number of chunks to retrieve
             source_filter: Optional list of source filenames to filter by
-            
+
         Returns:
             Response with sentences and sources in the format:
             {
@@ -303,7 +383,7 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         prompt = self._build_citation_prompt(question, chunks)
 
         # Generate response from LLM
-        raw_response = self._generate_with_qwen(prompt)
+        raw_response = self._generate(prompt)
 
         # Parse and validate JSON response
         parsed_response = self._parse_llm_response(raw_response)
@@ -321,13 +401,13 @@ def query_with_citations(
 ) -> Dict[str, Any]:
     """
     Simple function to query with citation support.
-    
+
     Args:
         question: The user's question
         top_k: Number of chunks to retrieve
         source_filter: Optional list of source filenames to filter by
         model: Optional model override
-        
+
     Returns:
         Response with sentences and sources
     """

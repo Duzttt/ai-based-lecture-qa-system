@@ -6,10 +6,12 @@ import StudioPanel from './components/layout/StudioPanel.vue'
 import ComparisonView from './components/documents/ComparisonView.vue'
 import SettingsModal from './components/settings/SettingsModal.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
+import ChunkViz from './components/shared/ChunkViz.vue'
 import { ref, computed } from 'vue'
 
 const showSettings = ref(false)
 const showAdmin = ref(false)
+const showChunkViz = ref(false)
 const compareMode = ref(false)
 const selectedDocs = ref([])
 
@@ -36,7 +38,11 @@ const handleCloseComparison = () => {
 
 <template>
   <div class="app-shell">
-    <Topbar @open-settings="showSettings = true" @open-admin="showAdmin = true" />
+    <Topbar 
+      @open-settings="showSettings = true" 
+      @open-admin="showAdmin = true" 
+      @open-chunkviz="showChunkViz = true"
+    />
     <main class="main">
       <SourcesPanel 
         @selection-change="handleSelectionChange"
@@ -55,6 +61,7 @@ const handleCloseComparison = () => {
     </main>
     <SettingsModal v-model:show="showSettings" />
     <AdminDashboard v-if="showAdmin" @close="showAdmin = false" />
+    <ChunkViz :show="showChunkViz" @close="showChunkViz = false" />
   </div>
 </template>
 

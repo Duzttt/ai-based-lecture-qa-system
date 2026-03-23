@@ -108,3 +108,110 @@ def generate_with_local_qwen(
         raise LocalRAGError("Invalid response format from local Qwen model")
 
     return str(message).strip()
+
+
+def generate_with_openrouter(
+    query: str,
+    context: str,
+    model: Optional[str] = None,
+    api_key: Optional[str] = None,
+    temperature: float = 0.7,
+    timeout_seconds: int = 60,
+) -> str:
+    if not context.strip():
+        return "No usable reference material was retrieved, so I cannot answer based on evidence."
+
+    resolved_model = model or settings.OPENROUTER_MODEL
+    resolved_key = api_key or settings.OPENROUTER_API_KEY
+
+    if not resolved_key:
+        raise LocalRAGError("OPENROUTER_API_KEY is not configured")
+
+    headers = {
+        "Authorization": f"Bearer {resolved_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/lecture-note-qa",
+        "X-Title": "Lecture Note Q&A System",
+    }
+
+    payload = {
+        "model": resolved_model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": f"Reference materials:\n{context}\n\nUser question: {query}",
+            },
+        ],
+        "temperature": temperature,
+        "stream": False,
+    }
+
+    response = requests.post(
+        f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
+        headers=headers,
+        json=payload,
+        timeout=timeout_seconds,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+    choices = data.get("choices", [])
+    if not choices:
+        raise LocalRAGError("Invalid response format from OpenRouter API")
+
+    message = choices[0].get("message", {}).get("content")
+    if not message:
+        raise LocalRAGError("Empty response from OpenRouter API")
+
+    return str(message).strip()
+
+
+def generate(
+    query: str,
+    context: str,
+    model: Optional[str] = None,
+    temperature: float = 0.7,
+    timeout_seconds: int = 60,
+) -> str:
+    provider = settings.LLM_PROVIDER
+
+    if provider == "openrouter":
+        try:
+            return generate_with_openrouter(
+                query=query,
+                context=context,
+                model=model,
+                temperature=temperature,
+                timeout_seconds=timeout_seconds,
+            )
+        except LocalRAGError as exc:
+            # OpenRouter may be misconfigured or have exhausted quota.
+            # Fall back to local Qwen to keep chat functional.
+            openrouter_error: Exception = exc
+        except requests.exceptions.Timeout as exc:
+            openrouter_error = exc
+        except requests.exceptions.RequestException as exc:
+            openrouter_error = exc
+
+        try:
+            return generate_with_local_qwen(
+                query=query,
+                context=context,
+                # Always prefer the configured local model for fallback.
+                model=settings.LOCAL_QWEN_MODEL,
+                timeout_seconds=timeout_seconds,
+            )
+        except Exception as local_exc:  # noqa: BLE001
+            raise LocalRAGError(
+                f"OpenRouter failed ({openrouter_error}) and local Qwen also failed ({local_exc})"
+            ) from local_exc
+    elif provider == "local_qwen":
+        return generate_with_local_qwen(
+            query=query,
+            context=context,
+            model=model,
+            timeout_seconds=timeout_seconds,
+        )
+    else:
+        raise LocalRAGError(f"Unsupported LLM_PROVIDER: {provider}")

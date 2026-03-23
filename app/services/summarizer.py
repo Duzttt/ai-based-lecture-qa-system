@@ -15,13 +15,14 @@ from app.config import settings
 
 class SummarizerError(Exception):
     """Exception raised for summarization errors."""
+
     pass
 
 
 class DocumentSummarizer:
     """
     Document summarization service using LLM.
-    
+
     Supports:
     - Single document summarization
     - Multi-document synthesis
@@ -54,7 +55,7 @@ class DocumentSummarizer:
     def __init__(self, llm_provider: str = None, model: str = None):
         """
         Initialize the summarizer.
-        
+
         Args:
             llm_provider: LLM provider (gemini, openrouter, local_qwen)
             model: Model name to use
@@ -71,11 +72,11 @@ class DocumentSummarizer:
     ) -> str:
         """
         Build the prompt for summary generation.
-        
+
         Args:
             documents: List of document dicts with name and text
             config: Summary configuration
-            
+
         Returns:
             Formatted prompt string
         """
@@ -84,7 +85,9 @@ class DocumentSummarizer:
         language = config.get("language", "zh")
         include_citations = config.get("include_citations", True)
 
-        length_info = self.LENGTH_LIMITS.get(length_config, self.LENGTH_LIMITS["medium"])
+        length_info = self.LENGTH_LIMITS.get(
+            length_config, self.LENGTH_LIMITS["medium"]
+        )
         style_prompt = self.STYLE_PROMPTS.get(style, self.STYLE_PROMPTS["narrative"])
         language_name = self.LANGUAGE_OPTIONS.get(language, "中文")
 
@@ -114,8 +117,10 @@ class DocumentSummarizer:
         else:
             # Multi-document synthesis
             doc_list = "\n\n".join(
-                [f"**文档 {i+1}**: {doc['name']}\n{doc['text'][:1000]}..." 
-                 for i, doc in enumerate(documents)]
+                [
+                    f"**文档 {i+1}**: {doc['name']}\n{doc['text'][:1000]}..."
+                    for i, doc in enumerate(documents)
+                ]
             )
 
             prompt = f"""请对以下 {len(documents)} 个相关文档进行综合摘要。
@@ -138,11 +143,11 @@ class DocumentSummarizer:
     def _call_llm(self, prompt: str, response_format: str = None) -> str:
         """
         Call the LLM to generate response.
-        
+
         Args:
             prompt: Input prompt
             response_format: Expected format (e.g., 'json')
-            
+
         Returns:
             LLM response text
         """
@@ -150,6 +155,8 @@ class DocumentSummarizer:
             return self._call_local_qwen(prompt, response_format)
         elif self.llm_provider == "gemini":
             return self._call_gemini(prompt, response_format)
+        elif self.llm_provider == "openrouter":
+            return self._call_openrouter(prompt, response_format)
         else:
             raise SummarizerError(f"Unsupported LLM provider: {self.llm_provider}")
 
@@ -157,12 +164,12 @@ class DocumentSummarizer:
         """Call local Qwen model via Ollama."""
         try:
             from ollama import Client as OllamaClient
-            
+
             client = OllamaClient(
                 host=self.base_url,
                 timeout=self.timeout,
             )
-            
+
             system_prompt = "You are a professional document summarization assistant. Generate clear, accurate summaries."
             if response_format == "json":
                 system_prompt += " Output ONLY valid JSON."
@@ -178,7 +185,7 @@ class DocumentSummarizer:
             )
 
             return str(response.get("message", {}).get("content", "")).strip()
-            
+
         except Exception as e:
             raise SummarizerError(f"Failed to call local Qwen: {str(e)}")
 
@@ -197,15 +204,13 @@ class DocumentSummarizer:
             }
 
             payload = {
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
+                "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "temperature": 0.3,
                     "topK": 40,
                     "topP": 0.95,
                     "maxOutputTokens": 2048,
-                }
+                },
             }
 
             if response_format == "json":
@@ -223,12 +228,62 @@ class DocumentSummarizer:
             if not candidates:
                 raise SummarizerError("No response from Gemini")
 
-            return candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            return (
+                candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            )
 
         except httpx.HTTPStatusError as e:
             raise SummarizerError(f"Gemini API error: {e.response.status_code}")
         except Exception as e:
             raise SummarizerError(f"Failed to call Gemini: {str(e)}")
+
+    def _call_openrouter(self, prompt: str, response_format: str = None) -> str:
+        """Call OpenRouter API."""
+        try:
+            api_key = settings.OPENROUTER_API_KEY
+            if not api_key:
+                raise SummarizerError("OpenRouter API key not configured")
+
+            model = settings.OPENROUTER_MODEL
+
+            system_prompt = "You are a professional document summarization assistant. Generate clear, accurate summaries."
+            if response_format == "json":
+                system_prompt += " Output ONLY valid JSON."
+
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.3,
+                "stream": False,
+            }
+
+            response = httpx.post(
+                f"{settings.OPENROUTER_BASE_URL}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=120,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            choices = data.get("choices", [])
+            if not choices:
+                raise SummarizerError("No response from OpenRouter")
+
+            return choices[0].get("message", {}).get("content", "").strip()
+
+        except httpx.HTTPStatusError as e:
+            raise SummarizerError(f"OpenRouter API error: {e.response.status_code}")
+        except Exception as e:
+            raise SummarizerError(f"Failed to call OpenRouter: {str(e)}")
 
     def _extract_citations(
         self,
@@ -237,11 +292,11 @@ class DocumentSummarizer:
     ) -> List[Dict[str, Any]]:
         """
         Extract key citations from document that support the summary.
-        
+
         Args:
             document: Document dict with text and metadata
             summary: Generated summary text
-            
+
         Returns:
             List of citation dicts with point, citation, source, page
         """
@@ -264,7 +319,7 @@ class DocumentSummarizer:
 返回格式示例：
 [
     {{"point": "观点 1", "citation": "原文引用 1", "source": "文档名", "page": 1}},
-    {"point": "观点 2", "citation": "原文引用 2", "source": "文档名", "page": 2}}
+    {{"point": "观点 2", "citation": "原文引用 2", "source": "文档名", "page": 2}}
 ]
 
 只返回 JSON 数组，不要其他文字："""
@@ -278,7 +333,7 @@ class DocumentSummarizer:
             if result.endswith("```"):
                 result = result[:-3]
             result = result.strip()
-            
+
             citations = json.loads(result)
             if isinstance(citations, list):
                 return citations
@@ -294,11 +349,11 @@ class DocumentSummarizer:
     ) -> Dict[str, Any]:
         """
         Generate summary for a single document.
-        
+
         Args:
             document: Document dict with name, text, and metadata
             config: Summary configuration
-            
+
         Returns:
             Summary result dict with text, citations, document info
         """
@@ -324,11 +379,11 @@ class DocumentSummarizer:
     ) -> Dict[str, Any]:
         """
         Generate combined summary for multiple documents.
-        
+
         Args:
             documents: List of document dicts
             config: Summary configuration
-            
+
         Returns:
             Summary result dict with text, comparison, document count
         """
@@ -354,10 +409,10 @@ class DocumentSummarizer:
     ) -> List[Dict[str, Any]]:
         """
         Generate a comparison table for multiple documents.
-        
+
         Args:
             documents: List of document dicts
-            
+
         Returns:
             List of comparison dicts per document
         """
@@ -393,19 +448,21 @@ class DocumentSummarizer:
                 if result.endswith("```"):
                     result = result[:-3]
                 result = result.strip()
-                
+
                 comparison_data = json.loads(result)
                 comparison_data["name"] = doc["name"]  # Ensure name is correct
                 comparison.append(comparison_data)
             except Exception:
                 # Add basic info on error
-                comparison.append({
-                    "name": doc["name"],
-                    "mainPoints": "分析失败",
-                    "keywords": [],
-                    "methodology": "",
-                    "conclusions": "",
-                })
+                comparison.append(
+                    {
+                        "name": doc["name"],
+                        "mainPoints": "分析失败",
+                        "keywords": [],
+                        "methodology": "",
+                        "conclusions": "",
+                    }
+                )
 
         return comparison
 
@@ -416,11 +473,11 @@ class DocumentSummarizer:
     ) -> Dict[str, Any]:
         """
         Generate summary for one or more documents.
-        
+
         Args:
             documents: List of document dicts
             config: Summary configuration
-            
+
         Returns:
             Summary result dict
         """
@@ -440,11 +497,11 @@ def summarize_documents(
 ) -> Dict[str, Any]:
     """
     Convenience function to summarize documents.
-    
+
     Args:
         documents: List of document dicts with name and text
         config: Optional configuration dict
-        
+
     Returns:
         Summary result dict
     """

@@ -3,19 +3,17 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-import httpx
 import requests
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from ollama import Client as OllamaClient
 
 from app.config import settings
 from app.services.local_rag import (
     LocalRAGError,
     build_context_from_sources,
-    generate_with_local_qwen,
+    generate,
     retrieve_with_faiss,
 )
 
@@ -54,18 +52,15 @@ def ask_question(request: HttpRequest) -> JsonResponse:
             query=query, top_k=3, source_filter=source_filter
         )
         context = build_context_from_sources(retrieved_sources)
-        answer = generate_with_local_qwen(query=query, context=context)
+        answer = generate(query=query, context=context)
     except requests.exceptions.Timeout:
         return _error_response(
-            (
-                "Local Qwen model request timed out "
-                f"(timeout={settings.LOCAL_QWEN_TIMEOUT_SECONDS}s)"
-            ),
+            ("LLM request timed out"),
             status=504,
         )
     except requests.exceptions.RequestException as exc:
         return _error_response(
-            f"Failed to call local Qwen model: {str(exc)}",
+            f"Failed to call LLM: {str(exc)}",
             status=503,
         )
     except LocalRAGError as exc:
@@ -125,43 +120,18 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
         if not context.strip():
             return _error_response("No indexed context found in FAISS", status=400)
 
-        system_prompt = (
-            "You are a rigorous academic teaching assistant. Please answer the questions based on the following reference materials."
-            "If the evidence is insufficient, please explain clearly. "
-            "Respond in English by default unless the user explicitly requests another language."
-        )
-        user_prompt = f"Reference materials:\n{context}\n\nUser question: {query}"
-
-        ollama_client = OllamaClient(
-            host=settings.LOCAL_QWEN_BASE_URL,
-            timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-        )
-        model_response = ollama_client.chat(
+        answer = generate(
+            query=query,
+            context=context,
             model=llm_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            stream=False,
-            keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
-            options={"temperature": temperature},
+            temperature=temperature,
         )
-
-        answer = str(model_response.get("message", {}).get("content", "")).strip()
         if not answer:
-            raise LocalRAGError("Empty response from local Qwen model")
-    except httpx.TimeoutException:
-        return _error_response(
-            (
-                "Local Qwen model request timed out "
-                f"(timeout={settings.LOCAL_QWEN_TIMEOUT_SECONDS}s)"
-            ),
-            status=504,
-        )
-    except httpx.RequestError as exc:
-        return _error_response(
-            f"Failed to call local Qwen model: {str(exc)}", status=503
-        )
+            raise LocalRAGError("Empty response from LLM")
+    except requests.exceptions.Timeout:
+        return _error_response("LLM request timed out", status=504)
+    except requests.exceptions.RequestException as exc:
+        return _error_response(f"Failed to call LLM: {str(exc)}", status=503)
     except LocalRAGError as exc:
         return _error_response(str(exc), status=503)
     except Exception as exc:  # noqa: BLE001
@@ -232,18 +202,13 @@ def ask_with_citations(request: HttpRequest) -> JsonResponse:
             top_k=top_k,
             source_filter=source_filter,
         )
-    except httpx.TimeoutException:
+    except requests.exceptions.Timeout:
         return _error_response(
-            (
-                "Local Qwen model request timed out "
-                f"(timeout={settings.LOCAL_QWEN_TIMEOUT_SECONDS}s)"
-            ),
+            "LLM request timed out",
             status=504,
         )
-    except httpx.RequestError as exc:
-        return _error_response(
-            f"Failed to call local Qwen model: {str(exc)}", status=503
-        )
+    except requests.exceptions.RequestException as exc:
+        return _error_response(f"Failed to call LLM: {str(exc)}", status=503)
     except CitationRAGError as exc:
         return _error_response(str(exc), status=503)
     except Exception as exc:  # noqa: BLE001
@@ -469,29 +434,14 @@ def chat_htmx(request: HttpRequest) -> HttpResponse:
                 "No indexed context found in FAISS. Please upload and index PDFs first."
             )
         else:
-            system_prompt = (
-                "You are a rigorous academic teaching assistant. Please answer the questions based on the following reference materials. "
-                "If the evidence is insufficient, please explain clearly."
-            )
-            user_prompt = f"Reference materials:\n{context}\n\nUser question: {query}"
-
-            ollama_client = OllamaClient(
-                host=settings.LOCAL_QWEN_BASE_URL,
-                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-            )
-            model_response = ollama_client.chat(
+            answer = generate(
+                query=query,
+                context=context,
                 model=llm_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                stream=False,
-                keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
-                options={"temperature": temperature},
+                temperature=temperature,
             )
-            answer = str(model_response.get("message", {}).get("content", "")).strip()
             if not answer:
-                answer = "Empty response from local Qwen model."
+                answer = "Empty response from LLM."
             else:
                 answer = inject_citation_marks(answer, citations)
     except Exception as exc:  # noqa: BLE001
@@ -624,28 +574,12 @@ def compare_documents(request: HttpRequest) -> JsonResponse:
                 )
                 continue
 
-            system_prompt = (
-                "You are a rigorous academic teaching assistant. Please answer the question "
-                "based strictly on the provided reference material. If evidence is insufficient, "
-                "say so clearly."
-            )
-            user_prompt = f"Reference material:\n{context}\n\nQuestion: {query}"
-
-            ollama_client = OllamaClient(
-                host=settings.LOCAL_QWEN_BASE_URL,
-                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-            )
-            model_response = ollama_client.chat(
+            answer = generate(
+                query=query,
+                context=context,
                 model=llm_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                stream=False,
-                keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
-                options={"temperature": temperature},
+                temperature=temperature,
             )
-            answer = str(model_response.get("message", {}).get("content", "")).strip()
             if not answer:
                 answer = "Empty response from model."
 

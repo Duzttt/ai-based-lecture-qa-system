@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b:free"
     LLM_PROVIDER: str = "gemini"
 
     LOCAL_QWEN_MODEL: str = "qwen2.5:3b"

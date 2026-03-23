@@ -492,7 +492,7 @@ Do NOT add any other text, explanation, or commentary."""
         }
 
         payload = {
-            "model": "anthropic/claude-3-haiku",
+            "model": settings.OPENROUTER_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 200,
         }
@@ -507,9 +507,17 @@ Do NOT add any other text, explanation, or commentary."""
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"].strip()
-
-        except Exception as e:
+        except httpx.HTTPStatusError as e:
+            # Common OpenRouter failures: missing billing/quota/invalid key.
+            if e.response is not None and e.response.status_code in {401, 402, 403, 429}:
+                return self._call_local_qwen(prompt)
             raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
+        except Exception as e:
+            # Last-resort fallback to local Qwen for network/transport issues.
+            try:
+                return self._call_local_qwen(prompt)
+            except Exception:
+                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
 
     def _parse_llm_response(self, response: str, num_final: int) -> List[str]:
         """Parse LLM response to extract generated questions.
