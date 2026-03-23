@@ -1,11 +1,9 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useLlmSettingsStore } from '../../stores/llmSettingsStore'
 
 const store = useLlmSettingsStore()
-const isOpen = ref(false)
-const switchMessage = ref('')
-const switchStatus = ref('')
+const showModal = ref(false)
 
 const PROVIDER_ICONS = {
   gemini: '✨',
@@ -13,99 +11,101 @@ const PROVIDER_ICONS = {
   local_qwen: '🏠',
 }
 
-const toggle = () => {
-  isOpen.value = !isOpen.value
+const openModal = () => {
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
 }
 
 const handleSelect = async (providerId, model) => {
   if (providerId === store.currentProvider && model === store.currentModel) {
-    isOpen.value = false
+    closeModal()
     return
   }
 
   const success = await store.switchProvider(providerId, model)
   if (success) {
-    switchStatus.value = 'success'
-    switchMessage.value = `Switched to ${providerId}`
-  } else {
-    switchStatus.value = 'error'
-    switchMessage.value = store.error || 'Failed to switch'
-  }
-
-  isOpen.value = false
-  setTimeout(() => {
-    switchMessage.value = ''
-    switchStatus.value = ''
-  }, 3000)
-}
-
-const handleClickOutside = (e) => {
-  if (!e.target.closest('.provider-switcher')) {
-    isOpen.value = false
+    closeModal()
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
 
 <template>
-  <div class="provider-switcher">
-    <button class="switcher-trigger pill-btn" @click="toggle">
-      <span class="switcher-icon">{{ PROVIDER_ICONS[store.currentProvider] || '🤖' }}</span>
-      <span class="switcher-label">{{ store.currentProviderName || 'LLM' }}</span>
-      <span class="switcher-chevron" :class="{ open: isOpen }">▾</span>
-    </button>
+  <button class="switcher-trigger pill-btn" @click="openModal">
+    <span class="switcher-icon">{{ PROVIDER_ICONS[store.currentProvider] || '🤖' }}</span>
+    <span class="switcher-label">{{ store.currentProviderName || 'LLM' }}</span>
+  </button>
 
-    <div v-if="switchMessage" class="switcher-toast" :class="switchStatus">
-      {{ switchMessage }}
-    </div>
-
-    <div v-if="isOpen" class="switcher-dropdown">
-      <div v-if="store.isSwitching" class="switcher-loading">
-        Switching...
-      </div>
-      <template v-else>
-        <div
-          v-for="provider in store.providers"
-          :key="provider.id"
-          class="provider-group"
-        >
-          <div class="provider-group-header">
-            <span>{{ PROVIDER_ICONS[provider.id] || '🤖' }}</span>
-            <span>{{ provider.name }}</span>
-            <span v-if="!provider.has_api_key && provider.requires_api_key" class="no-key-badge">
-              No API Key
-            </span>
-          </div>
-          <button
-            v-for="model in provider.models"
-            :key="model"
-            class="model-option"
-            :class="{
-              active: store.currentProvider === provider.id && store.currentModel === model,
-            }"
-            @click="handleSelect(provider.id, model)"
-          >
-            <span class="model-name">{{ model }}</span>
-            <span v-if="store.currentProvider === provider.id && store.currentModel === model" class="active-dot">●</span>
-          </button>
+  <Teleport to="body">
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3>Switch LLM Provider</h3>
+          <button class="modal-close" @click="closeModal">✕</button>
         </div>
-      </template>
+
+        <div class="modal-body">
+          <div v-if="store.isSwitching" class="switching-state">
+            <div class="spinner"></div>
+            <span>Switching provider...</span>
+          </div>
+
+          <template v-else>
+            <div
+              v-for="provider in store.providers"
+              :key="provider.id"
+              class="provider-section"
+            >
+              <div class="provider-title">
+                <span class="provider-title-icon">{{ PROVIDER_ICONS[provider.id] || '🤖' }}</span>
+                <span class="provider-title-name">{{ provider.name }}</span>
+                <span
+                  v-if="provider.has_api_key"
+                  class="status-badge ready"
+                >
+                  Ready
+                </span>
+                <span
+                  v-else-if="provider.requires_api_key"
+                  class="status-badge no-key"
+                >
+                  No API Key
+                </span>
+                <span v-else class="status-badge local">
+                  Local
+                </span>
+              </div>
+
+              <div class="model-grid">
+                <button
+                  v-for="model in provider.models"
+                  :key="model"
+                  class="model-card"
+                  :class="{
+                    active: store.currentProvider === provider.id && store.currentModel === model,
+                  }"
+                  @click="handleSelect(provider.id, model)"
+                >
+                  <div class="model-card-name">{{ model }}</div>
+                  <div
+                    v-if="store.currentProvider === provider.id && store.currentModel === model"
+                    class="model-card-active"
+                  >
+                    Active
+                  </div>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped>
-.provider-switcher {
-  position: relative;
-}
-
 .switcher-trigger {
   display: inline-flex;
   align-items: center;
@@ -125,127 +125,195 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.switcher-chevron {
-  font-size: 10px;
-  transition: transform 0.2s;
-  color: var(--text-muted);
-}
-
-.switcher-chevron.open {
-  transform: rotate(180deg);
-}
-
-.switcher-toast {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 100;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
   animation: fadeIn 0.2s ease;
 }
 
-.switcher-toast.success {
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.5);
-  color: #86efac;
-}
-
-.switcher-toast.error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  color: #fecaca;
-}
-
-.switcher-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 220px;
+.modal-container {
+  width: min(520px, 90vw);
+  max-height: 80vh;
   background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
-  z-index: 999;
+  border-radius: 24px;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.3s ease;
   overflow: hidden;
-  animation: slideDown 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-.switcher-loading {
-  padding: 16px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.provider-group {
-  padding: 6px 0;
-}
-
-.provider-group + .provider-group {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.provider-group-header {
+.modal-header {
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-size: 11px;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #fff, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.switching-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  border-top-color: #a855f7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.provider-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.provider-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-title-icon {
+  font-size: 16px;
+}
+
+.provider-title-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.status-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.no-key-badge {
-  margin-left: auto;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 999px;
+.status-badge.ready {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.status-badge.no-key {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
-  text-transform: none;
-  letter-spacing: 0;
 }
 
-.model-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 7px 14px 7px 30px;
-  border: none;
-  background: none;
-  color: var(--text-main);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  text-align: left;
-}
-
-.model-option:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.model-option.active {
-  background: rgba(99, 102, 241, 0.12);
+.status-badge.local {
+  background: rgba(99, 102, 241, 0.15);
   color: #a5b4fc;
 }
 
-.model-name {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 11px;
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
-.active-dot {
+.model-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.model-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.model-card.active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.model-card-name {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+.model-card.active .model-card-name {
+  color: #a5b4fc;
+}
+
+.model-card-active {
+  font-size: 10px;
   color: #a855f7;
-  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 @keyframes fadeIn {
@@ -253,14 +321,18 @@ onUnmounted(() => {
   to { opacity: 1; }
 }
 
-@keyframes slideDown {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-6px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
