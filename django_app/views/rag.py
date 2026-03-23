@@ -250,6 +250,9 @@ def settings_handler(request: HttpRequest) -> JsonResponse:
         if provider == "gemini":
             default_model = app_settings.GEMINI_MODEL
             default_key = app_settings.GEMINI_API_KEY
+        elif provider == "local_qwen":
+            default_model = app_settings.LOCAL_QWEN_MODEL
+            default_key = None
         else:
             default_model = "anthropic/claude-3-haiku"
             default_key = app_settings.OPENROUTER_API_KEY
