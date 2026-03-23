@@ -12,21 +12,45 @@ from typing import List, Dict, Any
 
 # Test documents - mix of Chinese and English
 TEST_DOCUMENTS = [
-    {"id": "doc1", "text": "机器学习是人工智能的一个分支，它使用算法来从数据中学习。"},
-    {"id": "doc2", "text": "深度学习是机器学习的子领域，使用神经网络进行建模。"},
-    {"id": "doc3", "text": "自然语言处理涉及计算机和人类语言之间的交互。"},
-    {"id": "doc4", "text": "Computer vision is a field of AI that trains computers to interpret visual information."},
-    {"id": "doc5", "text": "强化学习通过奖励和惩罚来训练智能体，使其在环境中做出决策。"},
-    {"id": "doc6", "text": "监督学习使用标记数据来训练模型，用于分类和回归任务。"},
-    {"id": "doc7", "text": "无监督学习发现未标记数据中的模式和结构。"},
-    {"id": "doc8", "text": "神经网络是由相互连接的节点组成的计算模型，灵感来自生物神经网络。"},
+    {
+        "id": "doc1",
+        "text": "Machine learning is a branch of artificial intelligence that uses algorithms to learn from data.",
+    },
+    {
+        "id": "doc2",
+        "text": "Deep learning is a subfield of machine learning that uses neural networks for modeling.",
+    },
+    {
+        "id": "doc3",
+        "text": "Natural language processing involves interaction between computers and human language.",
+    },
+    {
+        "id": "doc4",
+        "text": "Computer vision is a field of AI that trains computers to interpret visual information.",
+    },
+    {
+        "id": "doc5",
+        "text": "Reinforcement learning trains agents through rewards and penalties to make decisions in an environment.",
+    },
+    {
+        "id": "doc6",
+        "text": "Supervised learning uses labeled data to train models for classification and regression tasks.",
+    },
+    {
+        "id": "doc7",
+        "text": "Unsupervised learning discovers patterns and structures in unlabeled data.",
+    },
+    {
+        "id": "doc8",
+        "text": "Neural networks are computational models composed of interconnected nodes, inspired by biological neural networks.",
+    },
 ]
 
 TEST_QUERIES = [
-    {"query": "什么是机器学习", "expected_top": "doc1"},
-    {"query": "深度学习", "expected_top": "doc2"},
-    {"query": "自然语言处理", "expected_top": "doc3"},
-    {"query": "神经网络", "expected_top": "doc8"},
+    {"query": "What is machine learning", "expected_top": "doc1"},
+    {"query": "Deep learning", "expected_top": "doc2"},
+    {"query": "Natural language processing", "expected_top": "doc3"},
+    {"query": "Neural networks", "expected_top": "doc8"},
 ]
 
 
@@ -52,7 +76,7 @@ class TestBM25Index:
         from retrieval.bm25_index import BM25Index
 
         index = BM25Index(TEST_DOCUMENTS)
-        results = index.search("机器学习", top_k=3)
+        results = index.search("machine learning", top_k=3)
 
         assert len(results) > 0
         assert isinstance(results[0], tuple)
@@ -63,10 +87,10 @@ class TestBM25Index:
         from retrieval.bm25_index import BM25Index
 
         index = BM25Index(TEST_DOCUMENTS)
-        results = index.search("机器学习是人工智能", top_k=5)
+        results = index.search("machine learning is artificial intelligence", top_k=5)
 
         assert len(results) > 0
-        # doc1 should be in results as it contains "机器学习"
+        # doc1 should be in results as it contains "machine learning"
         doc_ids = [doc_id for doc_id, _ in results]
         assert "doc1" in doc_ids
 
@@ -95,7 +119,7 @@ class TestBM25Index:
         from retrieval.bm25_index import BM25Index
 
         index = BM25Index(TEST_DOCUMENTS)
-        scores = index.get_scores("机器学习")
+        scores = index.get_scores("machine learning")
 
         assert isinstance(scores, dict)
         assert len(scores) == 8
@@ -133,7 +157,7 @@ class TestDenseRetriever:
         from retrieval.dense_retriever import DenseRetriever
 
         retriever = DenseRetriever(TEST_DOCUMENTS)
-        results = retriever.search("机器学习", top_k=3)
+        results = retriever.search("machine learning", top_k=3)
 
         assert len(results) > 0
         assert isinstance(results[0], tuple)
@@ -144,7 +168,7 @@ class TestDenseRetriever:
         from retrieval.dense_retriever import DenseRetriever
 
         retriever = DenseRetriever(TEST_DOCUMENTS)
-        results = retriever.search("人工智能", top_k=5)
+        results = retriever.search("artificial intelligence", top_k=5)
 
         for doc_id, score in results:
             assert 0 <= score <= 1
@@ -166,7 +190,10 @@ class TestDenseRetriever:
         initial_count = retriever.get_document_count()
 
         new_docs = [
-            {"id": "doc9", "text": "新增文档内容用于测试添加功能"},
+            {
+                "id": "doc9",
+                "text": "New document content for testing the add functionality",
+            },
             {"id": "doc10", "text": "Another new document for testing"},
         ]
         retriever.add_documents(new_docs)
@@ -199,9 +226,7 @@ class TestHybridRetriever:
         """Test HybridRetriever initialization with weighted fusion."""
         from retrieval.hybrid_retriever import HybridRetriever, FusionMethod
 
-        retriever = HybridRetriever(
-            TEST_DOCUMENTS, fusion_method=FusionMethod.WEIGHTED
-        )
+        retriever = HybridRetriever(TEST_DOCUMENTS, fusion_method=FusionMethod.WEIGHTED)
         assert retriever.fusion_method == FusionMethod.WEIGHTED
 
     def test_retrieve_rrf(self):
@@ -209,7 +234,7 @@ class TestHybridRetriever:
         from retrieval.hybrid_retriever import HybridRetriever, FusionMethod
 
         retriever = HybridRetriever(TEST_DOCUMENTS, fusion_method=FusionMethod.RRF)
-        results = retriever.retrieve("机器学习", top_k=5)
+        results = retriever.retrieve("machine learning", top_k=5)
 
         assert len(results) > 0
         assert "id" in results[0]
@@ -220,10 +245,8 @@ class TestHybridRetriever:
         """Test hybrid retrieval with weighted fusion."""
         from retrieval.hybrid_retriever import HybridRetriever, FusionMethod
 
-        retriever = HybridRetriever(
-            TEST_DOCUMENTS, fusion_method=FusionMethod.WEIGHTED
-        )
-        results = retriever.retrieve("机器学习", top_k=5, alpha=0.3)
+        retriever = HybridRetriever(TEST_DOCUMENTS, fusion_method=FusionMethod.WEIGHTED)
+        results = retriever.retrieve("machine learning", top_k=5, alpha=0.3)
 
         assert len(results) > 0
 
@@ -241,7 +264,7 @@ class TestHybridRetriever:
         from retrieval.hybrid_retriever import HybridRetriever
 
         retriever = HybridRetriever(TEST_DOCUMENTS)
-        result = retriever.retrieve_with_scores("机器学习", top_k=5)
+        result = retriever.retrieve_with_scores("machine learning", top_k=5)
 
         assert "results" in result
         assert "bm25_scores" in result
@@ -299,7 +322,7 @@ class TestHybridRetriever:
         retriever = HybridRetriever(TEST_DOCUMENTS)
 
         for k in [1, 3, 5, 10]:
-            results = retriever.retrieve("机器学习", top_k=k)
+            results = retriever.retrieve("machine learning", top_k=k)
             assert len(results) <= k
 
 
@@ -373,7 +396,7 @@ class TestHybridRetrieverIntegration:
         retriever = HybridRetriever(TEST_DOCUMENTS)
 
         # Chinese query
-        cn_results = retriever.retrieve("机器学习", top_k=5)
+        cn_results = retriever.retrieve("machine learning", top_k=5)
         assert len(cn_results) > 0
 
         # English query
@@ -385,7 +408,7 @@ class TestHybridRetrieverIntegration:
         from retrieval.hybrid_retriever import HybridRetriever
 
         retriever = HybridRetriever(TEST_DOCUMENTS)
-        results = retriever.retrieve("机器学习", top_k=3)
+        results = retriever.retrieve("machine learning", top_k=3)
 
         for result in results:
             assert "id" in result

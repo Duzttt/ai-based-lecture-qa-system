@@ -20,12 +20,12 @@ def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
         "django_app.views.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {
-                "text": "趋势包括 ubiquity...",
+                "text": "Trends include ubiquity...",
                 "source": "Intelligent_Agent.pdf",
                 "page": 7,
             },
             {
-                "text": "趋势包括 interconnection...",
+                "text": "Trends include interconnection...",
                 "source": "Intelligent_Agent.pdf",
                 "page": 8,
             },
@@ -37,18 +37,19 @@ def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(
         "django_app.views.generate_with_local_qwen",
-        lambda query, context: "根据《Intelligent_Agent.pdf》第7页，五个趋势是……",
+        lambda query,
+        context: "According to Intelligent_Agent.pdf page 7, the five trends are...",
     )
 
     response = client.post(
         "/api/ask",
-        data=json.dumps({"query": "这份文档的五个趋势是什么？"}),
+        data=json.dumps({"query": "What are the five trends in this document?"}),
         content_type="application/json",
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["answer"].startswith("根据《Intelligent_Agent.pdf》第7页")
+    assert data["answer"].startswith("According to Intelligent_Agent.pdf page 7")
     assert data["sources"] == ["Intelligent_Agent.pdf"]
     assert len(data["source_snippets"]) == 2
 

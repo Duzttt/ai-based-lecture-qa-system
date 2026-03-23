@@ -93,7 +93,7 @@ def admin_alerts_current(request: HttpRequest) -> JsonResponse:
                     "id": "latency_high",
                     "type": "latency_anomaly",
                     "severity": "warning",
-                    "message": f"检索延迟较高: {latency_avg:.0f}ms",
+                    "message": f"High retrieval latency: {latency_avg:.0f}ms",
                     "current_value": latency_avg,
                     "baseline": {"avg": 200, "std": 50},
                     "start_time": (now - timedelta(minutes=30)).strftime("%H:%M"),
@@ -111,7 +111,7 @@ def admin_alerts_current(request: HttpRequest) -> JsonResponse:
                 "id": "faiss_empty",
                 "type": "index_empty",
                 "severity": "critical",
-                "message": "FAISS 索引为空",
+                "message": "FAISS index is empty",
                 "current_value": 0,
                 "baseline": {"min": 1000},
                 "start_time": now.strftime("%H:%M"),
@@ -204,16 +204,16 @@ def admin_capacity_forecast(request: HttpRequest) -> JsonResponse:
         recommendations.append(
             {
                 "date": (now + timedelta(days=14)).strftime("%Y-%m-%d"),
-                "action": "增加存储",
-                "details": f"预计需要额外 {int(current_index_size * 0.5)}MB",
+                "action": "Increase storage",
+                "details": f"Expected to need additional {int(current_index_size * 0.5)}MB",
             }
         )
     if current_queries > 1000:
         recommendations.append(
             {
                 "date": (now + timedelta(days=30)).strftime("%Y-%m-%d"),
-                "action": "考虑限流",
-                "details": "日查询量超过1000，建议配置限流",
+                "action": "Consider rate limiting",
+                "details": "Daily queries exceed 1000, consider configuring rate limiting",
             }
         )
 
@@ -329,7 +329,9 @@ def admin_cost_analysis(request: HttpRequest) -> JsonResponse:
     if type_costs:
         concept_queries = next((t for t in type_costs if t["type"] == "concept"), None)
         if concept_queries and concept_queries["traffic"] > 30:
-            recommendations.append("缓存高频概念类查询，预计节省 $5/月")
+            recommendations.append(
+                "Cache high-frequency concept queries, expected savings $5/month"
+            )
 
     projected = total * 1.2
 
@@ -354,7 +356,7 @@ def admin_cost_analysis(request: HttpRequest) -> JsonResponse:
                 },
                 {
                     "category": "storage",
-                    "name": "向量存储 (FAISS)",
+                    "name": "Vector storage (FAISS)",
                     "cost": round(storage_cost, 2),
                     "percentage": (
                         round(storage_cost / total * 100, 1) if total > 0 else 0
@@ -362,7 +364,7 @@ def admin_cost_analysis(request: HttpRequest) -> JsonResponse:
                 },
                 {
                     "category": "compute",
-                    "name": "服务器资源",
+                    "name": "Server resources",
                     "cost": round(compute_cost, 2),
                     "percentage": (
                         round(compute_cost / total * 100, 1) if total > 0 else 0
@@ -423,25 +425,25 @@ def admin_user_behavior(request: HttpRequest) -> JsonResponse:
         if qtype == "concept":
             segments.append(
                 {
-                    "name": "学生",
+                    "name": "Student",
                     "percentage": round(pct, 1),
-                    "behaviors": ["概念理解", "例子查询"],
+                    "behaviors": ["Concept understanding", "Example lookup"],
                 }
             )
         elif qtype == "method":
             segments.append(
                 {
-                    "name": "研究者",
+                    "name": "Researcher",
                     "percentage": round(pct, 1),
-                    "behaviors": ["方法对比", "深入分析"],
+                    "behaviors": ["Method comparison", "In-depth analysis"],
                 }
             )
         elif qtype == "comparison":
             segments.append(
                 {
-                    "name": "教师",
+                    "name": "Teacher",
                     "percentage": round(pct, 1),
-                    "behaviors": ["对比分析", "测验生成"],
+                    "behaviors": ["Comparative analysis", "Quiz generation"],
                 }
             )
 
@@ -519,15 +521,15 @@ def admin_generate_report(request: HttpRequest) -> JsonResponse:
         report["sections"]["events"] = [
             {
                 "date": now.strftime("%Y-%m-%d"),
-                "message": "系统运行稳定",
+                "message": "System is running stably",
                 "severity": "info",
             },
         ]
 
     if "recommendations" in sections:
         report["sections"]["recommendations"] = [
-            "系统性能良好，建议保持当前配置",
-            "建议定期清理旧日志以释放空间",
+            "System performance is good, recommend keeping current configuration",
+            "Recommend periodically cleaning old logs to free up space",
         ]
 
     reports = _load_reports()
@@ -594,21 +596,29 @@ def admin_health_score(request: HttpRequest) -> JsonResponse:
     if quality_score < 80:
         low_quality = len([s for s in quality_scores if s < 0.5])
         issues.append(
-            {"priority": "high", "message": f"优化 {low_quality} 个低质量 Chunk"}
+            {
+                "priority": "high",
+                "message": f"Optimize {low_quality} low-quality Chunks",
+            }
         )
     if coverage_score < 80:
-        issues.append({"priority": "medium", "message": "补充缺失主题内容"})
+        issues.append(
+            {"priority": "medium", "message": "Fill in missing topic content"}
+        )
     if freshness_score < 80:
-        issues.append({"priority": "low", "message": "更新过时文档"})
+        issues.append({"priority": "low", "message": "Update outdated documents"})
 
     return JsonResponse(
         {
             "overall_score": overall_score,
             "dimensions": {
-                "coverage": {"score": coverage_score, "label": "覆盖度"},
-                "quality": {"score": quality_score, "label": "质量"},
-                "freshness": {"score": freshness_score, "label": "新鲜度"},
-                "retrieval": {"score": retrieval_score, "label": "检索有效性"},
+                "coverage": {"score": coverage_score, "label": "Coverage"},
+                "quality": {"score": quality_score, "label": "Quality"},
+                "freshness": {"score": freshness_score, "label": "Freshness"},
+                "retrieval": {
+                    "score": retrieval_score,
+                    "label": "Retrieval effectiveness",
+                },
             },
             "total_chunks": total_chunks,
             "issues": issues,

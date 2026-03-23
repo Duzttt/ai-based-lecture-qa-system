@@ -39,17 +39,17 @@ class DocumentSummarizer:
 
     # Style prompts
     STYLE_PROMPTS = {
-        "bullets": "用要点形式（bullet points）列出核心内容，每个要点简洁明了",
-        "narrative": "用连贯的叙述方式概括，段落之间逻辑清晰、过渡自然",
-        "academic": "用学术语言撰写，包含主要论点、方法论和结论，保持严谨性",
-        "executive": "用行政摘要风格，突出关键发现和行动建议",
+        "bullets": "List core content as bullet points. Each point should be concise and clear.",
+        "narrative": "Summarize in a coherent narrative style with logical flow and smooth transitions between paragraphs.",
+        "academic": "Write in academic language covering main arguments, methodology, and conclusions with scholarly rigor.",
+        "executive": "Use an executive summary style highlighting key findings and actionable recommendations.",
     }
 
     # Language options
     LANGUAGE_OPTIONS = {
-        "zh": "中文",
+        "zh": "Chinese",
         "en": "English",
-        "ja": "日本語",
+        "ja": "Japanese",
     }
 
     def __init__(self, llm_provider: str = None, model: str = None):
@@ -82,14 +82,14 @@ class DocumentSummarizer:
         """
         length_config = config.get("length", "medium")
         style = config.get("style", "narrative")
-        language = config.get("language", "zh")
+        language = config.get("language", "en")
         include_citations = config.get("include_citations", True)
 
         length_info = self.LENGTH_LIMITS.get(
             length_config, self.LENGTH_LIMITS["medium"]
         )
         style_prompt = self.STYLE_PROMPTS.get(style, self.STYLE_PROMPTS["narrative"])
-        language_name = self.LANGUAGE_OPTIONS.get(language, "中文")
+        language_name = self.LANGUAGE_OPTIONS.get(language, "Chinese")
 
         if len(documents) == 1:
             # Single document summary
@@ -97,46 +97,46 @@ class DocumentSummarizer:
             # Truncate text if too long (keep first 5000 chars)
             text = doc["text"][:5000] if len(doc["text"]) > 5000 else doc["text"]
 
-            prompt = f"""请对以下文档生成摘要。
+            prompt = f"""Generate a summary for the following document.
 
-**文档名称**: {doc["name"]}
+**Document**: {doc["name"]}
 
-**文档内容**:
+**Content**:
 {text}
 
-**要求**:
-- 摘要长度：约 {length_info["tokens"]} 词，{length_info["sentences"]} 句
-- 风格：{style_prompt}
-- 语言：{language_name}
-- 保持原文的专业术语和关键概念
-- 突出文档的核心观点和重要结论
-{f"- 在摘要后列出关键引用段落（包含页码）" if include_citations else ""}
+**Requirements**:
+- Length: approximately {length_info["tokens"]} words, {length_info["sentences"]} sentences
+- Style: {style_prompt}
+- Language: {language_name}
+- Preserve domain-specific terminology and key concepts from the original
+- Highlight the core arguments and important conclusions
+{f"- After the summary, list key quoted passages with page numbers" if include_citations else ""}
 
-请直接输出摘要内容："""
+Output the summary directly:"""
 
         else:
             # Multi-document synthesis
             doc_list = "\n\n".join(
                 [
-                    f"**文档 {i+1}**: {doc['name']}\n{doc['text'][:1000]}..."
+                    f"**Document {i+1}**: {doc['name']}\n{doc['text'][:1000]}..."
                     for i, doc in enumerate(documents)
                 ]
             )
 
-            prompt = f"""请对以下 {len(documents)} 个相关文档进行综合摘要。
+            prompt = f"""Generate a synthesized summary across the following {len(documents)} related documents.
 
 {doc_list}
 
-**要求**:
-- 综合各个文档的核心观点，形成连贯的综述
-- 指出文档间的共识、差异和互补之处
-- 风格：{style_prompt}
-- 语言：{language_name}
-- 长度：中等篇幅（约 400-500 词）
-- 如文档间存在矛盾，请明确指出
-{f"- 在摘要后列出各文档的关键引用" if include_citations else ""}
+**Requirements**:
+- Synthesize core arguments from all documents into a coherent overview
+- Identify agreements, differences, and complementary points across documents
+- Style: {style_prompt}
+- Language: {language_name}
+- Length: medium (approximately 400-500 words)
+- If documents conflict, clearly note the discrepancies
+{f"- After the summary, list key citations from each document" if include_citations else ""}
 
-请直接输出综合摘要："""
+Output the synthesized summary directly:"""
 
         return prompt
 
@@ -302,27 +302,27 @@ class DocumentSummarizer:
         """
         text = document["text"][:3000]  # Limit for citation extraction
 
-        prompt = f"""给定原文和它的摘要，找出摘要中每个关键观点对应的原文段落。
+        prompt = f"""Given the original text and its summary, find the source passages that support each key point in the summary.
 
-**原文**:
+**Original Text**:
 {text}
 
-**摘要**:
+**Summary**:
 {summary}
 
-请以 JSON 数组格式返回，每个元素包含：
-- point: 摘要中的关键观点（简短）
-- citation: 对应的原文段落（直接引用）
-- source: 文档来源
-- page: 页码（如果有）
+Return a JSON array where each element contains:
+- point: A key point from the summary (brief)
+- citation: The corresponding passage from the original text (direct quote)
+- source: Document source name
+- page: Page number (if available)
 
-返回格式示例：
+Example format:
 [
-    {{"point": "观点 1", "citation": "原文引用 1", "source": "文档名", "page": 1}},
-    {{"point": "观点 2", "citation": "原文引用 2", "source": "文档名", "page": 2}}
+    {{"point": "Key point 1", "citation": "Direct quote 1", "source": "doc_name", "page": 1}},
+    {{"point": "Key point 2", "citation": "Direct quote 2", "source": "doc_name", "page": 2}}
 ]
 
-只返回 JSON 数组，不要其他文字："""
+Output ONLY the JSON array, no other text:"""
 
         try:
             result = self._call_llm(prompt, response_format="json")
@@ -421,23 +421,23 @@ class DocumentSummarizer:
         for doc in documents:
             text = doc["text"][:2000]  # Limit for comparison
 
-            prompt = f"""分析以下文档，提取关键信息用于对比表格。
+            prompt = f"""Analyze the following document and extract key information for a comparison table.
 
-**文档**: {doc["name"]}
+**Document**: {doc["name"]}
 
-**内容**:
+**Content**:
 {text}
 
-请以 JSON 格式返回：
+Return in JSON format:
 {{
-    "name": "文档名称",
-    "mainPoints": "核心观点（1-2 句话）",
-    "keywords": ["关键词 1", "关键词 2", "关键词 3"],
-    "methodology": "方法论（如果有）",
-    "conclusions": "主要结论"
+    "name": "Document name",
+    "mainPoints": "Core arguments (1-2 sentences)",
+    "keywords": ["keyword 1", "keyword 2", "keyword 3"],
+    "methodology": "Methodology (if any)",
+    "conclusions": "Main conclusions"
 }}
 
-只返回 JSON 对象："""
+Output ONLY the JSON object:"""
 
             try:
                 result = self._call_llm(prompt, response_format="json")
@@ -457,7 +457,7 @@ class DocumentSummarizer:
                 comparison.append(
                     {
                         "name": doc["name"],
-                        "mainPoints": "分析失败",
+                        "mainPoints": "Analysis failed",
                         "keywords": [],
                         "methodology": "",
                         "conclusions": "",
@@ -508,7 +508,7 @@ def summarize_documents(
     default_config = {
         "length": "medium",
         "style": "narrative",
-        "language": "zh",
+        "language": "en",
         "include_citations": True,
         "include_comparison": True,
     }

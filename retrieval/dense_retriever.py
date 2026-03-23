@@ -30,7 +30,7 @@ class DenseRetrieverError(Exception):
 
 class DenseRetriever:
     """
-    向量检索器，使用 FAISS 进行高效相似度搜索。
+    Vector retriever using FAISS for efficient similarity search.
 
     Uses sentence transformers to encode documents and queries into dense vectors,
     then uses FAISS for efficient nearest neighbor search with cosine similarity.
@@ -50,13 +50,13 @@ class DenseRetriever:
         model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
     ):
         """
-        构建向量索引。
+        Build vector index.
 
         Args:
-            documents: List[Dict] - 包含 id, text 的文档列表
-                Example: [{"id": "doc1", "text": "文档内容"}, ...]
-            embedder: SentenceTransformer 模型实例 (可选，如不提供则自动加载)
-            model_name: 模型名称 (仅在 embedder 为 None 时使用)
+            documents: List[Dict] - Document list containing id, text
+                Example: [{"id": "doc1", "text": "Document content"}, ...]
+            embedder: SentenceTransformer model instance (optional, auto-loaded if not provided)
+            model_name: Model name (only used when embedder is None)
         """
         if not documents:
             raise DenseRetrieverError("Documents list cannot be empty")
@@ -86,11 +86,11 @@ class DenseRetriever:
 
     def _build_index(self) -> None:
         """
-        构建 FAISS 向量索引。
+        Build FAISS vector index.
 
-        1. 生成所有文档向量
-        2. 归一化向量（用于余弦相似度）
-        3. 构建 FAISS 索引 (IndexFlatIP for inner product = cosine similarity on normalized vectors)
+        1. Generate all document vectors
+        2. Normalize vectors (for cosine similarity)
+        3. Build FAISS index (IndexFlatIP for inner product = cosine similarity on normalized vectors)
         """
         try:
             # Extract texts and build document map
@@ -127,15 +127,15 @@ class DenseRetriever:
 
     def search(self, query: str, top_k: int = 20) -> List[Tuple[str, float]]:
         """
-        向量检索。
+        Vector search.
 
         Args:
-            query: 查询字符串
-            top_k: 返回结果数量
+            query: Query string
+            top_k: Number of results to return
 
         Returns:
-            List[(doc_id, score)] - 按相似度分数降序排列
-                score 范围：[0, 1] (1 表示完全相似)
+            List[(doc_id, score)] - Sorted by similarity score in descending order
+                Score range: [0, 1] (1 means identical)
         """
         if self.index is None or self.index.ntotal == 0:
             raise DenseRetrieverError("Dense index not initialized")
@@ -179,14 +179,14 @@ class DenseRetriever:
         self, query: str, top_k: int = 20
     ) -> Tuple[List[int], List[float]]:
         """
-        向量检索，返回原始索引。
+        Vector search returning raw indices.
 
         Args:
-            query: 查询字符串
-            top_k: 返回结果数量
+            query: Query string
+            top_k: Number of results to return
 
         Returns:
-            (List[doc_index], List[score]) - 文档在原始列表中的索引和分数
+            (List[doc_index], List[score]) - Document indices in the original list and scores
         """
         if self.index is None or self.index.ntotal == 0:
             raise DenseRetrieverError("Dense index not initialized")
@@ -219,19 +219,19 @@ class DenseRetriever:
 
     def get_document_count(self) -> int:
         """
-        获取索引中的文档数量。
+        Get the number of documents in the index.
 
         Returns:
-            int: 文档数量
+            int: Number of documents
         """
         return self.index.ntotal if self.index else 0
 
     def refresh(self, documents: List[Dict[str, Any]]) -> None:
         """
-        重新构建索引。
+        Rebuild the index.
 
         Args:
-            documents: 新的文档列表
+            documents: New document list
         """
         self.documents = documents
         self.doc_map = {}
@@ -241,10 +241,10 @@ class DenseRetriever:
 
     def add_documents(self, new_documents: List[Dict[str, Any]]) -> None:
         """
-        添加新文档到现有索引。
+        Add new documents to the existing index.
 
         Args:
-            new_documents: 要添加的文档列表
+            new_documents: Documents to add
         """
         if not new_documents:
             return
@@ -257,7 +257,9 @@ class DenseRetriever:
                 text = doc.get("text", "")
                 if text and str(text).strip():
                     texts.append(str(text).strip())
-                    self.doc_map[len(self.doc_map)] = doc.get("id", f"doc_{len(self.doc_map)}")
+                    self.doc_map[len(self.doc_map)] = doc.get(
+                        "id", f"doc_{len(self.doc_map)}"
+                    )
 
             if not texts:
                 return

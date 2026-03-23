@@ -24,7 +24,7 @@ class BM25IndexError(Exception):
 
 class BM25Index:
     """
-    BM25 索引，支持中文分词。
+    BM25 index with Chinese tokenization support.
 
     BM25 (Best Matching 25) is a ranking function used in information retrieval
     that estimates the relevance of documents to a given search query.
@@ -38,11 +38,11 @@ class BM25Index:
 
     def __init__(self, documents: List[Dict[str, Any]]):
         """
-        构建 BM25 索引。
+        Build BM25 index.
 
         Args:
-            documents: List[Dict] - 每个文档包含 id, text
-                Example: [{"id": "doc1", "text": "这是文档内容"}, ...]
+            documents: List[Dict] - Each document contains id, text
+                Example: [{"id": "doc1", "text": "This is document content"}, ...]
         """
         if not documents:
             raise BM25IndexError("Documents list cannot be empty")
@@ -56,7 +56,7 @@ class BM25Index:
 
     def _tokenize_chinese(self, text: str) -> List[str]:
         """
-        使用 jieba 进行中文分词。
+        Use jieba for Chinese tokenization.
 
         For Chinese text, uses jieba to segment into words.
         For English text, splits on whitespace.
@@ -83,10 +83,10 @@ class BM25Index:
 
     def _build_index(self) -> None:
         """
-        构建 BM25 索引。
+        Build BM25 index.
 
-        1. 使用 jieba 进行中文分词
-        2. 构建 rank_bm25 索引
+        1. Use jieba for Chinese tokenization
+        2. Build rank_bm25 index
         """
         try:
             for idx, doc in enumerate(self.documents):
@@ -97,7 +97,9 @@ class BM25Index:
                 tokens = self._tokenize_chinese(text)
                 if tokens:
                     self.tokenized_docs.append(tokens)
-                    self.doc_map[len(self.tokenized_docs) - 1] = doc.get("id", f"doc_{idx}")
+                    self.doc_map[len(self.tokenized_docs) - 1] = doc.get(
+                        "id", f"doc_{idx}"
+                    )
 
             if not self.tokenized_docs:
                 raise BM25IndexError("No valid documents to index")
@@ -110,14 +112,14 @@ class BM25Index:
 
     def search(self, query: str, top_k: int = 20) -> List[Tuple[str, float]]:
         """
-        搜索 BM25 索引。
+        Search BM25 index.
 
         Args:
-            query: 查询字符串
-            top_k: 返回结果数量
+            query: Query string
+            top_k: Number of results to return
 
         Returns:
-            List[(doc_id, score)] - 按 BM25 分数降序排列
+            List[(doc_id, score)] - Sorted by BM25 score in descending order
         """
         if not self.bm25:
             raise BM25IndexError("BM25 index not initialized")
@@ -137,9 +139,7 @@ class BM25Index:
 
             # Get top_k indices
             top_indices = sorted(
-                range(len(scores)),
-                key=lambda i: scores[i],
-                reverse=True
+                range(len(scores)), key=lambda i: scores[i], reverse=True
             )[:top_k]
 
             # Filter out zero scores and build results
@@ -156,13 +156,13 @@ class BM25Index:
 
     def get_scores(self, query: str) -> Dict[str, float]:
         """
-        获取所有文档的 BM25 分数。
+        Get BM25 scores for all documents.
 
         Args:
-            query: 查询字符串
+            query: Query string
 
         Returns:
-            Dict[doc_id, score] - 所有文档的分数
+            Dict[doc_id, score] - Scores for all documents
         """
         if not self.bm25:
             raise BM25IndexError("BM25 index not initialized")
@@ -178,19 +178,19 @@ class BM25Index:
 
     def get_document_count(self) -> int:
         """
-        获取索引中的文档数量。
+        Get the number of documents in the index.
 
         Returns:
-            int: 文档数量
+            int: Number of documents
         """
         return len(self.tokenized_docs)
 
     def refresh(self, documents: List[Dict[str, Any]]) -> None:
         """
-        重新构建索引。
+        Rebuild the index.
 
         Args:
-            documents: 新的文档列表
+            documents: New document list
         """
         self.documents = documents
         self.tokenized_docs = []
