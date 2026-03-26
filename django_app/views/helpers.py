@@ -12,10 +12,10 @@ SETTINGS_FILE = Path(__file__).resolve().parents[2] / "data" / "settings.json"
 RAG_CONFIG_FILE = Path(__file__).resolve().parents[2] / "data" / "rag_config.json"
 VALID_PROVIDERS = {"gemini", "openrouter", "local_qwen"}
 LOCAL_QWEN_MODELS = [
-    "qwen2.5:0.5b",
-    "qwen2.5:1.5b",
+    " ",
+    " ",
     "qwen2.5:3b",
-    "qwen2.5:7b",
+    "qwen3.5:4b",
     "qwen2.5:14b",
 ]
 INDEXING_STRATEGY_FULL_REBUILD = "full_rebuild"

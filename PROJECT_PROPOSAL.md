@@ -214,7 +214,7 @@ The system supports three LLM providers:
 - Advantages: Provider flexibility, competitive pricing
 
 **3. Local Qwen (Ollama)**
-- Models: `qwen2.5:0.5b` to `qwen2.5:14b`
+- Models: ` ` to `qwen2.5:14b`
 - API: Ollama local server (`http://localhost:11434`)
 - Advantages: Privacy, offline operation, no API costs
 

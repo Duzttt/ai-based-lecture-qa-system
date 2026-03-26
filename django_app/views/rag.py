@@ -332,7 +332,7 @@ LLM_PROVIDERS_CATALOG = [
     {
         "id": "local_qwen",
         "name": "Local Qwen (Ollama)",
-        "models": ["qwen2.5:0.5b", "qwen2.5:1.5b", "qwen2.5:3b", "qwen2.5:7b"],
+        "models": [" ", " ", "qwen2.5:3b", "qwen3.5:4b"],
         "requires_api_key": False,
     },
 ]

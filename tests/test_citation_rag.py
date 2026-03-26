@@ -35,9 +35,9 @@ class TestCitationRAGPipelineInitialization:
         """Test pipeline initializes with custom model."""
         with patch('app.services.citation_rag.EmbeddingService'):
             with patch('app.services.citation_rag.VectorStore'):
-                pipeline = CitationRAGPipeline(model="qwen2.5:7b")
+                pipeline = CitationRAGPipeline(model="qwen3.5:4b")
                 
-                assert pipeline.model == "qwen2.5:7b"
+                assert pipeline.model == "qwen3.5:4b"
 
 
 class TestCitationPromptBuilding:
