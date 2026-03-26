@@ -4,6 +4,7 @@ import requests
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
+from app.services.llm_client import call_llm
 from app.services.vector_store import VectorStore, VectorStoreError
 
 SYSTEM_PROMPT = """You are an academic teaching assistant for lecture notes Q&A.
@@ -99,26 +100,19 @@ def generate_with_local_qwen(
     resolved_base_url = base_url or settings.LOCAL_QWEN_BASE_URL
     resolved_timeout = timeout_seconds or settings.LOCAL_QWEN_TIMEOUT_SECONDS
 
-    payload = {
-        "model": resolved_model,
-        "messages": build_rag_messages(query, context),
-        "stream": False,
-        "keep_alive": settings.LOCAL_QWEN_KEEP_ALIVE,
-    }
-
-    response = requests.post(
-        f"{resolved_base_url.rstrip('/')}/api/chat",
-        json=payload,
-        timeout=resolved_timeout,
-    )
-    response.raise_for_status()
-
-    data = response.json()
-    message = data.get("message", {}).get("content")
-    if not message:
-        raise LocalRAGError("Invalid response format from local Qwen model")
-
-    return str(message).strip()
+    try:
+        return call_llm(
+            provider="local_qwen",
+            model=resolved_model,
+            call_type="rag",
+            messages=build_rag_messages(query, context),
+            timeout=resolved_timeout,
+            query_text=query,
+            base_url=resolved_base_url,
+            keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
+        )
+    except ValueError as exc:
+        raise LocalRAGError(str(exc)) from exc
 
 
 def generate_with_openrouter(
@@ -138,38 +132,20 @@ def generate_with_openrouter(
     if not resolved_key:
         raise LocalRAGError("OPENROUTER_API_KEY is not configured")
 
-    headers = {
-        "Authorization": f"Bearer {resolved_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/lecture-note-qa",
-        "X-Title": "Lecture Note Q&A System",
-    }
-
-    payload = {
-        "model": resolved_model,
-        "messages": build_rag_messages(query, context),
-        "temperature": temperature,
-        "stream": False,
-    }
-
-    response = requests.post(
-        f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
-        headers=headers,
-        json=payload,
-        timeout=timeout_seconds,
-    )
-    response.raise_for_status()
-
-    data = response.json()
-    choices = data.get("choices", [])
-    if not choices:
-        raise LocalRAGError("Invalid response format from OpenRouter API")
-
-    message = choices[0].get("message", {}).get("content")
-    if not message:
-        raise LocalRAGError("Empty response from OpenRouter API")
-
-    return str(message).strip()
+    try:
+        return call_llm(
+            provider="openrouter",
+            model=resolved_model,
+            call_type="rag",
+            messages=build_rag_messages(query, context),
+            timeout=timeout_seconds,
+            query_text=query,
+            api_key=resolved_key,
+            base_url=settings.OPENROUTER_BASE_URL,
+            temperature=temperature,
+        )
+    except ValueError as exc:
+        raise LocalRAGError(str(exc)) from exc
 
 
 def generate(
