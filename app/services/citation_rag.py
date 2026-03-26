@@ -15,6 +15,7 @@ import requests
 
 from app.config import settings
 from app.services.embedding import EmbeddingService
+from app.services.llm_client import call_llm
 from app.services.vector_store import VectorStore
 
 
@@ -145,9 +146,7 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
 
         return prompt
 
-    def _generate_with_qwen(
-        self, prompt: str, model: Optional[str] = None
-    ) -> str:
+    def _generate_with_qwen(self, prompt: str, model: Optional[str] = None) -> str:
         """
         Generate response using local Qwen model.
 
@@ -158,36 +157,15 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         Returns:
             Raw response text from the model
         """
-        resolved_model = model or self.model
-        payload = {
-            "model": resolved_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that outputs valid JSON.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "stream": False,
-            "keep_alive": settings.LOCAL_QWEN_KEEP_ALIVE,
-            "options": {
-                "temperature": 0.3,  # Lower temperature for more consistent JSON output
-            },
-        }
-
-        response = requests.post(
-            f"{self.base_url.rstrip('/')}/api/chat",
-            json=payload,
-            timeout=self.timeout_seconds,
+        return call_llm(
+            provider="local_qwen",
+            model=model or settings.LOCAL_QWEN_MODEL,
+            call_type="citation",
+            messages=[{"role": "user", "content": prompt}],
+            query_text=prompt,
+            base_url=self.base_url,
+            temperature=0.3,
         )
-        response.raise_for_status()
-
-        data = response.json()
-        message = data.get("message", {}).get("content")
-        if not message:
-            raise CitationRAGError("Invalid response format from local Qwen model")
-
-        return str(message).strip()
 
     def _generate_with_openrouter(self, prompt: str) -> str:
         """
@@ -199,46 +177,16 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         Returns:
             Raw response text from the model
         """
-        api_key = settings.OPENROUTER_API_KEY
-        if not api_key:
-            raise CitationRAGError("OPENROUTER_API_KEY is not configured")
-
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": settings.OPENROUTER_MODEL,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that outputs valid JSON.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.3,
-            "stream": False,
-        }
-
-        response = requests.post(
-            f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=self.timeout_seconds,
+        return call_llm(
+            provider="openrouter",
+            model=settings.OPENROUTER_MODEL,
+            call_type="citation",
+            messages=[{"role": "user", "content": prompt}],
+            query_text=prompt,
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url=settings.OPENROUTER_BASE_URL,
+            temperature=0.3,
         )
-        response.raise_for_status()
-
-        data = response.json()
-        choices = data.get("choices", [])
-        if not choices:
-            raise CitationRAGError("Invalid response format from OpenRouter API")
-
-        message = choices[0].get("message", {}).get("content")
-        if not message:
-            raise CitationRAGError("Empty response from OpenRouter API")
-
-        return str(message).strip()
 
     def _generate(self, prompt: str) -> str:
         """Dispatch to the configured LLM provider."""
