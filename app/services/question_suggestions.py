@@ -439,79 +439,70 @@ Do NOT add any other text, explanation, or commentary."""
     def _call_local_qwen(self, prompt: str) -> str:
         """Call local Qwen model via Ollama."""
         try:
-            from ollama import Client as OllamaClient
+            from app.services.llm_client import call_llm
 
-            client = OllamaClient(
-                host=settings.LOCAL_QWEN_BASE_URL,
-                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-            )
-
-            model_response = client.chat(
+            return call_llm(
+                provider="local_qwen",
                 model=settings.LOCAL_QWEN_MODEL,
+                call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
-                stream=False,
+                query_text=prompt[:200],
+                base_url=settings.LOCAL_QWEN_BASE_URL,
+                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
                 keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
             )
-
-            return str(model_response.get("message", {}).get("content", "")).strip()
-
         except Exception as e:
             raise QuestionSuggestionError(f"Local Qwen call failed: {e}")
 
     def _call_gemini(self, prompt: str) -> str:
         """Call Gemini API."""
-        headers = {"Content-Type": "application/json"}
-
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "maxOutputTokens": 200,
-                "temperature": 0.3,
-            },
-        }
-
         try:
-            url = f"{settings.GEMINI_BASE_URL}/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
-            response = httpx.post(url, headers=headers, json=payload, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+            from app.services.llm_client import call_llm
 
-            if "candidates" in data and len(data["candidates"]) > 0:
-                return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
-            raise QuestionSuggestionError("Invalid Gemini response format")
-
+            return call_llm(
+                provider="gemini",
+                model=settings.GEMINI_MODEL,
+                call_type="suggestion",
+                messages=[{"role": "user", "content": prompt}],
+                query_text=prompt[:200],
+                api_key=settings.GEMINI_API_KEY,
+                base_url=settings.GEMINI_BASE_URL,
+                temperature=0.7,
+                max_tokens=500,
+            )
         except Exception as e:
             raise QuestionSuggestionError(f"Gemini call failed: {e}")
 
     def _call_openrouter(self, prompt: str) -> str:
         """Call OpenRouter API."""
-        headers = {
-            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": settings.OPENROUTER_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200,
-        }
-
         try:
-            response = httpx.post(
-                f"{settings.OPENROUTER_BASE_URL}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30,
+            from app.services.llm_client import call_llm
+
+            return call_llm(
+                provider="openrouter",
+                model=settings.OPENROUTER_MODEL,
+                call_type="suggestion",
+                messages=[{"role": "user", "content": prompt}],
+                query_text=prompt[:200],
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url=settings.OPENROUTER_BASE_URL,
+                temperature=0.7,
+                max_tokens=500,
             )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"].strip()
         except httpx.HTTPStatusError as e:
-            # Common OpenRouter failures: missing billing/quota/invalid key.
-            if e.response is not None and e.response.status_code in {401, 402, 403, 429}:
+            if e.response is not None and e.response.status_code in {
+                401,
+                402,
+                403,
+                429,
+            }:
                 return self._call_local_qwen(prompt)
             raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
+        except Exception as e:
+            try:
+                return self._call_local_qwen(prompt)
+            except Exception:
+                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
         except Exception as e:
             # Last-resort fallback to local Qwen for network/transport issues.
             try:
