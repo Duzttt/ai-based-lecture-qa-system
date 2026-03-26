@@ -8,9 +8,8 @@ using LLM-based generation.
 import json
 from typing import Any, Dict, List, Optional
 
-import httpx
-
 from app.config import settings
+from app.services.llm_client import call_llm
 
 
 class SummarizerError(Exception):
@@ -110,7 +109,7 @@ class DocumentSummarizer:
 - Language: {language_name}
 - Preserve domain-specific terminology and key concepts from the original
 - Highlight the core arguments and important conclusions
-{f"- After the summary, list key quoted passages with page numbers" if include_citations else ""}
+{"- After the summary, list key quoted passages with page numbers" if include_citations else ""}
 
 Output the summary directly:"""
 
@@ -134,7 +133,7 @@ Output the summary directly:"""
 - Language: {language_name}
 - Length: medium (approximately 400-500 words)
 - If documents conflict, clearly note the discrepancies
-{f"- After the summary, list key citations from each document" if include_citations else ""}
+{"- After the summary, list key citations from each document" if include_citations else ""}
 
 Output the synthesized summary directly:"""
 
@@ -160,32 +159,33 @@ Output the synthesized summary directly:"""
         else:
             raise SummarizerError(f"Unsupported LLM provider: {self.llm_provider}")
 
+    def _build_messages(
+        self, prompt: str, response_format: str = None
+    ) -> List[Dict[str, str]]:
+        system_prompt = (
+            "You are a professional document summarization assistant. "
+            "Generate clear, accurate summaries."
+        )
+        if response_format == "json":
+            system_prompt += " Output ONLY valid JSON."
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+
     def _call_local_qwen(self, prompt: str, response_format: str = None) -> str:
         """Call local Qwen model via Ollama."""
         try:
-            from ollama import Client as OllamaClient
-
-            client = OllamaClient(
-                host=self.base_url,
-                timeout=self.timeout,
-            )
-
-            system_prompt = "You are a professional document summarization assistant. Generate clear, accurate summaries."
-            if response_format == "json":
-                system_prompt += " Output ONLY valid JSON."
-
-            response = client.chat(
+            messages = self._build_messages(prompt, response_format)
+            return call_llm(
+                provider="local_qwen",
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=False,
+                call_type="summary",
+                messages=messages,
+                base_url=self.base_url,
+                timeout=self.timeout,
                 keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
             )
-
-            return str(response.get("message", {}).get("content", "")).strip()
-
         except Exception as e:
             raise SummarizerError(f"Failed to call local Qwen: {str(e)}")
 
@@ -195,45 +195,20 @@ Output the synthesized summary directly:"""
             api_key = settings.GEMINI_API_KEY
             if not api_key:
                 raise SummarizerError("Gemini API key not configured")
-
-            model_name = settings.GEMINI_MODEL
-            base_url = settings.GEMINI_BASE_URL
-
-            headers = {
-                "Content-Type": "application/json",
-            }
-
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.3,
-                    "topK": 40,
-                    "topP": 0.95,
-                    "maxOutputTokens": 2048,
-                },
-            }
-
-            if response_format == "json":
-                payload["generationConfig"]["responseMimeType"] = "application/json"
-
-            response = httpx.post(
-                f"{base_url}/models/{model_name}:generateContent?key={api_key}",
-                json=payload,
-                timeout=60,
+            messages = self._build_messages(prompt, response_format)
+            return call_llm(
+                provider="gemini",
+                model=settings.GEMINI_MODEL,
+                call_type="summary",
+                messages=messages,
+                api_key=api_key,
+                base_url=settings.GEMINI_BASE_URL,
+                temperature=0.3,
+                max_tokens=2048,
+                response_format=response_format,
             )
-            response.raise_for_status()
-
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if not candidates:
-                raise SummarizerError("No response from Gemini")
-
-            return (
-                candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-            )
-
-        except httpx.HTTPStatusError as e:
-            raise SummarizerError(f"Gemini API error: {e.response.status_code}")
+        except SummarizerError:
+            raise
         except Exception as e:
             raise SummarizerError(f"Failed to call Gemini: {str(e)}")
 
@@ -243,45 +218,19 @@ Output the synthesized summary directly:"""
             api_key = settings.OPENROUTER_API_KEY
             if not api_key:
                 raise SummarizerError("OpenRouter API key not configured")
-
-            model = settings.OPENROUTER_MODEL
-
-            system_prompt = "You are a professional document summarization assistant. Generate clear, accurate summaries."
-            if response_format == "json":
-                system_prompt += " Output ONLY valid JSON."
-
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-
-            payload = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                "temperature": 0.3,
-                "stream": False,
-            }
-
-            response = httpx.post(
-                f"{settings.OPENROUTER_BASE_URL}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=120,
+            messages = self._build_messages(prompt, response_format)
+            return call_llm(
+                provider="openrouter",
+                model=settings.OPENROUTER_MODEL,
+                call_type="summary",
+                messages=messages,
+                api_key=api_key,
+                base_url=settings.OPENROUTER_BASE_URL,
+                temperature=0.3,
+                max_tokens=2048,
             )
-            response.raise_for_status()
-
-            data = response.json()
-            choices = data.get("choices", [])
-            if not choices:
-                raise SummarizerError("No response from OpenRouter")
-
-            return choices[0].get("message", {}).get("content", "").strip()
-
-        except httpx.HTTPStatusError as e:
-            raise SummarizerError(f"OpenRouter API error: {e.response.status_code}")
+        except SummarizerError:
+            raise
         except Exception as e:
             raise SummarizerError(f"Failed to call OpenRouter: {str(e)}")
 
@@ -338,7 +287,7 @@ Output ONLY the JSON array, no other text:"""
             if isinstance(citations, list):
                 return citations
             return []
-        except Exception as e:
+        except Exception:
             # Return empty citations on error
             return []
 
