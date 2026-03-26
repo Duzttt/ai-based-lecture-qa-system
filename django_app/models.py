@@ -223,16 +223,29 @@ class QueryLog(models.Model):
         help_text="LLM model used for generation",
     )
 
+    LLM_PROVIDER_CHOICES = [
+        ("gemini", "Google Gemini"),
+        ("openrouter", "OpenRouter"),
+        ("local_qwen", "Local Qwen"),
+    ]
+
     llm_provider = models.CharField(
         max_length=20,
         blank=True,
         default="",
+        choices=LLM_PROVIDER_CHOICES,
         help_text="LLM provider: gemini / openrouter / local_qwen",
     )
+
+    LLM_STATUS_CHOICES = [
+        ("success", "Success"),
+        ("error", "Error"),
+    ]
 
     llm_status = models.CharField(
         max_length=10,
         default="success",
+        choices=LLM_STATUS_CHOICES,
         help_text="Call status: success / error",
     )
 
@@ -252,6 +265,7 @@ class QueryLog(models.Model):
     call_type = models.CharField(
         max_length=20,
         default="qa",
+        choices=CALL_TYPE_CHOICES,
         help_text="Type of LLM call",
     )
 
