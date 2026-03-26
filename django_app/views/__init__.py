@@ -103,6 +103,13 @@ from django_app.views.suggestions import (
     get_suggestion_history,
 )
 
+# LLM Logs
+from django_app.views.llm_logs import (
+    llm_logs_list,
+    llm_logs_stats,
+    llm_logs_page,
+)
+
 # Smart Operations
 from django_app.views.ops import (
     admin_alerts_current,
@@ -190,6 +197,10 @@ __all__ = [
     "get_question_suggestions",
     "record_suggestion_click",
     "get_suggestion_history",
+    # LLM Logs
+    "llm_logs_list",
+    "llm_logs_stats",
+    "llm_logs_page",
     # Smart Operations
     "admin_alerts_current",
     "admin_alerts_acknowledge",
