@@ -2,6 +2,8 @@
 Django models for the Lecture Note Q&A System.
 """
 
+import uuid
+
 from django.db import models
 
 
@@ -226,7 +228,7 @@ class QueryLog(models.Model):
     LLM_PROVIDER_CHOICES = [
         ("gemini", "Google Gemini"),
         ("openrouter", "OpenRouter"),
-        ("local_qwen", "Local Qwen"),
+        ("local_llm", "Local LLM"),
     ]
 
     llm_provider = models.CharField(
@@ -234,7 +236,7 @@ class QueryLog(models.Model):
         blank=True,
         default="",
         choices=LLM_PROVIDER_CHOICES,
-        help_text="LLM provider: gemini / openrouter / local_qwen",
+        help_text="LLM provider: gemini / openrouter / local_llm",
     )
 
     LLM_STATUS_CHOICES = [
@@ -407,3 +409,46 @@ class ConfigHistory(models.Model):
         """Get the active configuration for a category."""
         active = cls.objects.filter(category=category, is_active=True).first()
         return active.config if active else {}
+
+
+class Conversation(models.Model):
+    """A multi-turn conversation session for Q&A."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notebook = models.ForeignKey(
+        Notebook,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="conversations",
+    )
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self) -> str:
+        return self.title or f"Conversation {self.id}"
+
+
+class Message(models.Model):
+    """A single message in a conversation."""
+
+    ROLE_CHOICES = [("user", "User"), ("assistant", "Assistant")]
+
+    id = models.AutoField(primary_key=True)
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE, related_name="messages"
+    )
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    sources = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.role}: {self.content[:50]}"
