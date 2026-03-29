@@ -103,6 +103,14 @@ from django_app.views.suggestions import (
     get_suggestion_history,
 )
 
+# Conversations
+from django_app.views.conversations import (
+    create_conversation,
+    list_conversations,
+    get_conversation,
+    delete_conversation,
+)
+
 # LLM Logs
 from django_app.views.llm_logs import (
     llm_logs_list,
@@ -212,4 +220,9 @@ __all__ = [
     "admin_generate_report",
     "admin_reports_history",
     "admin_health_score",
+    # Conversations
+    "create_conversation",
+    "list_conversations",
+    "get_conversation",
+    "delete_conversation",
 ]

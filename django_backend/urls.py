@@ -163,8 +163,16 @@ urlpatterns = [
     path("api/suggestions/history/", views.get_suggestion_history),
     # LLM Monitoring
     path("llm-logs", views.llm_logs_page, name="llm_logs_page"),
+    path("llm-logs/", views.llm_logs_page, name="llm_logs_page_slash"),
     path("api/llm-logs/", views.llm_logs_list, name="llm_logs_list"),
     path("api/llm-logs/stats/", views.llm_logs_stats, name="llm_logs_stats"),
+    # Conversations
+    path("api/conversations", views.list_conversations),
+    path("api/conversations/", views.list_conversations),
+    path("api/conversations/create", views.create_conversation),
+    path("api/conversations/<str:conversation_id>", views.get_conversation),
+    path("api/conversations/<str:conversation_id>/", views.get_conversation),
+    path("api/conversations/<str:conversation_id>/delete", views.delete_conversation),
     # SPA catch-all: serve Vue frontend for any non-API route
     re_path(r"^(?!api/).*$", views.index_page),
 ]
