@@ -10,12 +10,12 @@ from app.config import settings
 
 SETTINGS_FILE = Path(__file__).resolve().parents[2] / "data" / "settings.json"
 RAG_CONFIG_FILE = Path(__file__).resolve().parents[2] / "data" / "rag_config.json"
-VALID_PROVIDERS = {"gemini", "openrouter"}
+VALID_PROVIDERS = {"gemini", "openrouter", "local_qwen"}
 LOCAL_QWEN_MODELS = [
-    "qwen2.5:0.5b",
-    "qwen2.5:1.5b",
+    " ",
+    " ",
     "qwen2.5:3b",
-    "qwen2.5:7b",
+    "qwen3.5:4b",
     "qwen2.5:14b",
 ]
 INDEXING_STRATEGY_FULL_REBUILD = "full_rebuild"
@@ -78,7 +78,6 @@ def _enqueue_full_rebuild(uploaded_filename: str) -> Dict[str, Any]:
         _INDEXING_STATE["last_error"] = None
 
         if _INDEXING_WORKER_THREAD is None or not _INDEXING_WORKER_THREAD.is_alive():
-
             _INDEXING_WORKER_THREAD = threading.Thread(
                 target=_full_rebuild_worker,
                 daemon=True,
@@ -257,6 +256,9 @@ def _build_runtime_llm_settings() -> Dict[str, Optional[str]]:
     if provider == "gemini":
         default_model = settings.GEMINI_MODEL
         default_key = settings.GEMINI_API_KEY
+    elif provider == "local_qwen":
+        default_model = settings.LOCAL_QWEN_MODEL
+        default_key = None
     else:
         default_model = "anthropic/claude-3-haiku"
         default_key = settings.OPENROUTER_API_KEY

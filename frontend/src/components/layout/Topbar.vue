@@ -1,5 +1,7 @@
 <script setup>
-const emit = defineEmits(['open-settings', 'open-admin'])
+import ProviderSwitcher from '../settings/ProviderSwitcher.vue'
+
+const emit = defineEmits(['open-settings', 'open-admin', 'open-chunkviz'])
 </script>
 
 <template>
@@ -14,9 +16,14 @@ const emit = defineEmits(['open-settings', 'open-admin'])
       </div>
     </div>
     <div class="topbar-center">
+      <ProviderSwitcher />
       <button class="pill-btn admin-btn" @click="emit('open-admin')">
         <span class="icon">🛠️</span>
         Admin
+      </button>
+      <button class="pill-btn" @click="emit('open-chunkviz')">
+        <span class="icon">📊</span>
+        Chunks
       </button>
       <button class="pill-btn" @click="emit('open-settings')">
         <span class="icon">⚙️</span>

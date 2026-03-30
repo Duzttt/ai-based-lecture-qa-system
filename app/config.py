@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: set = {".pdf"}
     UPLOAD_INDEXING_STRATEGY: str = "full_rebuild"
     UPLOAD_INDEXING_ASYNC: bool = True
+    PDF_PARSER: str = "pypdf"  # "pypdf" or "opendataloader"
+
+    @field_validator("PDF_PARSER", mode="before")
+    @classmethod
+    def validate_pdf_parser(cls, value):
+        parser = str(value).strip().lower()
+        if parser not in {"pypdf", "opendataloader"}:
+            return "pypdf"
+        return parser
 
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
@@ -40,12 +49,13 @@ class Settings(BaseSettings):
 
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b:free"
     LLM_PROVIDER: str = "gemini"
 
-    LOCAL_QWEN_MODEL: str = "qwen2.5:3b"
-    LOCAL_QWEN_BASE_URL: str = "http://localhost:11434"
-    LOCAL_QWEN_TIMEOUT_SECONDS: int = 300
-    LOCAL_QWEN_KEEP_ALIVE: str = "30m"
+    LOCAL_LLM_MODEL: str = "qwen2.5:3b"
+    LOCAL_LLM_BASE_URL: str = "http://localhost:11434"
+    LOCAL_LLM_TIMEOUT_SECONDS: int = 300
+    LOCAL_LLM_KEEP_ALIVE: str = "30m"
 
     @field_validator("DEBUG", mode="before")
     @classmethod

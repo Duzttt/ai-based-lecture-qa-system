@@ -1,9 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-import requests
-
 from app.config import settings
 from app.services.embedding import EmbeddingService
+from app.services.llm_client import call_llm
 from app.services.vector_store import VectorStore
 
 
@@ -23,7 +22,7 @@ class RAGPipeline:
         self.embedding_service = embedding_service
         self.vector_store = vector_store
         self.provider = provider
-        
+
         if provider == "gemini":
             self.api_key = api_key or settings.GEMINI_API_KEY
             self.model = model or settings.GEMINI_MODEL
@@ -73,73 +72,30 @@ Answer:"""
             return self._generate_openrouter(prompt)
 
     def _generate_gemini(self, prompt: str) -> str:
-        headers = {
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": prompt}]
-                }
-            ],
-            "generationConfig": {
-                "maxOutputTokens": 500,
-                "temperature": 0.7,
-            }
-        }
-
-        try:
-            url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
-            response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-            
-            if "candidates" in data and len(data["candidates"]) > 0:
-                candidate = data["candidates"][0]
-                if "content" in candidate and "parts" in candidate["content"]:
-                    return candidate["content"]["parts"][0]["text"]
-            
-            raise LLMError("Invalid response format from Gemini API")
-            
-        except requests.exceptions.RequestException as e:
-            raise LLMError(f"Failed to generate answer: {str(e)}")
-        except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid response from Gemini API: {str(e)}")
+        return call_llm(
+            provider="gemini",
+            model=self.model,
+            call_type="qa",
+            messages=[{"role": "user", "content": prompt}],
+            query_text=prompt,
+            api_key=self.api_key,
+            base_url=self.base_url,
+            temperature=0.7,
+            max_tokens=500,
+        )
 
     def _generate_openrouter(self, prompt: str) -> str:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": 500,
-        }
-
-        try:
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except requests.exceptions.RequestException as e:
-            raise LLMError(f"Failed to generate answer: {str(e)}")
-        except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid response from LLM API: {str(e)}")
+        return call_llm(
+            provider="openrouter",
+            model=self.model,
+            call_type="qa",
+            messages=[{"role": "user", "content": prompt}],
+            query_text=prompt,
+            api_key=self.api_key,
+            base_url=self.base_url,
+            temperature=0.7,
+            max_tokens=500,
+        )
 
     def query(self, question: str, top_k: int = 3) -> Dict:
         sources = self.retrieve(question, top_k=top_k)

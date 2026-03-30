@@ -91,7 +91,7 @@ class AggregateMetrics:
 
 class RetrievalEvaluator:
     """
-    检索评估器。
+    Retrieval Evaluator.
 
     Computes standard information retrieval metrics:
     - Recall @k: What fraction of relevant documents were retrieved?
@@ -110,16 +110,16 @@ class RetrievalEvaluator:
         relevant_docs: Optional[Dict[str, List[str]]] = None,
     ):
         """
-        初始化评估器。
+        Initialize the evaluator.
 
         Args:
-            test_queries: List[Dict] - 每个包含 query, expected_doc_ids
+            test_queries: List[Dict] - each containing query, expected_doc_ids
                 Example: [
-                    {"id": "q1", "query": "什么是机器学习", "expected_doc_ids": ["doc1", "doc2"]},
+                    {"id": "q1", "query": "What is machine learning", "expected_doc_ids": ["doc1", "doc2"]},
                     ...
                 ]
             relevant_docs: Dict - query_id -> [relevant_doc_ids]
-                (如果 test_queries 中已有 expected_doc_ids，此参数可选)
+                (Optional if expected_doc_ids is already in test_queries)
         """
         self.test_queries = test_queries
 
@@ -139,21 +139,21 @@ class RetrievalEvaluator:
         top_k: int = 10,
     ) -> Tuple[AggregateMetrics, List[EvaluationResult]]:
         """
-        评估检索器性能。
+        Evaluate retriever performance.
 
-        计算：
+        Computes:
         - Recall @k (k=1,3,5,10)
         - Precision @k
         - MRR (Mean Reciprocal Rank)
         - NDCG @k
 
         Args:
-            retriever: 检索器实例，必须有 retrieve(query, top_k) 方法
-                retrieve 应返回 List[Dict]，每个 Dict 包含 'id' 键
-            top_k: 最大检索结果数
+            retriever: Retriever instance, must have retrieve(query, top_k) method
+                retrieve should return List[Dict], each Dict containing 'id' key
+            top_k: Maximum number of retrieval results
 
         Returns:
-            (AggregateMetrics, List[EvaluationResult]) - 聚合指标和每个查询的详细结果
+            (AggregateMetrics, List[EvaluationResult]) - Aggregate metrics and detailed results per query
         """
         if not self.test_queries:
             raise RetrievalEvaluatorError("No test queries provided")
@@ -175,7 +175,9 @@ class RetrievalEvaluator:
                 retrieved = retriever.retrieve(query_text, top_k=top_k)
                 retrieved_ids = [doc.get("id") for doc in retrieved if doc.get("id")]
             except Exception as e:
-                raise RetrievalEvaluatorError(f"Retrieval failed for query {query_id}: {str(e)}")
+                raise RetrievalEvaluatorError(
+                    f"Retrieval failed for query {query_id}: {str(e)}"
+                )
 
             # Compute metrics
             result = self._compute_metrics(query_id, retrieved_ids, relevant_doc_ids)
@@ -193,20 +195,22 @@ class RetrievalEvaluator:
         relevant_doc_ids: set,
     ) -> EvaluationResult:
         """
-        计算单个查询的所有指标。
+        Compute all metrics for a single query.
 
         Args:
-            query_id: 查询 ID
-            retrieved_ids: 检索到的文档 ID 列表（按排名顺序）
-            relevant_doc_ids: 相关文档 ID 集合
+            query_id: Query ID
+            retrieved_ids: List of retrieved document IDs (in ranking order)
+            relevant_doc_ids: Set of relevant document IDs
 
         Returns:
-            EvaluationResult: 包含所有指标的结果
+            EvaluationResult: Result containing all metrics
         """
         result = EvaluationResult(query_id=query_id)
 
         # Compute relevance for each retrieved document
-        relevances = [1 if doc_id in relevant_doc_ids else 0 for doc_id in retrieved_ids]
+        relevances = [
+            1 if doc_id in relevant_doc_ids else 0 for doc_id in retrieved_ids
+        ]
 
         # Total relevant documents
         total_relevant = len(relevant_doc_ids)
@@ -267,7 +271,7 @@ class RetrievalEvaluator:
         k: int = 5,
     ) -> float:
         """
-        计算 NDCG @k (Normalized Discounted Cumulative Gain).
+        Compute NDCG @k (Normalized Discounted Cumulative Gain).
 
         NDCG measures ranking quality by considering:
         - Relevance of documents
@@ -291,13 +295,13 @@ class RetrievalEvaluator:
         # Compute DCG
         dcg = 0.0
         for i, rel in enumerate(k_relevances, start=1):
-            dcg += (2 ** rel - 1) / math.log2(i + 1)
+            dcg += (2**rel - 1) / math.log2(i + 1)
 
         # Compute IDCG (ideal DCG - all relevant docs at top)
         ideal_rels = [1] * min(total_relevant, k) + [0] * max(0, k - total_relevant)
         idcg = 0.0
         for i, rel in enumerate(ideal_rels, start=1):
-            idcg += (2 ** rel - 1) / math.log2(i + 1)
+            idcg += (2**rel - 1) / math.log2(i + 1)
 
         # Normalize
         if idcg == 0:
@@ -310,13 +314,13 @@ class RetrievalEvaluator:
         results: List[EvaluationResult],
     ) -> AggregateMetrics:
         """
-        聚合所有查询的指标。
+        Aggregate metrics across all queries.
 
         Args:
             results: List of EvaluationResult
 
         Returns:
-            AggregateMetrics: 平均指标
+            AggregateMetrics: Average metrics
         """
         if not results:
             return AggregateMetrics(num_queries=0)
@@ -346,14 +350,14 @@ class RetrievalEvaluator:
         top_k: int = 10,
     ) -> Dict[str, AggregateMetrics]:
         """
-        对比多个检索器性能。
+        Compare multiple retrievers' performance.
 
         Args:
-            retrievers: Dict[name, retriever] - 多个检索器实例
-            top_k: 最大检索结果数
+            retrievers: Dict[name, retriever] - Multiple retriever instances
+            top_k: Maximum number of retrieval results
 
         Returns:
-            Dict[retriever_name, AggregateMetrics] - 每个检索器的指标
+            Dict[retriever_name, AggregateMetrics] - Metrics for each retriever
         """
         results: Dict[str, AggregateMetrics] = {}
 
@@ -369,14 +373,14 @@ class RetrievalEvaluator:
         results: List[EvaluationResult],
     ) -> str:
         """
-        生成评估报告。
+        Generate evaluation report.
 
         Args:
-            aggregate: 聚合指标
-            results: 每个查询的详细结果
+            aggregate: Aggregate metrics
+            results: Detailed results per query
 
         Returns:
-            str: 格式化的评估报告
+            str: Formatted evaluation report
         """
         lines = [
             "=" * 60,

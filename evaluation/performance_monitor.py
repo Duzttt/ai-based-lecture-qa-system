@@ -75,7 +75,7 @@ class PerformanceMonitorError(Exception):
 
 class PerformanceMonitor:
     """
-    实时性能监控。
+    Real-time performance monitoring.
 
     Tracks and analyzes retrieval system performance:
     - Query latency (total and per-component)
@@ -91,7 +91,7 @@ class PerformanceMonitor:
 
     def __init__(self, window_size: int = 1000):
         """
-        初始化性能监控器。
+        Initialize the performance monitor.
 
         Args:
             window_size: Number of recent queries to keep for rolling statistics
@@ -120,20 +120,20 @@ class PerformanceMonitor:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> QueryRecord:
         """
-        记录查询性能。
+        Record query performance.
 
         Args:
-            query: 查询文本
-            latency: 总延迟（毫秒）
-            cache_hit: 是否缓存命中
-            bm25_latency: BM25 检索延迟（毫秒）
-            dense_latency: 向量检索延迟（毫秒）
-            fusion_latency: 融合延迟（毫秒）
-            num_results: 返回结果数量
-            metadata: 额外元数据
+            query: Query text
+            latency: Total latency in milliseconds
+            cache_hit: Whether cache hit
+            bm25_latency: BM25 retrieval latency in milliseconds
+            dense_latency: Dense retrieval latency in milliseconds
+            fusion_latency: Fusion latency in milliseconds
+            num_results: Number of returned results
+            metadata: Additional metadata
 
         Returns:
-            QueryRecord: 创建的记录
+            QueryRecord: The created record
         """
         self._query_counter += 1
 
@@ -182,7 +182,7 @@ class PerformanceMonitor:
         track_components: bool = True,
     ) -> Tuple[Any, QueryRecord]:
         """
-        计时查询执行。
+        Time query execution.
 
         Decorator-style method to automatically time a query execution.
 
@@ -225,10 +225,10 @@ class PerformanceMonitor:
 
     def get_metrics(self) -> PerformanceMetrics:
         """
-        获取当前性能指标。
+        Get current performance metrics.
 
         Returns:
-            PerformanceMetrics: 聚合性能指标
+            PerformanceMetrics: Aggregated performance metrics
         """
         if not self.records:
             return PerformanceMetrics(total_queries=0)
@@ -253,15 +253,9 @@ class PerformanceMonitor:
         qps = n / time_span if time_span > 0 else 0.0
 
         # Component averages
-        avg_bm25 = (
-            statistics.mean(self.bm25_times) if self.bm25_times else 0.0
-        )
-        avg_dense = (
-            statistics.mean(self.dense_times) if self.dense_times else 0.0
-        )
-        avg_fusion = (
-            statistics.mean(self.fusion_times) if self.fusion_times else 0.0
-        )
+        avg_bm25 = statistics.mean(self.bm25_times) if self.bm25_times else 0.0
+        avg_dense = statistics.mean(self.dense_times) if self.dense_times else 0.0
+        avg_fusion = statistics.mean(self.fusion_times) if self.fusion_times else 0.0
 
         return PerformanceMetrics(
             total_queries=n,
@@ -280,10 +274,10 @@ class PerformanceMonitor:
 
     def get_report(self) -> str:
         """
-        生成性能报告。
+        Generate performance report.
 
         Returns:
-            str: 格式化的性能报告
+            str: Formatted performance report
         """
         metrics = self.get_metrics()
 
@@ -322,10 +316,10 @@ class PerformanceMonitor:
 
     def get_latency_summary(self) -> Dict[str, float]:
         """
-        获取延迟摘要。
+        Get latency summary.
 
         Returns:
-            Dict[str, float]: 延迟统计字典
+            Dict[str, float]: Latency statistics dictionary
         """
         metrics = self.get_metrics()
         return metrics.to_dict()
@@ -336,11 +330,11 @@ class PerformanceMonitor:
         percentile: float = 0.95,
     ) -> bool:
         """
-        检查延迟是否超过阈值。
+        Check if latency exceeds threshold.
 
         Args:
-            threshold_ms: 延迟阈值（毫秒）
-            percentile: 百分位数 (0.95 = p95)
+            threshold_ms: Latency threshold in milliseconds
+            percentile: Percentile (0.95 = p95)
 
         Returns:
             bool: True if latency exceeds threshold
@@ -358,7 +352,7 @@ class PerformanceMonitor:
         return percentile_latency > threshold_ms
 
     def reset(self) -> None:
-        """重置监控器统计信息。"""
+        """Reset monitor statistics."""
         self.records = []
         self.cache_hits = 0
         self.cache_misses = 0
@@ -442,9 +436,9 @@ class ComponentTimer:
     def _stop(self) -> None:
         if self._current_component:
             elapsed = (time.perf_counter() - self._start_time) * 1000
-            self.times[self._current_component] = self.times.get(
-                self._current_component, 0.0
-            ) + elapsed
+            self.times[self._current_component] = (
+                self.times.get(self._current_component, 0.0) + elapsed
+            )
         self._current_component = None
 
 

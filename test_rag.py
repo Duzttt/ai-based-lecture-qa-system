@@ -7,9 +7,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 QUERY = "what is the summary of the lecture 2 pdf"
-SYSTEM_INSTRUCTION = (
-    "You are a rigorous academic teaching assistant. Please answer the questions based on the following reference materials."
-)
+SYSTEM_INSTRUCTION = "You are a rigorous academic teaching assistant. Please answer the questions based on the following reference materials."
 
 
 def parse_args():
@@ -67,7 +65,9 @@ def build_context(grounded_results: List[Dict[str, Any]]) -> str:
         page = item.get("page")
         page_label = page if page is not None else "unknown"
         text = item["text"]
-        context_blocks.append(f"[S{rank}] 来源文件: {source}，页码: {page_label}\n{text}")
+        context_blocks.append(
+            f"[S{rank}] Source file: {source}, Page: {page_label}\n{text}"
+        )
     return "\n\n".join(context_blocks)
 
 
@@ -140,7 +140,7 @@ def main():
         )
     print("\n=== Streaming Answer ===")
 
-    user_prompt = f"参考资料：\n{context}\n\n用户提问：{QUERY}"
+    user_prompt = f"Reference materials:\n{context}\n\nUser question: {QUERY}"
     stream = ollama.chat(
         model=args.ollama_model,
         messages=[

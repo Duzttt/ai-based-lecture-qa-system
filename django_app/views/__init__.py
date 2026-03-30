@@ -30,6 +30,7 @@ from django_app.views.rag import (
     ask_qwen,
     ask_with_citations,
     settings_handler,
+    providers_handler,
     get_rag_config,
     update_rag_config,
     reset_faiss_index,
@@ -102,6 +103,21 @@ from django_app.views.suggestions import (
     get_suggestion_history,
 )
 
+# Conversations
+from django_app.views.conversations import (
+    create_conversation,
+    list_conversations,
+    get_conversation,
+    delete_conversation,
+)
+
+# LLM Logs
+from django_app.views.llm_logs import (
+    llm_logs_list,
+    llm_logs_stats,
+    llm_logs_page,
+)
+
 # Smart Operations
 from django_app.views.ops import (
     admin_alerts_current,
@@ -136,6 +152,7 @@ __all__ = [
     "ask_qwen",
     "ask_with_citations",
     "settings_handler",
+    "providers_handler",
     "get_rag_config",
     "update_rag_config",
     "reset_faiss_index",
@@ -188,6 +205,10 @@ __all__ = [
     "get_question_suggestions",
     "record_suggestion_click",
     "get_suggestion_history",
+    # LLM Logs
+    "llm_logs_list",
+    "llm_logs_stats",
+    "llm_logs_page",
     # Smart Operations
     "admin_alerts_current",
     "admin_alerts_acknowledge",
@@ -199,4 +220,9 @@ __all__ = [
     "admin_generate_report",
     "admin_reports_history",
     "admin_health_score",
+    # Conversations
+    "create_conversation",
+    "list_conversations",
+    "get_conversation",
+    "delete_conversation",
 ]

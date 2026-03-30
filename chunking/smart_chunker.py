@@ -54,7 +54,7 @@ class Chunk:
 
 class SmartChunker:
     """
-    智能文档分块器。
+    Intelligent document chunker.
 
     Implements intelligent document chunking with:
     - Paragraph-aware splitting
@@ -78,20 +78,22 @@ class SmartChunker:
         max_paragraph_size: int = 800,
     ):
         """
-        初始化智能分块器。
+        Initialize the intelligent chunker.
 
         Args:
-            chunk_size: 目标块大小（字符数）
-            overlap: 重叠部分大小（字符数）
-            min_paragraph_size: 最小段落大小，小于此值会与下一段合并
-            max_paragraph_size: 最大段落大小，超过此值会按句子分割
+            chunk_size: Target chunk size in characters
+            overlap: Overlap size in characters
+            min_paragraph_size: Minimum paragraph size, paragraphs smaller than this will be merged with the next
+            max_paragraph_size: Maximum paragraph size, paragraphs larger than this will be split by sentences
         """
         if overlap >= chunk_size:
             raise ValueError("overlap must be smaller than chunk_size")
         if min_paragraph_size <= 0:
             raise ValueError("min_paragraph_size must be positive")
         if max_paragraph_size <= min_paragraph_size:
-            raise ValueError("max_paragraph_size must be greater than min_paragraph_size")
+            raise ValueError(
+                "max_paragraph_size must be greater than min_paragraph_size"
+            )
 
         self.chunk_size = chunk_size
         self.overlap = overlap
@@ -113,16 +115,16 @@ class SmartChunker:
         top_k_keywords: int = 5,
     ) -> List[Dict[str, Any]]:
         """
-        将文档分割成智能块。
+        Split document into intelligent chunks.
 
         Args:
-            text: 文档全文
-            metadata: 文档元数据（标题、来源等）
-            extract_keywords: 是否提取关键词
-            top_k_keywords: 提取的关键词数量
+            text: Full document text
+            metadata: Document metadata (title, source, etc.)
+            extract_keywords: Whether to extract keywords
+            top_k_keywords: Number of keywords to extract
 
         Returns:
-            List[Dict] - 每个块包含 text, metadata, position, headings, keywords
+            List[Dict] - Each chunk contains text, metadata, position, headings, keywords
         """
         if not text or not text.strip():
             return []
@@ -130,22 +132,26 @@ class SmartChunker:
         text = text.strip()
         metadata = metadata or {}
 
-        # 1. 按段落分割
+        # 1. Split by paragraphs
         paragraphs = self._split_paragraphs(text)
 
-        # 2. 合并小段落，分割大段落
+        # 2. Merge small paragraphs, split large paragraphs
         chunks = self._merge_and_split(paragraphs)
 
-        # 3. 添加重叠
+        # 3. Add overlap
         chunks = self._add_overlap(chunks)
 
-        # 4. 提取标题
+        # 4. Extract headings
         headings_map = self._extract_headings(text)
 
-        # 5. 添加元数据
+        # 5. Add metadata
         result = []
         for idx, chunk_text in enumerate(chunks):
-            chunk_start = text.find(chunk_text[:50]) if len(chunk_text) >= 50 else text.find(chunk_text)
+            chunk_start = (
+                text.find(chunk_text[:50])
+                if len(chunk_text) >= 50
+                else text.find(chunk_text)
+            )
             if chunk_start == -1:
                 chunk_start = idx * (self.chunk_size - self.overlap)
 
@@ -178,15 +184,15 @@ class SmartChunker:
 
     def _split_paragraphs(self, text: str) -> List[str]:
         """
-        按段落分割（支持中英文）。
+        Split by paragraphs (supports Chinese and English).
 
-        识别：\n\n, \r\n\r\n, \n 等段落分隔符
+        Recognizes: \n\n, \r\n\r\n, \n and other paragraph separators
 
         Args:
-            text: 输入文本
+            text: Input text
 
         Returns:
-            List[str]: 段落列表
+            List[str]: List of paragraphs
         """
         # Split on common paragraph separators
         # Handle both Windows (\r\n) and Unix (\n) line endings
@@ -205,18 +211,18 @@ class SmartChunker:
 
     def _merge_and_split(self, paragraphs: List[str]) -> List[str]:
         """
-        智能合并/分割段落。
+        Intelligently merge/split paragraphs.
 
-        规则：
-        - 短段落（<min_paragraph_size 字）与下一个合并
-        - 长段落（>max_paragraph_size 字）按句子分割
-        - 尽量在句子边界切分
+        Rules:
+        - Short paragraphs (<min_paragraph_size characters) are merged with the next
+        - Long paragraphs (>max_paragraph_size characters) are split by sentences
+        - Try to split at sentence boundaries
 
         Args:
-            paragraphs: 段落列表
+            paragraphs: List of paragraphs
 
         Returns:
-            List[str]: 处理后的块列表
+            List[str]: List of processed chunks
         """
         if not paragraphs:
             return []
@@ -254,13 +260,13 @@ class SmartChunker:
 
     def _split_if_needed(self, text: str) -> List[str]:
         """
-        如果文本太长，按句子分割。
+        If text is too long, split by sentences.
 
         Args:
-            text: 输入文本
+            text: Input text
 
         Returns:
-            List[str]: 分割后的块列表
+            List[str]: List of split chunks
         """
         if len(text) <= self.chunk_size:
             return [text]
@@ -298,16 +304,16 @@ class SmartChunker:
 
     def _add_overlap(self, chunks: List[str]) -> List[str]:
         """
-        添加重叠内容。
+        Add overlap content.
 
-        每个块的开始包含上一个块末尾的 overlap 内容
-        避免在切分点丢失上下文
+        Each chunk's beginning contains overlap content from the end of the previous chunk
+        Avoid losing context at split points
 
         Args:
-            chunks: 块列表
+            chunks: List of chunks
 
         Returns:
-            List[str]: 添加重叠后的块列表
+            List[str]: List of chunks with overlap added
         """
         if len(chunks) <= 1 or self.overlap <= 0:
             return chunks
@@ -322,13 +328,13 @@ class SmartChunker:
             overlap_text = ""
             if len(prev_chunk) > self.overlap:
                 # Try to find a good break point (sentence or word boundary)
-                overlap_candidate = prev_chunk[-self.overlap:]
+                overlap_candidate = prev_chunk[-self.overlap :]
 
                 # Find sentence boundary in overlap
                 for ending in self._chinese_sentence_endings:
                     idx = overlap_candidate.find(ending)
                     if idx != -1 and idx > len(overlap_candidate) // 2:
-                        overlap_text = overlap_candidate[idx + 1:].strip()
+                        overlap_text = overlap_candidate[idx + 1 :].strip()
                         break
 
                 # If no good sentence boundary, use word boundary
@@ -337,8 +343,12 @@ class SmartChunker:
                     words = list(jieba.cut(overlap_candidate))
                     overlap_text = overlap_candidate
                     for i, word in enumerate(reversed(words)):
-                        if len(overlap_candidate) - sum(len(w) for w in words[len(words)-i:]) >= self.overlap // 2:
-                            overlap_text = "".join(words[len(words)-i:])
+                        if (
+                            len(overlap_candidate)
+                            - sum(len(w) for w in words[len(words) - i :])
+                            >= self.overlap // 2
+                        ):
+                            overlap_text = "".join(words[len(words) - i :])
                             break
 
             if overlap_text:
@@ -354,16 +364,16 @@ class SmartChunker:
 
     def _split_by_sentences(self, text: str) -> List[str]:
         """
-        按句子分割（中英文）。
+        Split by sentences (Chinese and English).
 
-        中文：。！？等
-        英文：.!?等
+        Chinese: 。！？etc.
+        English: .!?etc.
 
         Args:
-            text: 输入文本
+            text: Input text
 
         Returns:
-            List[str]: 句子列表
+            List[str]: List of sentences
         """
         # Use regex to split on sentence boundaries
         # This pattern handles both Chinese and English sentence endings
@@ -374,29 +384,28 @@ class SmartChunker:
 
     def _extract_headings(self, text: str, max_level: int = 3) -> Dict[str, int]:
         """
-        提取文本中的标题。
+        Extract headings from text.
 
-        识别 Markdown 风格标题 (#, ##) 或数字编号 (1., 1.1)
+        Recognizes Markdown-style headings (#, ##) or numbered headings (1., 1.1)
 
         Args:
-            text: 输入文本
-            max_level: 最大标题层级 (1-3)
+            text: Input text
+            max_level: Maximum heading level (1-3)
 
         Returns:
-            Dict[heading_text, position]: 标题及其在文本中的位置
+            Dict[heading_text, position]: Headings and their positions in the text
         """
         headings: Dict[str, int] = {}
 
         # Pattern for Markdown-style headings: #, ##, ###
         markdown_pattern = re.compile(
-            r"^(#{1," + str(max_level) + r"})\s+(.+)$",
-            re.MULTILINE
+            r"^(#{1," + str(max_level) + r"})\s+(.+)$", re.MULTILINE
         )
 
         # Pattern for numbered headings: 1., 1.1, 1.1.1
         numbered_pattern = re.compile(
             r"^(\d+(?:\.\d+){0," + str(max_level - 1) + r"})[\s、.]\s*(.+)$",
-            re.MULTILINE
+            re.MULTILINE,
         )
 
         # Find Markdown headings
@@ -416,16 +425,16 @@ class SmartChunker:
 
     def _extract_keywords(self, text: str, top_k: int = 5) -> List[str]:
         """
-        提取关键词（用于检索过滤）。
+        Extract keywords (for retrieval filtering).
 
-        使用 jieba 分词 + TF-IDF
+        Uses jieba word segmentation + TF-IDF
 
         Args:
-            text: 输入文本
-            top_k: 提取的关键词数量
+            text: Input text
+            top_k: Number of keywords to extract
 
         Returns:
-            List[str]: 关键词列表
+            List[str]: List of keywords
         """
         if not text or len(text) < 10:
             return []
@@ -450,7 +459,7 @@ class SmartChunker:
 
 class ChunkMetadata:
     """
-    块元数据工具类。
+    Chunk metadata utility class.
 
     Provides static methods for extracting metadata from text chunks.
     """
@@ -458,16 +467,16 @@ class ChunkMetadata:
     @staticmethod
     def extract_headings(text: str, max_level: int = 3) -> List[str]:
         """
-        提取文本中的标题。
+        Extract headings from text.
 
-        识别 Markdown 风格标题 (#, ##) 或数字编号 (1., 1.1)
+        Recognizes Markdown-style headings (#, ##) or numbered headings (1., 1.1)
 
         Args:
-            text: 输入文本
-            max_level: 最大标题层级
+            text: Input text
+            max_level: Maximum heading level
 
         Returns:
-            List[str]: 标题列表
+            List[str]: List of headings
         """
         chunker = SmartChunker()
         headings_dict = chunker._extract_headings(text, max_level)
@@ -476,16 +485,16 @@ class ChunkMetadata:
     @staticmethod
     def extract_keywords(text: str, top_k: int = 5) -> List[str]:
         """
-        提取关键词（用于检索过滤）。
+        Extract keywords (for retrieval filtering).
 
-        使用 jieba 分词 + TF-IDF
+        Uses jieba word segmentation + TF-IDF
 
         Args:
-            text: 输入文本
-            top_k: 提取的关键词数量
+            text: Input text
+            top_k: Number of keywords to extract
 
         Returns:
-            List[str]: 关键词列表
+            List[str]: List of keywords
         """
         chunker = SmartChunker()
         return chunker._extract_keywords(text, top_k)
@@ -493,13 +502,13 @@ class ChunkMetadata:
     @staticmethod
     def count_words(text: str) -> int:
         """
-        统计文本中的词数。
+        Count words in text.
 
         Args:
-            text: 输入文本
+            text: Input text
 
         Returns:
-            int: 词数
+            int: Word count
         """
         words = jieba.lcut(text)
         return len([w for w in words if w.strip()])
@@ -507,12 +516,12 @@ class ChunkMetadata:
     @staticmethod
     def count_characters(text: str) -> int:
         """
-        统计文本中的字符数（不含空格）。
+        Count characters in text (excluding spaces).
 
         Args:
-            text: 输入文本
+            text: Input text
 
         Returns:
-            int: 字符数
+            int: Character count
         """
         return len(text.replace(" ", "").replace("\n", "").replace("\t", ""))
