@@ -56,13 +56,13 @@ class DocumentSummarizer:
         Initialize the summarizer.
 
         Args:
-            llm_provider: LLM provider (gemini, openrouter, local_qwen)
+            llm_provider: LLM provider (gemini, openrouter, local_llm)
             model: Model name to use
         """
-        self.llm_provider = llm_provider or "local_qwen"
-        self.model = model or settings.LOCAL_QWEN_MODEL
-        self.base_url = settings.LOCAL_QWEN_BASE_URL
-        self.timeout = settings.LOCAL_QWEN_TIMEOUT_SECONDS
+        self.llm_provider = llm_provider or "local_llm"
+        self.model = model or settings.LOCAL_LLM_MODEL
+        self.base_url = settings.LOCAL_LLM_BASE_URL
+        self.timeout = settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     def _build_prompt(
         self,
@@ -150,8 +150,8 @@ Output the synthesized summary directly:"""
         Returns:
             LLM response text
         """
-        if self.llm_provider == "local_qwen":
-            return self._call_local_qwen(prompt, response_format)
+        if self.llm_provider == "local_llm":
+            return self._call_local_llm(prompt, response_format)
         elif self.llm_provider == "gemini":
             return self._call_gemini(prompt, response_format)
         elif self.llm_provider == "openrouter":
@@ -173,21 +173,21 @@ Output the synthesized summary directly:"""
             {"role": "user", "content": prompt},
         ]
 
-    def _call_local_qwen(self, prompt: str, response_format: str = None) -> str:
-        """Call local Qwen model via Ollama."""
+    def _call_local_llm(self, prompt: str, response_format: str = None) -> str:
+        """Call local LLM via Ollama."""
         try:
             messages = self._build_messages(prompt, response_format)
             return call_llm(
-                provider="local_qwen",
+                provider="local_llm",
                 model=self.model,
                 call_type="summary",
                 messages=messages,
                 base_url=self.base_url,
                 timeout=self.timeout,
-                keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
+                keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
         except Exception as e:
-            raise SummarizerError(f"Failed to call local Qwen: {str(e)}")
+            raise SummarizerError(f"Failed to call local LLM: {str(e)}")
 
     def _call_gemini(self, prompt: str, response_format: str = None) -> str:
         """Call Google Gemini API."""

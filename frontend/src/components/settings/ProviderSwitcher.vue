@@ -8,7 +8,7 @@ const showModal = ref(false)
 const PROVIDER_ICONS = {
   gemini: '✨',
   openrouter: '🔗',
-  local_qwen: '🏠',
+  local_llm: '🏠',
 }
 
 const openModal = () => {

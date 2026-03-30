@@ -10,8 +10,6 @@ import string
 from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple
 
-import httpx
-
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -148,9 +146,8 @@ class QuestionSuggestionService:
         "under",
     }
 
-    def __init__(self, llm_provider: str = "local_qwen"):
+    def __init__(self, llm_provider: str = "local_llm"):
         self.llm_provider = llm_provider
-        self._http_client: Optional[httpx.Client] = None
 
     def extract_keywords(
         self, text: str, top_k: int = 15, min_word_length: int = 3
@@ -389,8 +386,8 @@ class QuestionSuggestionService:
 
     def _call_llm(self, prompt: str) -> str:
         """Dispatch to the configured LLM provider."""
-        if self.llm_provider == "local_qwen":
-            return self._call_local_qwen(prompt)
+        if self.llm_provider == "local_llm":
+            return self._call_local_llm(prompt)
         elif self.llm_provider == "gemini":
             return self._call_gemini(prompt)
         elif self.llm_provider == "openrouter":
@@ -436,23 +433,23 @@ Respond with EXACTLY {num_final} questions, one per line, numbered like:
 
 Do NOT add any other text, explanation, or commentary."""
 
-    def _call_local_qwen(self, prompt: str) -> str:
-        """Call local Qwen model via Ollama."""
+    def _call_local_llm(self, prompt: str) -> str:
+        """Call local LLM via Ollama."""
         try:
             from app.services.llm_client import call_llm
 
             return call_llm(
-                provider="local_qwen",
-                model=settings.LOCAL_QWEN_MODEL,
+                provider="local_llm",
+                model=settings.LOCAL_LLM_MODEL,
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
-                base_url=settings.LOCAL_QWEN_BASE_URL,
-                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-                keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
+                base_url=settings.LOCAL_LLM_BASE_URL,
+                timeout=settings.LOCAL_LLM_TIMEOUT_SECONDS,
+                keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
         except Exception as e:
-            raise QuestionSuggestionError(f"Local Qwen call failed: {e}")
+            raise QuestionSuggestionError(f"Local LLM call failed: {e}")
 
     def _call_gemini(self, prompt: str) -> str:
         """Call Gemini API."""
@@ -489,26 +486,8 @@ Do NOT add any other text, explanation, or commentary."""
                 temperature=0.7,
                 max_tokens=500,
             )
-        except httpx.HTTPStatusError as e:
-            if e.response is not None and e.response.status_code in {
-                401,
-                402,
-                403,
-                429,
-            }:
-                return self._call_local_qwen(prompt)
+        except Exception as e:
             raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
-        except Exception as e:
-            try:
-                return self._call_local_qwen(prompt)
-            except Exception:
-                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
-        except Exception as e:
-            # Last-resort fallback to local Qwen for network/transport issues.
-            try:
-                return self._call_local_qwen(prompt)
-            except Exception:
-                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
 
     def _parse_llm_response(self, response: str, num_final: int) -> List[str]:
         """Parse LLM response to extract generated questions.
@@ -703,7 +682,7 @@ def get_question_suggestion_service(
     current one so runtime provider changes take effect immediately.
     """
     global _service_instance
-    provider = llm_provider or getattr(settings, "LLM_PROVIDER", "local_qwen")
+    provider = llm_provider or getattr(settings, "LLM_PROVIDER", "local_llm")
 
     if _service_instance is None or _service_instance.llm_provider != provider:
         _service_instance = QuestionSuggestionService(provider)

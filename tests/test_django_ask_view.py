@@ -17,7 +17,7 @@ def client() -> Client:
 
 def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {
                 "text": "Trends include ubiquity...",
@@ -32,13 +32,16 @@ def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
         ],
     )
     monkeypatch.setattr(
-        "django_app.views.build_context_from_sources",
+        "django_app.views.rag.build_context_from_sources",
         lambda sources: "mock context",
     )
     monkeypatch.setattr(
-        "django_app.views.generate_with_local_qwen",
+        "django_app.views.rag.generate",
         lambda query,
-        context: "According to Intelligent_Agent.pdf page 7, the five trends are...",
+        context,
+        model=None,
+        temperature=0.7,
+        timeout_seconds=60: "According to Intelligent_Agent.pdf page 7, the five trends are...",
     )
 
     response = client.post(
@@ -66,20 +69,20 @@ def test_ask_view_missing_query(client: Client):
 
 def test_ask_view_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {"text": "chunk", "source": "a.pdf", "page": 1}
         ],
     )
     monkeypatch.setattr(
-        "django_app.views.build_context_from_sources",
+        "django_app.views.rag.build_context_from_sources",
         lambda sources: "mock context",
     )
 
-    def _raise_timeout(query, context):
+    def _raise_timeout(query, context, model=None, temperature=0.7, timeout_seconds=60):
         raise requests.exceptions.Timeout("timeout")
 
-    monkeypatch.setattr("django_app.views.generate_with_local_qwen", _raise_timeout)
+    monkeypatch.setattr("django_app.views.rag.generate", _raise_timeout)
 
     response = client.post(
         "/api/ask",

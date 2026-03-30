@@ -224,7 +224,7 @@ def delete_document(request: HttpRequest) -> JsonResponse:
 def summarize_doc(request: HttpRequest) -> JsonResponse:
     from app.services.local_rag import (
         build_context_from_sources,
-        generate_with_local_qwen,
+        generate_with_local_llm,
         retrieve_with_faiss,
     )
 
@@ -253,7 +253,7 @@ def summarize_doc(request: HttpRequest) -> JsonResponse:
             filtered = retrieved_sources
 
         context = build_context_from_sources(filtered)
-        summary = generate_with_local_qwen(query=query, context=context)
+        summary = generate_with_local_llm(query=query, context=context)
 
         return JsonResponse({"summary": summary, "filename": filename})
     except Exception as exc:  # noqa: BLE001

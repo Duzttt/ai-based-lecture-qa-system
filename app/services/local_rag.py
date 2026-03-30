@@ -1,7 +1,5 @@
 from typing import Any, Dict, List, Optional
 
-import requests
-
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
 from app.services.llm_client import call_llm
@@ -86,7 +84,7 @@ def build_rag_messages(
     ]
 
 
-def generate_with_local_qwen(
+def generate_with_local_llm(
     query: str,
     context: str,
     model: Optional[str] = None,
@@ -96,20 +94,20 @@ def generate_with_local_qwen(
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
-    resolved_model = model or settings.LOCAL_QWEN_MODEL
-    resolved_base_url = base_url or settings.LOCAL_QWEN_BASE_URL
-    resolved_timeout = timeout_seconds or settings.LOCAL_QWEN_TIMEOUT_SECONDS
+    resolved_model = model or settings.LOCAL_LLM_MODEL
+    resolved_base_url = base_url or settings.LOCAL_LLM_BASE_URL
+    resolved_timeout = timeout_seconds or settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     try:
         return call_llm(
-            provider="local_qwen",
+            provider="local_llm",
             model=resolved_model,
             call_type="rag",
             messages=build_rag_messages(query, context),
             timeout=resolved_timeout,
             query_text=query,
             base_url=resolved_base_url,
-            keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
+            keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
         )
     except ValueError as exc:
         raise LocalRAGError(str(exc)) from exc
@@ -158,34 +156,15 @@ def generate(
     provider = settings.LLM_PROVIDER
 
     if provider == "openrouter":
-        try:
-            return generate_with_openrouter(
-                query=query,
-                context=context,
-                model=model,
-                temperature=temperature,
-                timeout_seconds=timeout_seconds,
-            )
-        except LocalRAGError as exc:
-            openrouter_error: Exception = exc
-        except requests.exceptions.Timeout as exc:
-            openrouter_error = exc
-        except requests.exceptions.RequestException as exc:
-            openrouter_error = exc
-
-        try:
-            return generate_with_local_qwen(
-                query=query,
-                context=context,
-                model=settings.LOCAL_QWEN_MODEL,
-                timeout_seconds=timeout_seconds,
-            )
-        except Exception as local_exc:  # noqa: BLE001
-            raise LocalRAGError(
-                f"OpenRouter failed ({openrouter_error}) and local Qwen also failed ({local_exc})"
-            ) from local_exc
-    elif provider == "local_qwen":
-        return generate_with_local_qwen(
+        return generate_with_openrouter(
+            query=query,
+            context=context,
+            model=model,
+            temperature=temperature,
+            timeout_seconds=timeout_seconds,
+        )
+    elif provider == "local_llm":
+        return generate_with_local_llm(
             query=query,
             context=context,
             model=model,

@@ -11,8 +11,6 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
-import requests
-
 from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.llm_client import call_llm
@@ -48,9 +46,9 @@ class CitationRAGPipeline:
             index_path=settings.FAISS_INDEX_PATH,
             embedding_dim=settings.EMBEDDING_DIM,
         )
-        self.model = model or settings.LOCAL_QWEN_MODEL
-        self.base_url = base_url or settings.LOCAL_QWEN_BASE_URL
-        self.timeout_seconds = timeout_seconds or settings.LOCAL_QWEN_TIMEOUT_SECONDS
+        self.model = model or settings.LOCAL_LLM_MODEL
+        self.base_url = base_url or settings.LOCAL_LLM_BASE_URL
+        self.timeout_seconds = timeout_seconds or settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     def retrieve(
         self, query: str, top_k: int = 3, source_filter: Optional[List[str]] = None
@@ -146,20 +144,20 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
 
         return prompt
 
-    def _generate_with_qwen(self, prompt: str, model: Optional[str] = None) -> str:
+    def _generate_with_llm(self, prompt: str, model: Optional[str] = None) -> str:
         """
-        Generate response using local Qwen model.
+        Generate response using local LLM.
 
         Args:
             prompt: The formatted prompt
-            model: Optional model override (used during provider fallback).
+            model: Optional model override.
 
         Returns:
             Raw response text from the model
         """
         return call_llm(
-            provider="local_qwen",
-            model=model or settings.LOCAL_QWEN_MODEL,
+            provider="local_llm",
+            model=model or settings.LOCAL_LLM_MODEL,
             call_type="citation",
             messages=[{"role": "user", "content": prompt}],
             query_text=prompt,
@@ -188,26 +186,38 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             temperature=0.3,
         )
 
+    def _generate_with_gemini(self, prompt: str) -> str:
+        """
+        Generate response using Gemini API.
+
+        Args:
+            prompt: The formatted prompt
+
+        Returns:
+            Raw response text from the model
+        """
+        return call_llm(
+            provider="gemini",
+            model=settings.GEMINI_MODEL,
+            call_type="citation",
+            messages=[{"role": "user", "content": prompt}],
+            query_text=prompt,
+            api_key=settings.GEMINI_API_KEY,
+            base_url=settings.GEMINI_BASE_URL,
+            temperature=0.3,
+            response_format="json",
+        )
+
     def _generate(self, prompt: str) -> str:
         """Dispatch to the configured LLM provider."""
         provider = settings.LLM_PROVIDER
 
-        if provider == "openrouter":
-            try:
-                return self._generate_with_openrouter(prompt)
-            except (requests.exceptions.RequestException, CitationRAGError) as exc:
-                # OpenRouter failures (e.g. 402 Payment Required) should not
-                # prevent answering when local Qwen is available.
-                try:
-                    return self._generate_with_qwen(
-                        prompt, model=settings.LOCAL_QWEN_MODEL
-                    )
-                except Exception as local_exc:  # noqa: BLE001
-                    raise CitationRAGError(
-                        f"OpenRouter failed ({exc}) and local Qwen also failed ({local_exc})"
-                    ) from local_exc
-        elif provider == "local_qwen":
-            return self._generate_with_qwen(prompt)
+        if provider == "gemini":
+            return self._generate_with_gemini(prompt)
+        elif provider == "openrouter":
+            return self._generate_with_openrouter(prompt)
+        elif provider == "local_llm":
+            return self._generate_with_llm(prompt)
         else:
             raise CitationRAGError(f"Unsupported LLM_PROVIDER: {provider}")
 
@@ -333,8 +343,18 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         # Generate response from LLM
         raw_response = self._generate(prompt)
 
-        # Parse and validate JSON response
-        parsed_response = self._parse_llm_response(raw_response)
+        # Parse and validate JSON response. Some providers occasionally return
+        # plain text even when asked for JSON; degrade gracefully instead of
+        # failing the whole request with 503.
+        try:
+            parsed_response = self._parse_llm_response(raw_response)
+        except CitationRAGError:
+            fallback_text = str(raw_response or "").strip()
+            if not fallback_text:
+                raise
+            parsed_response = {
+                "sentences": [{"text": fallback_text, "citations": []}],
+            }
 
         # Build final response with source metadata
         return self._build_response_with_sources(parsed_response, chunks)

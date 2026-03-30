@@ -106,7 +106,7 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_QWEN_MODEL)
+    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
     temperature = rag_config.get("temperature", 0.7)
     similarity_threshold = float(rag_config.get("similarity_threshold", 0.6))
     started_at = time.perf_counter()
@@ -191,7 +191,7 @@ def ask_with_citations(request: HttpRequest) -> JsonResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_QWEN_MODEL)
+    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
 
     try:
         from app.services.citation_rag import CitationRAGPipeline, CitationRAGError
@@ -250,8 +250,8 @@ def settings_handler(request: HttpRequest) -> JsonResponse:
         if provider == "gemini":
             default_model = app_settings.GEMINI_MODEL
             default_key = app_settings.GEMINI_API_KEY
-        elif provider == "local_qwen":
-            default_model = app_settings.LOCAL_QWEN_MODEL
+        elif provider == "local_llm":
+            default_model = app_settings.LOCAL_LLM_MODEL
             default_key = None
         else:
             default_model = "anthropic/claude-3-haiku"
@@ -330,8 +330,8 @@ LLM_PROVIDERS_CATALOG = [
         "requires_api_key": True,
     },
     {
-        "id": "local_qwen",
-        "name": "Local Qwen (Ollama)",
+        "id": "local_llm",
+        "name": "Local LLM (Ollama)",
         "models": [" ", " ", "qwen2.5:3b", "qwen3.5:4b"],
         "requires_api_key": False,
     },
@@ -352,8 +352,8 @@ def providers_handler(request: HttpRequest) -> JsonResponse:
     if not current_model:
         if current_provider == "gemini":
             current_model = app_settings.GEMINI_MODEL
-        elif current_provider == "local_qwen":
-            current_model = app_settings.LOCAL_QWEN_MODEL
+        elif current_provider == "local_llm":
+            current_model = app_settings.LOCAL_LLM_MODEL
         else:
             current_model = "anthropic/claude-3-haiku"
 
@@ -395,7 +395,7 @@ def update_rag_config(request: HttpRequest) -> JsonResponse:
     except ValueError as exc:
         return _error_response(str(exc), status=400)
 
-    llm_model = str(payload.get("llm_model", settings.LOCAL_QWEN_MODEL)).strip()
+    llm_model = str(payload.get("llm_model", settings.LOCAL_LLM_MODEL)).strip()
     top_k = int(payload.get("top_k", 3))
     temperature = float(payload.get("temperature", 0.7))
 
@@ -458,7 +458,7 @@ def chat_htmx(request: HttpRequest) -> HttpResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_QWEN_MODEL)
+    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
     temperature = rag_config.get("temperature", 0.7)
 
     retrieved_sources: List[Dict[str, Any]] = []
@@ -623,7 +623,7 @@ def compare_documents(request: HttpRequest) -> JsonResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_QWEN_MODEL)
+    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
     temperature = rag_config.get("temperature", 0.7)
 
     results: List[Dict[str, Any]] = []

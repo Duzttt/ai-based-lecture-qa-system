@@ -84,7 +84,7 @@ def _call_openrouter(
     return choices[0]["message"]["content"]
 
 
-def _call_local_qwen(
+def _call_local_llm(
     messages: List[Dict[str, str]],
     model: str,
     base_url: str,
@@ -110,7 +110,7 @@ def _call_local_qwen(
     data = response.json()
     message = data.get("message", {}).get("content")
     if not message:
-        raise ValueError("Invalid response from local Qwen model")
+        raise ValueError("Invalid response from local LLM")
 
     return str(message).strip()
 
@@ -118,7 +118,7 @@ def _call_local_qwen(
 _PROVIDER_DISPATCH = {
     "gemini": _call_gemini,
     "openrouter": _call_openrouter,
-    "local_qwen": _call_local_qwen,
+    "local_llm": _call_local_llm,
 }
 
 
