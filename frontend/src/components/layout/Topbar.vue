@@ -1,38 +1,59 @@
 <script setup>
-import ProviderSwitcher from '../settings/ProviderSwitcher.vue'
+import { ref } from 'vue'
 
 const emit = defineEmits(['open-settings', 'open-admin', 'open-chunkviz'])
+
+const activeNav = ref('library')
+
+const navItems = [
+  { id: 'library', label: 'Library', icon: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 7h2v2H7zm0 4h2v2H7zm0 4h2v2H7zm4-8h6v2h-6zm0 4h6v2h-6zm0 4h6v2h-6z' },
+  { id: 'archive', label: 'Archive', icon: 'M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z' },
+  { id: 'studio', label: 'Studio', icon: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z' },
+]
 </script>
 
 <template>
   <header class="topbar">
     <div class="topbar-left">
-      <div class="logo-dot">
-        <span></span>
-      </div>
-      <div class="topbar-title">
-        <span class="topbar-title-main">Lecture Note Q&A</span>
-        <span class="topbar-title-sub">RAG Powered</span>
+      <div class="brand">
+        <div class="brand-icon">
+          <span class="brand-icon-inner"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">The Academic Curator</span>
+        </div>
       </div>
     </div>
-    <div class="topbar-center">
-      <ProviderSwitcher />
-      <button class="pill-btn admin-btn" @click="emit('open-admin')">
-        <span class="icon">🛠️</span>
-        Admin
+
+    <nav class="topbar-nav">
+      <button
+        v-for="item in navItems"
+        :key="item.id"
+        class="nav-item"
+        :class="{ active: activeNav === item.id }"
+        @click="activeNav = item.id"
+      >
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path :d="item.icon" />
+        </svg>
+        <span class="nav-label">{{ item.label }}</span>
       </button>
-      <button class="pill-btn" @click="emit('open-chunkviz')">
-        <span class="icon">📊</span>
-        Chunks
-      </button>
-      <button class="pill-btn" @click="emit('open-settings')">
-        <span class="icon">⚙️</span>
-        Settings
-      </button>
-    </div>
+    </nav>
+
     <div class="topbar-right">
-      <button class="icon-btn">🔔</button>
-      <div class="avatar"></div>
+      <button class="icon-btn" @click="emit('open-chunkviz')" title="Chunks">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      </button>
+      <button class="icon-btn" @click="emit('open-admin')" title="Admin">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      </button>
+      <button class="icon-btn notification-btn" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        <span class="notification-dot"></span>
+      </button>
+      <div class="avatar">
+        <span class="avatar-letter">A</span>
+      </div>
     </div>
   </header>
 </template>
@@ -40,131 +61,162 @@ const emit = defineEmits(['open-settings', 'open-admin', 'open-chunkviz'])
 <style scoped>
 .topbar {
   height: 56px;
-  padding: 0 16px 0 20px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(55, 65, 81, 0.8);
-  background: linear-gradient(135deg, #020617, #111827);
+  background: rgba(19, 27, 46, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(69, 70, 83, 0.15);
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
+  min-width: 200px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.logo-dot {
-  width: 26px;
-  height: 26px;
-  border-radius: 10px;
-  background: radial-gradient(circle at 30% 20%, #a855f7, #6366f1);
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #bdc2ff 0%, #818cf8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
 }
 
-.logo-dot span {
-  width: 12px;
-  height: 12px;
+.brand-icon-inner {
+  width: 14px;
+  height: 14px;
   border-radius: 4px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(11, 19, 38, 0.9);
 }
 
-.topbar-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.brand-title {
+  font-family: var(--font-headline);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.01em;
 }
 
-.topbar-title-main {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.topbar-title-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.topbar-center {
-  flex: 1 1 auto;
-  min-width: 0;
+.topbar-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-  padding: 0 12px;
+  gap: 4px;
 }
 
-.pill-btn {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-color: rgba(255, 255, 255, 0.15);
-  border-left-color: rgba(255, 255, 255, 0.15);
-  font-size: 12px;
-  background: linear-gradient(
-    145deg,
-    rgba(15, 25, 40, 0.6) 0%,
-    rgba(25, 35, 55, 0.7) 100%
-  );
-  color: var(--text-main);
-  cursor: pointer;
-  display: inline-flex;
+.nav-item {
+  display: flex;
   align-items: center;
   gap: 6px;
-  white-space: nowrap;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow:
-    0 5px 15px -5px rgba(0, 0, 0, 0.5),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
-.pill-btn:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+.nav-item:hover {
+  background: rgba(189, 194, 255, 0.06);
+  color: var(--on-surface);
 }
 
-.pill-btn span.icon {
-  font-size: 13px;
+.nav-item.active {
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--primary);
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  min-width: 200px;
+  justify-content: flex-end;
 }
 
 .icon-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  background: rgba(15, 23, 42, 0.95);
-  color: var(--text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--on-surface-variant);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
 .icon-btn:hover {
-  color: var(--text-main);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(189, 194, 255, 0.06);
+  color: var(--on-surface);
+}
+
+.notification-btn {
+  position: relative;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tertiary);
+  border: 1.5px solid var(--surface-container-low);
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 2px solid #4ade80;
-  background: linear-gradient(135deg, #06b6d4, #a855f7);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
   cursor: pointer;
+}
+
+.avatar-letter {
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .nav-label {
+    display: none;
+  }
+  .brand-title {
+    display: none;
+  }
 }
 </style>

@@ -1,21 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: dark;
-  --bg-main: #111827;
-  --bg-panel: #111827;
-  --bg-panel-soft: #020617;
-  --bg-chip: #1f2937;
-  --border-subtle: #1f2937;
-  --border-strong: #374151;
-  --text-main: #e5e7eb;
-  --text-muted: #9ca3af;
-  --accent: #6366f1;
-  --accent-soft: #312e81;
-  --radius-lg: 14px;
+
+  /* Surface hierarchy - "Physical Layering" */
+  --surface: #0b1326;
+  --surface-dim: #0b1326;
+  --surface-container-lowest: #060e20;
+  --surface-container-low: #131b2e;
+  --surface-container: #171f33;
+  --surface-container-high: #222a3d;
+  --surface-container-highest: #2d3449;
+  --surface-bright: #31394d;
+
+  /* Primary */
+  --primary: #bdc2ff;
+  --primary-container: #818cf8;
+  --on-primary: #131e8c;
+  --on-primary-container: #101b8a;
+
+  /* Secondary */
+  --secondary: #bcc7de;
+  --secondary-container: #3e495d;
+  --on-secondary: #263143;
+  --on-secondary-container: #aeb9d0;
+
+  /* Tertiary */
+  --tertiary: #f7bd3e;
+  --tertiary-container: #c08d00;
+  --on-tertiary: #402d00;
+
+  /* Text */
+  --on-surface: #dae2fd;
+  --on-surface-variant: #c6c5d5;
+
+  /* Accents */
+  --outline: #908f9e;
+  --outline-variant: #454653;
+
+  /* Legacy compatibility */
+  --bg-main: var(--surface);
+  --bg-panel: var(--surface-container);
+  --bg-panel-soft: var(--surface-container-low);
+  --bg-chip: var(--surface-container-high);
+  --border-subtle: var(--outline-variant);
+  --border-strong: var(--surface-container-highest);
+  --text-main: var(--on-surface);
+  --text-muted: var(--on-surface-variant);
+  --accent: var(--primary-container);
+
+  /* Layout */
+  --radius-lg: 12px;
+  --radius-md: 8px;
   --spacing-unit: 8px;
+
+  /* Fonts */
+  --font-headline: 'Manrope', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 * {
@@ -24,10 +69,9 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: radial-gradient(circle at top, #1f2937 0, #020617 60%);
-  color: var(--text-main);
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--on-surface);
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -37,6 +81,10 @@ body {
 #app {
   width: 100%;
   height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-headline);
 }
 
 /* Global scrollbar styles */
@@ -50,16 +98,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(198, 197, 213, 0.15);
   border-radius: 20px;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(198, 197, 213, 0.25);
 }

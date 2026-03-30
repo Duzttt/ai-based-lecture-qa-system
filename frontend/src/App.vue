@@ -45,22 +45,22 @@ const handleCloseComparison = () => {
 
 <template>
   <div class="app-shell">
-    <Topbar 
-      @open-settings="showSettings = true" 
-      @open-admin="showAdmin = true" 
+    <Topbar
+      @open-settings="showSettings = true"
+      @open-admin="showAdmin = true"
       @open-chunkviz="showChunkViz = true"
     />
     <main class="main">
-      <SourcesPanel 
+      <SourcesPanel
         @selection-change="handleSelectionChange"
         @toggle-compare="handleToggleCompare"
       />
-      <ChatPanel 
-        v-if="!showComparison" 
-        :selected-sources="selectedDocs" 
+      <ChatPanel
+        v-if="!showComparison"
+        :selected-sources="selectedDocs"
       />
-      <ComparisonView 
-        v-else 
+      <ComparisonView
+        v-else
         :selected-docs="selectedDocs"
         @close="handleCloseComparison"
       />
@@ -74,28 +74,21 @@ const handleCloseComparison = () => {
 
 <style scoped>
 .app-shell {
-  width: min(1280px, 100vw);
-  height: min(720px, 100vh - 40px);
-  background: rgba(15, 23, 42, 0.95);
-  border-radius: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  backdrop-filter: blur(16px);
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.8);
 }
 
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1.4fr) 270px;
+  grid-template-columns: 280px minmax(0, 1fr) 280px;
   grid-template-rows: minmax(0, 1fr);
-  gap: var(--spacing-unit);
-  padding: calc(var(--spacing-unit) + 2px) var(--spacing-unit)
-    calc(var(--spacing-unit) * 1.75);
-  background: radial-gradient(circle at top, #020617 0, #020617 45%, #000 90%);
-  min-width: 0;
+  gap: 1px;
+  background: rgba(69, 70, 83, 0.08);
   min-height: 0;
 }
 
@@ -103,7 +96,6 @@ const handleCloseComparison = () => {
   .app-shell {
     width: 100vw;
     height: 100vh;
-    border-radius: 0;
   }
 }
 
