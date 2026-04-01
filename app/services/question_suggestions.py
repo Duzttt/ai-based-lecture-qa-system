@@ -364,21 +364,74 @@ class QuestionSuggestionService:
         doc_names: List[str],
         keywords: List[Tuple[str, float]],
         num_final: int = 3,
+        timeout_seconds: int = 30,
     ) -> List[str]:
         """
         Use LLM to directly generate questions from document content.
 
-        Falls back to template-based selection if LLM is unavailable.
+        Falls back to template-based selection if LLM is unavailable or times out.
+
+        Args:
+            document_context: Combined text from documents
+            doc_names: List of document names
+            keywords: Extracted keywords with scores
+            num_final: Number of questions to generate
+            timeout_seconds: Maximum time to wait for LLM response
+
+        Returns:
+            List of generated question strings
         """
+        import signal
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError("LLM call timed out")
+
         prompt = self._build_direct_generation_prompt(
             document_context, doc_names, keywords, num_final
         )
 
         try:
-            response = self._call_llm(prompt)
+            # Set timeout for LLM call
+            if hasattr(signal, "SIGALRM"):  # Unix-like systems
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout_seconds)
+                try:
+                    response = self._call_llm(prompt)
+                finally:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+            else:
+                # Windows - use threading timeout as fallback
+                import threading
+
+                result = [None]
+                exception = [None]
+
+                def call_llm_thread():
+                    try:
+                        result[0] = self._call_llm(prompt)
+                    except Exception as e:
+                        exception[0] = e
+
+                thread = threading.Thread(target=call_llm_thread)
+                thread.start()
+                thread.join(timeout=timeout_seconds)
+
+                if thread.is_alive():
+                    raise TimeoutError(f"LLM call timed out after {timeout_seconds}s")
+                if exception[0]:
+                    raise exception[0]
+                response = result[0]
+
             questions = self._parse_llm_response(response, num_final)
             if questions:
+                logger.info(f"Generated {len(questions)} questions via LLM")
                 return questions
+
+        except TimeoutError:
+            logger.warning(
+                "LLM question generation timed out, falling back to templates"
+            )
         except Exception as exc:
             logger.warning("LLM question generation failed: %s", exc)
 
@@ -671,6 +724,47 @@ Do NOT add any other text, explanation, or commentary."""
 
 
 _service_instance: Optional[QuestionSuggestionService] = None
+_suggestion_cache: Dict[str, Dict[str, Any]] = {}
+CACHE_MAX_SIZE = 100
+CACHE_TTL_SECONDS = 300  # 5 minutes
+
+
+def _get_cache_key(doc_names: List[str], num_suggestions: int) -> str:
+    """Generate cache key from document names and suggestion count."""
+    sorted_names = sorted(doc_names)
+    return f"{'|'.join(sorted_names)}:{num_suggestions}"
+
+
+def _get_cached_suggestions(cache_key: str) -> Optional[Dict[str, Any]]:
+    """Get cached suggestions if still valid."""
+    import time
+
+    if cache_key in _suggestion_cache:
+        cached = _suggestion_cache[cache_key]
+        if time.time() - cached.get("timestamp", 0) < CACHE_TTL_SECONDS:
+            return cached.get("data")
+        else:
+            # Expired - remove from cache
+            del _suggestion_cache[cache_key]
+    return None
+
+
+def _cache_suggestions(cache_key: str, data: Dict[str, Any]):
+    """Cache suggestions with timestamp."""
+    import time
+
+    # Evict oldest entries if cache is full
+    if len(_suggestion_cache) >= CACHE_MAX_SIZE:
+        oldest_key = min(
+            _suggestion_cache.keys(),
+            key=lambda k: _suggestion_cache[k].get("timestamp", 0),
+        )
+        del _suggestion_cache[oldest_key]
+
+    _suggestion_cache[cache_key] = {
+        "data": data,
+        "timestamp": time.time(),
+    }
 
 
 def get_question_suggestion_service(
@@ -694,6 +788,31 @@ def generate_question_suggestions(
     documents: List[Dict[str, Any]],
     num_suggestions: int = 3,
 ) -> Dict[str, Any]:
-    """Convenience function to generate question suggestions."""
+    """
+    Convenience function to generate question suggestions with caching.
+
+    Uses an LLM-first approach: ask the LLM to generate questions directly
+    from the document content. Falls back to template-based candidate
+    selection when the LLM is unavailable or returns an unusable response.
+
+    Results are cached for 5 minutes to avoid repeated LLM calls.
+    """
+    if not documents:
+        return {"suggestions": [], "generated_from": []}
+
+    doc_names = [doc.get("name") or doc.get("filename", "Unknown") for doc in documents]
+
+    # Check cache first
+    cache_key = _get_cache_key(doc_names, num_suggestions)
+    cached_result = _get_cached_suggestions(cache_key)
+    if cached_result is not None:
+        logger.debug(f"Cache hit for suggestions: {cache_key}")
+        return cached_result
+
     service = get_question_suggestion_service()
-    return service.generate_suggestions(documents, num_suggestions)
+    result = service.generate_suggestions(documents, num_suggestions)
+
+    # Cache the result
+    _cache_suggestions(cache_key, result)
+
+    return result

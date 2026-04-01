@@ -5,6 +5,7 @@ import ChatPanel from './components/chat/ChatPanel.vue'
 import StudioPanel from './components/layout/StudioPanel.vue'
 import ComparisonView from './components/documents/ComparisonView.vue'
 import SettingsModal from './components/settings/SettingsModal.vue'
+import LLMConfigPanel from './components/settings/LLMConfigPanel.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
 import ChunkViz from './components/shared/ChunkViz.vue'
 import { ref, computed, onMounted } from 'vue'
@@ -19,6 +20,7 @@ onMounted(() => {
 const showSettings = ref(false)
 const showAdmin = ref(false)
 const showChunkViz = ref(false)
+const showLLMConfig = ref(false)
 const compareMode = ref(false)
 const selectedDocs = ref([])
 
@@ -49,8 +51,13 @@ const handleCloseComparison = () => {
       @open-settings="showSettings = true"
       @open-admin="showAdmin = true"
       @open-chunkviz="showChunkViz = true"
+      @open-llm-config="showLLMConfig = true"
     />
-    <main class="main">
+    <LLMConfigPanel
+      v-if="showLLMConfig"
+      @close="showLLMConfig = false"
+    />
+    <main v-else class="main">
       <SourcesPanel
         @selection-change="handleSelectionChange"
         @toggle-compare="handleToggleCompare"

@@ -5,14 +5,46 @@ import sys
 import threading
 import tkinter as tk
 import webbrowser
-from tkinter import scrolledtext
+from tkinter import scrolledtext, messagebox
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+ENV_FILE = BASE_DIR / ".env"
 
 BACKEND_CMD = [sys.executable, "manage.py", "runserver", "0.0.0.0:8000"]
 FRONTEND_CMD = ["npm", "run", "dev"]
+
+
+def _get_pdf_parser() -> str:
+    """Read current PDF_PARSER from .env, default to pypdf."""
+    if not ENV_FILE.exists():
+        return "pypdf"
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line.startswith("PDF_PARSER="):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    return "pypdf"
+
+
+def _set_pdf_parser(value: str) -> None:
+    """Set PDF_PARSER in .env, creating the file if needed."""
+    env_text = ""
+    if ENV_FILE.exists():
+        env_text = ENV_FILE.read_text(encoding="utf-8")
+
+    lines = env_text.splitlines()
+    found = False
+    for i, line in enumerate(lines):
+        if line.strip().startswith("PDF_PARSER="):
+            lines[i] = f"PDF_PARSER={value}"
+            found = True
+            break
+
+    if not found:
+        lines.append(f"PDF_PARSER={value}")
+
+    ENV_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 class ServerGUI:
@@ -129,6 +161,43 @@ class ServerGUI:
             bg=bg,
         )
         self.frontend_status.pack(side=tk.LEFT, padx=12)
+
+        # ── PDF Parser row ──
+        parser_row = tk.Frame(root, bg=bg, padx=20, pady=4)
+        parser_row.pack(fill=tk.X)
+
+        tk.Label(
+            parser_row,
+            text="PDF Parser",
+            font=("Segoe UI", 11),
+            fg=fg,
+            bg=bg,
+            width=28,
+            anchor="w",
+        ).pack(side=tk.LEFT)
+
+        current_parser = _get_pdf_parser()
+        parser_label_text = f"● {current_parser}"
+        parser_label_color = (
+            "#f9e2af" if current_parser == "opendataloader" else "#89b4fa"
+        )
+
+        self.parser_status = tk.Label(
+            parser_row,
+            text=parser_label_text,
+            font=("Segoe UI", 11),
+            fg=parser_label_color,
+            bg=bg,
+        )
+        self.parser_status.pack(side=tk.LEFT, padx=12)
+
+        self.btn_parser_toggle = tk.Button(
+            parser_row,
+            text=f"Switch to {'pypdf' if current_parser == 'opendataloader' else 'opendataloader'}",
+            command=self.toggle_pdf_parser,
+            **style_btn,
+        )
+        self.btn_parser_toggle.pack(side=tk.LEFT, padx=4)
 
         # ── Bulk actions ──
         bulk_row = tk.Frame(root, bg=bg, padx=20, pady=8)
@@ -286,6 +355,19 @@ class ServerGUI:
 
     def open_llm_logs(self) -> None:
         webbrowser.open("http://localhost:8000/llm-logs")
+
+    def toggle_pdf_parser(self) -> None:
+        current = _get_pdf_parser()
+        new_value = "pypdf" if current == "opendataloader" else "opendataloader"
+        _set_pdf_parser(new_value)
+        color = "#f9e2af" if new_value == "opendataloader" else "#89b4fa"
+        self.parser_status.config(text=f"● {new_value}", fg=color)
+        self.btn_parser_toggle.config(
+            text=f"Switch to {'pypdf' if new_value == 'opendataloader' else 'opendataloader'}"
+        )
+        self._log(
+            "PARSER", f"Switched to {new_value} (restart backend to apply)", color
+        )
 
     # ── Cleanup ─────────────────────────────────────────────────────
 

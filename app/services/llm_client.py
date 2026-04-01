@@ -16,6 +16,9 @@ def _call_gemini(
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    if not api_key or str(api_key).strip().lower() in {"none", "null"}:
+        raise ValueError("GEMINI_API_KEY is not configured")
+
     prompt_parts = []
     for msg in messages:
         prompt_parts.append(f"[{msg['role']}]: {msg['content']}")
@@ -54,6 +57,9 @@ def _call_openrouter(
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    if not api_key or str(api_key).strip().lower() in {"none", "null"}:
+        raise ValueError("OPENROUTER_API_KEY is not configured")
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",

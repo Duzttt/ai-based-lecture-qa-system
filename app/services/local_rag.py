@@ -146,6 +146,43 @@ def generate_with_openrouter(
         raise LocalRAGError(str(exc)) from exc
 
 
+def generate_with_gemini(
+    query: str,
+    context: str,
+    model: Optional[str] = None,
+    api_key: Optional[str] = None,
+    temperature: float = 0.7,
+    timeout_seconds: int = 60,
+) -> str:
+    if not context.strip():
+        return "No usable reference material was retrieved, so I cannot answer based on evidence."
+
+    requested_model = str(model or "").strip()
+    if requested_model and "gemini" in requested_model.lower():
+        resolved_model = requested_model
+    else:
+        resolved_model = settings.GEMINI_MODEL
+    resolved_key = api_key or settings.GEMINI_API_KEY
+
+    if not resolved_key:
+        raise LocalRAGError("GEMINI_API_KEY is not configured")
+
+    try:
+        return call_llm(
+            provider="gemini",
+            model=resolved_model,
+            call_type="rag",
+            messages=build_rag_messages(query, context),
+            timeout=timeout_seconds,
+            query_text=query,
+            api_key=resolved_key,
+            base_url=settings.GEMINI_BASE_URL,
+            temperature=temperature,
+        )
+    except ValueError as exc:
+        raise LocalRAGError(str(exc)) from exc
+
+
 def generate(
     query: str,
     context: str,
@@ -155,7 +192,15 @@ def generate(
 ) -> str:
     provider = settings.LLM_PROVIDER
 
-    if provider == "openrouter":
+    if provider == "gemini":
+        return generate_with_gemini(
+            query=query,
+            context=context,
+            model=model,
+            temperature=temperature,
+            timeout_seconds=timeout_seconds,
+        )
+    elif provider == "openrouter":
         return generate_with_openrouter(
             query=query,
             context=context,

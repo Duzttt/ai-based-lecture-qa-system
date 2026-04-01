@@ -19,6 +19,14 @@ const suggestions = ref([])
 const isLoading = ref(false)
 const error = ref('')
 const collapsed = ref(false)
+const generationTime = ref(null)
+
+// Local cache for suggestions (keyed by sorted doc names)
+const suggestionsCache = ref(new Map())
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+// Abort controller for cancelling in-flight requests
+let abortController = null
 
 let debounceTimer = null
 
@@ -41,6 +49,7 @@ watch(docIdKey, (newKey, oldKey) => {
     suggestions.value = []
     error.value = ''
     collapsed.value = false
+    generationTime.value = null
     return
   }
   if (newKey !== oldKey) {
@@ -51,34 +60,89 @@ watch(docIdKey, (newKey, oldKey) => {
 
 function debouncedGenerate() {
   if (debounceTimer) clearTimeout(debounceTimer)
+  // Cancel any in-flight request
+  if (abortController) {
+    abortController.abort()
+    abortController = null
+  }
   debounceTimer = setTimeout(() => generateSuggestions(), 500)
+}
+
+function getCachedSuggestions(key) {
+  const cached = suggestionsCache.value.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data
+  }
+  if (cached) {
+    suggestionsCache.value.delete(key)
+  }
+  return null
+}
+
+function setCachedSuggestions(key, data) {
+  // Keep cache size reasonable
+  if (suggestionsCache.value.size > 20) {
+    const oldestKey = suggestionsCache.value.keys().next().value
+    suggestionsCache.value.delete(oldestKey)
+  }
+  suggestionsCache.value.set(key, { data, timestamp: Date.now() })
 }
 
 const generateSuggestions = async () => {
   if (!canGenerate.value) return
 
+  // Check local cache first
+  const cacheKey = docIdKey.value
+  const cached = getCachedSuggestions(cacheKey)
+  if (cached) {
+    suggestions.value = cached.suggestions
+    generationTime.value = cached.generationTime
+    return
+  }
+
+  // Cancel previous request if still pending
+  if (abortController) {
+    abortController.abort()
+  }
+  abortController = new AbortController()
+
   isLoading.value = true
   error.value = ''
+  generationTime.value = null
 
   try {
     const docIds = props.selectedDocuments.map(doc => doc.name || doc.filename)
     const response = await getQuestionSuggestions(docIds)
 
-    if (response.success && response.suggestions) {
-      suggestions.value = response.suggestions.map((text, index) => ({
+    if (response.success && response.suggestions && response.suggestions.length > 0) {
+      const mappedSuggestions = response.suggestions.map((text, index) => ({
         id: `s_${Date.now()}_${index}`,
         text,
         position: index,
       }))
+
+      suggestions.value = mappedSuggestions
+      generationTime.value = response.generation_time_ms
+
+      // Cache the result
+      setCachedSuggestions(cacheKey, {
+        suggestions: mappedSuggestions,
+        generationTime: response.generation_time_ms,
+      })
     } else {
-      error.value = response.message || 'Failed to generate suggestions'
+      error.value = response.message || 'No suggestions available'
+      generateFallbackSuggestions()
     }
   } catch (err) {
+    // Don't show error if request was aborted
+    if (err.name === 'AbortError') return
+
     console.error('Failed to generate suggestions:', err)
     error.value = err.response?.data?.detail || err.message || 'Failed to generate suggestions'
     generateFallbackSuggestions()
   } finally {
     isLoading.value = false
+    abortController = null
   }
 }
 
@@ -108,6 +172,8 @@ const handleChipClick = async (suggestion) => {
 
 const handleRefresh = async () => {
   if (!canGenerate.value) return
+  // Clear cache for current key to force regeneration
+  suggestionsCache.value.delete(docIdKey.value)
   collapsed.value = false
   await generateSuggestions()
 }
@@ -120,6 +186,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
+  if (abortController) abortController.abort()
 })
 </script>
 

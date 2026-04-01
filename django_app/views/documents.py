@@ -43,9 +43,10 @@ def upload_pdf(request: HttpRequest) -> JsonResponse:
         return _error_response("Invalid filename", status=400)
 
     file_ext = os.path.splitext(original_filename)[1].lower()
-    if file_ext not in settings.ALLOWED_EXTENSIONS:
+    allowed_extensions = settings.allowed_extensions
+    if file_ext not in allowed_extensions:
         return _error_response(
-            f"Invalid file type. Allowed types: {settings.ALLOWED_EXTENSIONS}",
+            f"Invalid file type. Allowed types: {sorted(allowed_extensions)}",
             status=400,
         )
 
