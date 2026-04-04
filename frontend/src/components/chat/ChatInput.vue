@@ -18,23 +18,34 @@ const sendMessage = () => {
 
 <template>
   <div class="chat-input-wrap">
-    <button class="attach-btn" title="Attach file">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+    <label class="sr-only" for="chat-question-input">Your question</label>
+    <button
+      type="button"
+      class="attach-btn"
+      aria-label="Attach file (coming soon)"
+      disabled
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
     </button>
     <input
+      id="chat-question-input"
       v-model="question"
       @keydown.enter.prevent="sendMessage"
       type="text"
       class="chat-input"
-      placeholder="Ask a question..."
+      name="question"
+      autocomplete="off"
+      placeholder="Ask a question…"
       :disabled="isLoading"
     />
     <button
+      type="button"
       class="chat-send-btn"
+      aria-label="Send message"
       @click="sendMessage"
       :disabled="isLoading || !question.trim()"
     >
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
 </template>
@@ -48,6 +59,18 @@ const sendMessage = () => {
   background: var(--surface-container);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .attach-btn {
   width: 36px;
   height: 36px;
@@ -59,8 +82,18 @@ const sendMessage = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   flex-shrink: 0;
+}
+
+.attach-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.attach-btn:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 .attach-btn svg {
@@ -82,12 +115,17 @@ const sendMessage = () => {
   color: var(--on-surface);
   font-family: var(--font-body);
   font-size: 13px;
-  outline: none;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .chat-input:focus {
+  outline: none;
+}
+
+.chat-input:focus-visible {
+  outline: none;
   border-color: var(--primary-container);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.35);
 }
 
 .chat-input::placeholder {
@@ -111,8 +149,13 @@ const sendMessage = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
   flex-shrink: 0;
+}
+
+.chat-send-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .chat-send-btn svg {

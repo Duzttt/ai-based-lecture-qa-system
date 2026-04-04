@@ -92,9 +92,9 @@ const handleChunkRightClick = (event, chunk) => {
 </script>
 
 <template>
-  <div v-if="loading" class="retrieval-loading">
-    <div class="loading-spinner"></div>
-    <span>Searching knowledge base...</span>
+  <div v-if="loading" class="retrieval-loading" aria-live="polite">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <span>Searching knowledge base…</span>
   </div>
   
   <div v-else-if="filteredChunks.length > 0" class="retrieval-chunks">
@@ -107,19 +107,26 @@ const handleChunkRightClick = (event, chunk) => {
       <div class="retrieval-actions">
         <button
           v-if="chunks.length > filteredChunks.length"
+          type="button"
           class="show-all-btn"
           @click.stop="showAllChunks = !showAllChunks"
         >
           {{ showAllChunks ? 'Show Relevant Only' : `Show All (${chunks.length})` }}
         </button>
-        <button class="collapse-btn" @click.stop="isOpen = !isOpen">
-          <span class="collapse-icon">{{ isOpen ? '▼' : '▶' }}</span>
-          <span class="collapse-label">{{ isOpen ? 'Hide' : 'Show' }}</span>
+        <button
+          type="button"
+          class="collapse-btn"
+          :aria-expanded="isOpen"
+          aria-controls="retrieval-chunks-body"
+          @click.stop="isOpen = !isOpen"
+        >
+          <span class="collapse-icon" aria-hidden="true">{{ isOpen ? '▼' : '▶' }}</span>
+          <span class="collapse-label">{{ isOpen ? 'Hide' : 'Show' }} context</span>
         </button>
       </div>
     </div>
     
-    <div v-if="isOpen" class="chunks-scroll">
+    <div v-if="isOpen" id="retrieval-chunks-body" class="chunks-scroll">
       <div class="chunks-grid">
         <div
           v-for="(chunk, index) in filteredChunks"
@@ -144,7 +151,13 @@ const handleChunkRightClick = (event, chunk) => {
               <span class="source-name">{{ chunk.source }}</span>
               <span v-if="chunk.page" class="source-page">Page {{ chunk.page }}</span>
             </div>
-            <button class="expand-btn" @click.stop="toggleExpand(index)">
+            <button
+              type="button"
+              class="expand-btn"
+              :aria-expanded="isExpanded(index)"
+              :aria-label="isExpanded(index) ? 'Collapse chunk' : 'Expand chunk'"
+              @click.stop="toggleExpand(index)"
+            >
               {{ isExpanded(index) ? '▼' : '▶' }}
             </button>
           </div>
@@ -272,7 +285,12 @@ const handleChunkRightClick = (event, chunk) => {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.show-all-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .show-all-btn:hover {
@@ -292,7 +310,12 @@ const handleChunkRightClick = (event, chunk) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.collapse-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .collapse-btn:hover {
@@ -343,8 +366,13 @@ const handleChunkRightClick = (event, chunk) => {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
+}
+
+.chunk-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .chunk-card::before {
@@ -438,8 +466,13 @@ const handleChunkRightClick = (event, chunk) => {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
   flex-shrink: 0;
+}
+
+.expand-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .expand-btn:hover {

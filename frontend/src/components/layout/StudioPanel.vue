@@ -88,31 +88,33 @@ const closeSummaryViewer = () => {
 
     <div class="panel-body">
       <div class="tools-list">
-        <div
+        <button
           v-for="tool in studioTools"
           :key="tool.id"
+          type="button"
           class="tool-card"
           :class="{ disabled: tool.disabled }"
+          :disabled="tool.disabled"
           @click="handleToolClick(tool)"
         >
           <div class="tool-icon-wrap">
-            <svg class="tool-icon" viewBox="0 0 24 24" fill="currentColor"><path :d="tool.icon" /></svg>
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="tool.icon" /></svg>
           </div>
           <div class="tool-content">
             <span class="tool-title">{{ tool.title }}</span>
             <span class="tool-desc">{{ tool.desc }}</span>
           </div>
-          <span v-if="tool.action === 'summary' && selectedCount > 0" class="tool-badge">
+          <span v-if="tool.action === 'summary' && selectedCount > 0" class="tool-badge" aria-hidden="true">
             {{ selectedCount }}
           </span>
-        </div>
+        </button>
       </div>
 
       <div v-if="showSummaryViewer" class="summary-viewer-container">
         <div class="viewer-header">
           <span class="viewer-title">Summary</span>
-          <button class="viewer-close" @click="closeSummaryViewer">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <button type="button" class="viewer-close" aria-label="Close summary" @click="closeSummaryViewer">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
           </button>
         </div>
         <SummaryViewer
@@ -126,12 +128,12 @@ const closeSummaryViewer = () => {
 
       <div class="pro-section">
         <div class="pro-header">
-          <svg class="pro-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <svg class="pro-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
           <span class="pro-title">Deep Focus Mode</span>
         </div>
         <span class="pro-badge">Pro Feature</span>
-        <button class="pro-btn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        <button type="button" class="pro-btn" aria-label="Upgrade workspace (coming soon)" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           Upgrade Workspace
         </button>
       </div>
@@ -190,10 +192,24 @@ const closeSummaryViewer = () => {
   gap: 12px;
   padding: 14px 12px;
   border-radius: 10px;
+  border: none;
+  width: 100%;
+  text-align: left;
   background: var(--surface-container);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s;
   position: relative;
+  font: inherit;
+  color: inherit;
+}
+
+.tool-card:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
+}
+
+.tool-card:disabled {
+  cursor: not-allowed;
 }
 
 .tool-card:hover:not(.disabled) {
@@ -302,7 +318,12 @@ const closeSummaryViewer = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.viewer-close:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 .viewer-close svg {
@@ -369,7 +390,19 @@ const closeSummaryViewer = () => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.pro-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pro-btn:focus-visible:not(:disabled) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .pro-btn svg {

@@ -29,11 +29,14 @@ const navItems = [
       <button
         v-for="item in navItems"
         :key="item.id"
+        type="button"
         class="nav-item"
         :class="{ active: activeNav === item.id }"
+        :aria-label="item.label"
+        :aria-current="activeNav === item.id ? 'page' : undefined"
         @click="activeNav = item.id"
       >
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path :d="item.icon" />
         </svg>
         <span class="nav-label">{{ item.label }}</span>
@@ -41,20 +44,48 @@ const navItems = [
     </nav>
 
     <div class="topbar-right">
-      <button class="icon-btn" @click="emit('open-llm-config')" title="Model Config">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Model configuration"
+        @click="emit('open-llm-config')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
       </button>
-      <button class="icon-btn" @click="emit('open-chunkviz')" title="Chunks">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Chunk visualization"
+        @click="emit('open-chunkviz')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
       </button>
-      <button class="icon-btn" @click="emit('open-admin')" title="Admin">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Admin dashboard"
+        @click="emit('open-admin')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
       </button>
-      <button class="icon-btn notification-btn" title="Notifications">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-        <span class="notification-dot"></span>
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Settings"
+        @click="emit('open-settings')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       </button>
-      <div class="avatar">
+      <button
+        type="button"
+        class="icon-btn notification-btn"
+        aria-label="Notifications"
+        disabled
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        <span class="notification-dot" aria-hidden="true"></span>
+      </button>
+      <div class="avatar" aria-hidden="true">
         <span class="avatar-letter">A</span>
       </div>
     </div>
@@ -130,7 +161,7 @@ const navItems = [
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .nav-item:hover {
@@ -141,6 +172,11 @@ const navItems = [
 .nav-item.active {
   background: rgba(129, 140, 248, 0.12);
   color: var(--primary);
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 .nav-icon {
@@ -167,7 +203,17 @@ const navItems = [
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
+}
+
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .icon-btn svg {
@@ -204,7 +250,6 @@ const navItems = [
   align-items: center;
   justify-content: center;
   margin-left: 6px;
-  cursor: pointer;
 }
 
 .avatar-letter {

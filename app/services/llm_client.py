@@ -97,14 +97,20 @@ def _call_local_llm(
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    options: Dict[str, Any] = {}
+    if "temperature" in kwargs:
+        options["temperature"] = kwargs["temperature"]
+    if "num_predict" in kwargs:
+        options["num_predict"] = kwargs["num_predict"]
+
     payload = {
         "model": model,
         "messages": messages,
         "stream": False,
         "keep_alive": kwargs.get("keep_alive", "30m"),
     }
-    if "temperature" in kwargs:
-        payload["options"] = {"temperature": kwargs["temperature"]}
+    if options:
+        payload["options"] = options
 
     response = requests.post(
         f"{base_url.rstrip('/')}/api/chat",

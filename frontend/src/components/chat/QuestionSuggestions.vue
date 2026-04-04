@@ -200,7 +200,7 @@ onUnmounted(() => {
       <div class="suggestions-row">
         <!-- Label chip -->
         <span class="label-chip">
-          <svg class="label-icon" viewBox="0 0 16 16" fill="none">
+          <svg class="label-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M8 2a1 1 0 0 1 .894.553l1.276 2.557 2.829.416a1 1 0 0 1 .554 1.705l-2.047 1.993.483 2.818a1 1 0 0 1-1.45 1.054L8 11.846l-2.539 1.25a1 1 0 0 1-1.45-1.054l.483-2.818L2.447 7.23a1 1 0 0 1 .554-1.705l2.829-.416L7.106 2.553A1 1 0 0 1 8 2z" fill="currentColor"/>
           </svg>
           Suggested
@@ -213,15 +213,16 @@ onUnmounted(() => {
 
         <!-- Suggestion chips -->
         <TransitionGroup v-else name="chip" tag="div" class="chips-wrap">
-          <button
-            v-for="suggestion in suggestions"
-            :key="suggestion.id"
-            class="suggestion-chip"
-            @click="handleChipClick(suggestion)"
-            :disabled="disabled"
-          >
+        <button
+          v-for="suggestion in suggestions"
+          :key="suggestion.id"
+          type="button"
+          class="suggestion-chip"
+          @click="handleChipClick(suggestion)"
+          :disabled="disabled"
+        >
             <span class="chip-text">{{ suggestion.text }}</span>
-            <svg class="chip-arrow" viewBox="0 0 12 12" fill="none">
+            <svg class="chip-arrow" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
@@ -235,16 +236,18 @@ onUnmounted(() => {
         <!-- Refresh button -->
         <button
           v-if="hasSuggestions || isLoading"
+          type="button"
           class="refresh-btn"
+          aria-label="Refresh suggestions"
           @click="handleRefresh"
           :disabled="isLoading || !hasSelection"
-          title="Refresh suggestions"
         >
           <svg
             class="refresh-icon"
             :class="{ spinning: isLoading }"
             viewBox="0 0 16 16"
             fill="none"
+            aria-hidden="true"
           >
             <path d="M13.65 2.35A7.958 7.958 0 0 0 8 0a8 8 0 1 0 7.745 6h-2.09A5.98 5.98 0 0 1 8 14 6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
           </svg>
@@ -338,11 +341,16 @@ onUnmounted(() => {
   font-size: 12px;
   line-height: 1.4;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
   max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.suggestion-chip:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 2px;
 }
 
 .suggestion-chip:hover {
@@ -368,7 +376,7 @@ onUnmounted(() => {
   color: var(--accent, #6366f1);
   opacity: 0;
   transform: translateX(-4px);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .suggestion-chip:hover .chip-arrow {
@@ -400,8 +408,13 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   flex-shrink: 0;
+}
+
+.refresh-btn:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 2px;
 }
 
 .refresh-btn:hover:not(:disabled) {
@@ -437,10 +450,10 @@ onUnmounted(() => {
 }
 
 .chip-enter-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .chip-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .chip-enter-from {
   opacity: 0;

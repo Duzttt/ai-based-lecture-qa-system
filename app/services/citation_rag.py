@@ -163,6 +163,7 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             query_text=prompt,
             base_url=self.base_url,
             temperature=0.3,
+            num_predict=2048,
         )
 
     def _generate_with_openrouter(self, prompt: str) -> str:
@@ -352,6 +353,13 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             fallback_text = str(raw_response or "").strip()
             if not fallback_text:
                 raise
+            if fallback_text.startswith("{") and (
+                "sentences" in fallback_text or "text" in fallback_text
+            ):
+                fallback_text = (
+                    "The model returned a malformed response. "
+                    "Please try rephrasing your question or try again later."
+                )
             parsed_response = {
                 "sentences": [{"text": fallback_text, "citations": []}],
             }

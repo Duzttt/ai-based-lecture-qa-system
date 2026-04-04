@@ -106,7 +106,7 @@ const registerCitations = (messageId, query, answer, chunks) => {
     bidirectionalIndex.value[key].push({
       messageId,
       query,
-      answer: answer.substring(0, 150) + (answer.length > 150 ? '...' : ''),
+      answer: answer.substring(0, 150) + (answer.length > 150 ? '…' : ''),
       timestamp: new Date().toLocaleTimeString(),
       source: chunk.source,
       page: chunk.page,
@@ -198,7 +198,7 @@ const handleSuggestionSelect = (questionText) => {
       @send="sendMessage"
     />
 
-    <div v-if="error" class="chat-error">{{ error }}</div>
+    <div v-if="error" class="chat-error" role="alert">{{ error }}</div>
 
     <PdfViewer
       :show="showPdfViewer"

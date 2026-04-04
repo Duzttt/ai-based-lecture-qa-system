@@ -170,24 +170,24 @@ watch(() => props.show, (newShow) => {
         <span>{{ pdfUrl ? pdfUrl.split('/').pop() : 'PDF Viewer' }}</span>
       </div>
       <div class="pdf-viewer-actions">
-        <button class="pdf-viewer-btn" @click="zoomOut" title="Zoom Out">−</button>
-        <button class="pdf-viewer-btn" @click="zoomIn" title="Zoom In">+</button>
-        <button class="pdf-viewer-btn" @click="$emit('close')" title="Close">✕</button>
+        <button type="button" class="pdf-viewer-btn" aria-label="Zoom out" @click="zoomOut">−</button>
+        <button type="button" class="pdf-viewer-btn" aria-label="Zoom in" @click="zoomIn">+</button>
+        <button type="button" class="pdf-viewer-btn" aria-label="Close PDF viewer" @click="$emit('close')">✕</button>
       </div>
     </div>
 
     <div class="pdf-viewer-nav">
-      <button class="pdf-viewer-nav-btn" @click="previousPage" :disabled="currentPage <= 1">◀</button>
+      <button type="button" class="pdf-viewer-nav-btn" aria-label="Previous page" @click="previousPage" :disabled="currentPage <= 1">◀</button>
       <div class="pdf-viewer-page-info">
-        Page <span class="current-page">{{ currentPage }}</span> of {{ totalPages || '--' }}
+        Page <span class="current-page">{{ currentPage }}</span> of {{ totalPages || '—' }}
       </div>
-      <button class="pdf-viewer-nav-btn" @click="nextPage" :disabled="currentPage >= totalPages">▶</button>
+      <button type="button" class="pdf-viewer-nav-btn" aria-label="Next page" @click="nextPage" :disabled="currentPage >= totalPages">▶</button>
     </div>
 
     <div class="pdf-viewer-body" id="pdfViewerBody">
       <div v-if="isLoading" class="pdf-loading">
         <div class="pdf-loading-spinner"></div>
-        <span>Loading PDF...</span>
+        <span>Loading PDF…</span>
       </div>
 
       <div v-else-if="error" class="pdf-error">
@@ -205,10 +205,11 @@ watch(() => props.show, (newShow) => {
 <style scoped>
 .pdf-viewer-panel {
   position: fixed;
-  top: 80px;
-  right: 20px;
+  top: max(80px, env(safe-area-inset-top, 0px));
+  right: max(20px, env(safe-area-inset-right, 0px));
   width: 450px;
-  height: calc(100vh - 100px);
+  max-width: calc(100vw - 40px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  height: calc(100vh - 100px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -217,6 +218,7 @@ watch(() => props.show, (newShow) => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   z-index: 4000;
   overflow: hidden;
+  overscroll-behavior: contain;
   display: none;
   flex-direction: column;
 }
@@ -265,7 +267,12 @@ watch(() => props.show, (newShow) => {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.pdf-viewer-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .pdf-viewer-btn:hover {
@@ -295,7 +302,12 @@ watch(() => props.show, (newShow) => {
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.pdf-viewer-nav-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .pdf-viewer-nav-btn:hover:not(:disabled) {

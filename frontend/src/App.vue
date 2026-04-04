@@ -47,6 +47,7 @@ const handleCloseComparison = () => {
 
 <template>
   <div class="app-shell">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <Topbar
       @open-settings="showSettings = true"
       @open-admin="showAdmin = true"
@@ -57,10 +58,11 @@ const handleCloseComparison = () => {
       v-if="showLLMConfig"
       @close="showLLMConfig = false"
     />
-    <main v-else class="main">
+    <main v-else id="main-content" class="main" tabindex="-1">
       <SourcesPanel
         @selection-change="handleSelectionChange"
         @toggle-compare="handleToggleCompare"
+        @open-settings="showSettings = true"
       />
       <ChatPanel
         v-if="!showComparison"
@@ -80,6 +82,37 @@ const handleCloseComparison = () => {
 </template>
 
 <style scoped>
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 12px;
+  z-index: 10000;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 16px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skip-link:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.skip-link:focus-visible {
+  left: 16px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .app-shell {
   width: 100%;
   height: 100%;
