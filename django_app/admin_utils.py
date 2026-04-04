@@ -15,6 +15,7 @@ import numpy as np
 from django.db.models import Avg, Count
 
 from app.config import settings
+from app.services.vector_store import VectorStore
 from django_app.models import ConfigHistory, QueryLog, SystemMetric
 
 
@@ -563,6 +564,7 @@ def log_query(
     session_id: str = "",
     llm_model: str = "",
     answer_length: int = 0,
+    log_id: Optional[int] = None,
 ) -> QueryLog:
     """
     Log a query to the database.
@@ -580,10 +582,37 @@ def log_query(
         session_id: Session identifier
         llm_model: LLM model used
         answer_length: Length of generated answer
+        log_id: Existing QueryLog ID to update instead of creating a new row
 
     Returns:
-        Created QueryLog instance
+        Created or updated QueryLog instance
     """
+    payload = {
+        "query": query,
+        "query_type": query_type,
+        "latency_ms": latency_ms,
+        "cache_hit": cache_hit,
+        "results_count": results_count,
+        "top_k": top_k,
+        "similarity_threshold": similarity_threshold,
+        "retrieved_documents": retrieved_documents or [],
+        "user_feedback": user_feedback,
+        "session_id": session_id,
+        "llm_model": llm_model,
+        "answer_length": answer_length,
+    }
+
+    if log_id is not None:
+        try:
+            log_entry = QueryLog.objects.get(id=log_id)
+        except QueryLog.DoesNotExist:
+            pass
+        else:
+            for field, value in payload.items():
+                setattr(log_entry, field, value)
+            log_entry.save(update_fields=list(payload.keys()))
+            return log_entry
+
     return QueryLog.objects.create(
         query=query,
         query_type=query_type,

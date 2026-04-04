@@ -20,6 +20,7 @@ from django_app.views.helpers import (
     _error_response,
     _get_json_body,
     _get_upload_indexing_state,
+    _invalidate_index_dependent_caches,
 )
 
 
@@ -440,6 +441,7 @@ def admin_delete_document(request: HttpRequest, doc_id: str) -> JsonResponse:
         )
     except Exception as exc:
         return _error_response(f"Index rebuild failed: {str(exc)}", status=500)
+    _invalidate_index_dependent_caches()
 
     return JsonResponse(
         {
@@ -469,6 +471,7 @@ def admin_reindex_document(request: HttpRequest, doc_id: str) -> JsonResponse:
         )
     except Exception as exc:
         return _error_response(f"Reindex failed: {str(exc)}", status=500)
+    _invalidate_index_dependent_caches()
 
     return JsonResponse(
         {

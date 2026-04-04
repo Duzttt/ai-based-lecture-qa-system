@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.llm_client import call_llm
+from app.services.runtime_llm import load_runtime_llm_settings
 from app.services.vector_store import VectorStore
 
 
@@ -39,6 +40,7 @@ class CitationRAGPipeline:
         base_url: Optional[str] = None,
         timeout_seconds: Optional[int] = None,
     ):
+        runtime_settings = load_runtime_llm_settings()
         self.embedding_service = embedding_service or EmbeddingService(
             model_name=settings.EMBEDDING_MODEL
         )
@@ -46,8 +48,10 @@ class CitationRAGPipeline:
             index_path=settings.FAISS_INDEX_PATH,
             embedding_dim=settings.EMBEDDING_DIM,
         )
-        self.model = model or settings.LOCAL_LLM_MODEL
-        self.base_url = base_url or settings.LOCAL_LLM_BASE_URL
+        self.model = model or runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+        self.base_url = (
+            base_url or runtime_settings["base_url"] or settings.LOCAL_LLM_BASE_URL
+        )
         self.timeout_seconds = timeout_seconds or settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     def retrieve(
@@ -155,13 +159,14 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         Returns:
             Raw response text from the model
         """
+        runtime_settings = load_runtime_llm_settings()
         return call_llm(
             provider="local_llm",
-            model=model or settings.LOCAL_LLM_MODEL,
+            model=model or self.model or settings.LOCAL_LLM_MODEL,
             call_type="citation",
             messages=[{"role": "user", "content": prompt}],
             query_text=prompt,
-            base_url=self.base_url,
+            base_url=self.base_url or runtime_settings["base_url"],
             temperature=0.3,
             num_predict=2048,
         )
@@ -176,14 +181,18 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         Returns:
             Raw response text from the model
         """
+        runtime_settings = load_runtime_llm_settings()
+        api_key = runtime_settings["api_key"] or settings.OPENROUTER_API_KEY
+        if not api_key:
+            raise CitationRAGError("OPENROUTER_API_KEY is not configured")
         return call_llm(
             provider="openrouter",
-            model=settings.OPENROUTER_MODEL,
+            model=self.model or runtime_settings["model"] or settings.OPENROUTER_MODEL,
             call_type="citation",
             messages=[{"role": "user", "content": prompt}],
             query_text=prompt,
-            api_key=settings.OPENROUTER_API_KEY,
-            base_url=settings.OPENROUTER_BASE_URL,
+            api_key=api_key,
+            base_url=runtime_settings["base_url"] or settings.OPENROUTER_BASE_URL,
             temperature=0.3,
         )
 
@@ -197,21 +206,25 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         Returns:
             Raw response text from the model
         """
+        runtime_settings = load_runtime_llm_settings()
+        api_key = runtime_settings["api_key"] or settings.GEMINI_API_KEY
+        if not api_key:
+            raise CitationRAGError("GEMINI_API_KEY is not configured")
         return call_llm(
             provider="gemini",
-            model=settings.GEMINI_MODEL,
+            model=self.model or runtime_settings["model"] or settings.GEMINI_MODEL,
             call_type="citation",
             messages=[{"role": "user", "content": prompt}],
             query_text=prompt,
-            api_key=settings.GEMINI_API_KEY,
-            base_url=settings.GEMINI_BASE_URL,
+            api_key=api_key,
+            base_url=runtime_settings["base_url"] or settings.GEMINI_BASE_URL,
             temperature=0.3,
             response_format="json",
         )
 
     def _generate(self, prompt: str) -> str:
         """Dispatch to the configured LLM provider."""
-        provider = settings.LLM_PROVIDER
+        provider = load_runtime_llm_settings()["provider"] or settings.LLM_PROVIDER
 
         if provider == "gemini":
             return self._generate_with_gemini(prompt)

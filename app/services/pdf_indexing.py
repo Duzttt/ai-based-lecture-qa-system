@@ -128,6 +128,7 @@ def index_pdf_file(
     try:
         vector_store.add_embeddings(embeddings, chunk_records)
         vector_store.save()
+        VectorStore.set_cached(vector_store)
     except VectorStoreError as exc:
         raise PDFIndexingError(str(exc)) from exc
     except Exception as exc:  # noqa: BLE001

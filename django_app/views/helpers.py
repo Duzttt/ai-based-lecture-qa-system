@@ -7,10 +7,14 @@ from typing import Any, Dict, List, Optional
 from django.http import HttpRequest, JsonResponse
 
 from app.config import settings
+from app.services.runtime_llm import (
+    SETTINGS_FILE,
+    VALID_PROVIDERS,  # noqa: F401
+    get_default_model_for_provider,
+    load_runtime_llm_settings,
+)
 
-SETTINGS_FILE = Path(__file__).resolve().parents[2] / "data" / "settings.json"
 RAG_CONFIG_FILE = Path(__file__).resolve().parents[2] / "data" / "rag_config.json"
-VALID_PROVIDERS = {"gemini", "openrouter", "local_llm"}
 LOCAL_LLM_MODELS = [
     " ",
     " ",
@@ -115,6 +119,7 @@ def _full_rebuild_worker() -> None:
                 model_name=settings.EMBEDDING_MODEL,
                 clear_existing=True,
             )
+            _invalidate_index_dependent_caches()
             with _INDEXING_STATE_LOCK:
                 _INDEXING_STATE["status"] = INDEXING_STATUS_COMPLETED
                 _INDEXING_STATE["last_completed_at"] = _utc_now_iso()
@@ -137,6 +142,26 @@ def _full_rebuild_worker() -> None:
 
 def _error_response(detail: str, status: int) -> JsonResponse:
     return JsonResponse({"detail": detail}, status=status)
+
+
+def _invalidate_index_dependent_caches() -> None:
+    """Clear caches that depend on the FAISS index contents."""
+    try:
+        from app.services.vector_store import VectorStore
+
+        VectorStore.invalidate_cached(
+            index_path=settings.FAISS_INDEX_PATH,
+            embedding_dim=settings.EMBEDDING_DIM,
+        )
+    except Exception:
+        pass
+
+    try:
+        from django_app.views.suggestions import _clear_document_cache
+
+        _clear_document_cache()
+    except Exception:
+        pass
 
 
 def _build_source_snippets(sources: Any) -> List[Dict[str, Any]]:
@@ -221,8 +246,10 @@ def _load_persisted_settings() -> Dict[str, Any]:
 
 
 def _load_rag_config() -> Dict[str, Any]:
+    runtime_settings = load_runtime_llm_settings()
     default_config = {
-        "llm_model": settings.LOCAL_LLM_MODEL,
+        "llm_model": runtime_settings["model"]
+        or get_default_model_for_provider(runtime_settings["provider"] or "local_llm"),
         "top_k": 3,
         "temperature": 0.7,
     }
@@ -247,29 +274,11 @@ def _save_rag_config(config: Dict[str, Any]) -> None:
 
 
 def _build_runtime_llm_settings() -> Dict[str, Optional[str]]:
-    persisted = _load_persisted_settings()
-
-    provider = persisted.get("provider") or settings.LLM_PROVIDER
-    if provider not in VALID_PROVIDERS:
-        provider = settings.LLM_PROVIDER
-
-    if provider == "gemini":
-        default_model = settings.GEMINI_MODEL
-        default_key = settings.GEMINI_API_KEY
-    elif provider == "local_llm":
-        default_model = settings.LOCAL_LLM_MODEL
-        default_key = None
-    else:
-        default_model = "anthropic/claude-3-haiku"
-        default_key = settings.OPENROUTER_API_KEY
-
-    model = persisted.get("model") or default_model
-    api_key = persisted.get("api_key") or default_key
-
+    runtime_settings = load_runtime_llm_settings()
     return {
-        "provider": provider,
-        "model": model,
-        "api_key": api_key,
+        "provider": runtime_settings["provider"],
+        "model": runtime_settings["model"],
+        "api_key": runtime_settings["api_key"],
     }
 
 
