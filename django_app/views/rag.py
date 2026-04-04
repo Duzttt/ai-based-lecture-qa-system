@@ -20,10 +20,12 @@ from app.services.local_rag import (
 from django_app.admin_utils import log_query
 from django_app.views.helpers import (
     VALID_PROVIDERS,
+    _build_runtime_llm_settings,
     _build_retrieved_chunks,
     _build_source_snippets,
     _error_response,
     _get_json_body,
+    _invalidate_index_dependent_caches,
     _load_persisted_settings,
     _load_rag_config,
     _save_rag_config,
@@ -105,12 +107,14 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
         return _error_response("Query cannot be empty", status=400)
 
     rag_config = _load_rag_config()
+    runtime_settings = _build_runtime_llm_settings()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
+    llm_model = rag_config.get("llm_model") or runtime_settings["model"]
     temperature = rag_config.get("temperature", 0.7)
     similarity_threshold = float(rag_config.get("similarity_threshold", 0.6))
     started_at = time.perf_counter()
     retrieved_sources: List[Dict[str, Any]] = []
+    log_id = None
 
     try:
         retrieved_sources = retrieve_with_faiss(
@@ -120,12 +124,17 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
         if not context.strip():
             return _error_response("No indexed context found in FAISS", status=400)
 
-        answer = generate(
+        generation_result = generate(
             query=query,
             context=context,
             model=llm_model,
             temperature=temperature,
+            return_log=True,
         )
+        if isinstance(generation_result, tuple):
+            answer, log_id = generation_result
+        else:
+            answer = generation_result
         if not answer:
             raise LocalRAGError("Empty response from LLM")
     except requests.exceptions.Timeout:
@@ -159,6 +168,7 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
             session_id=str(request.headers.get("X-Session-Id", "")),
             llm_model=str(llm_model),
             answer_length=len(answer),
+            log_id=log_id,
         )
     except Exception:  # noqa: BLE001
         pass
@@ -191,7 +201,7 @@ def ask_with_citations(request: HttpRequest) -> JsonResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
+    llm_model = rag_config.get("llm_model") or _build_runtime_llm_settings()["model"]
 
     try:
         from app.services.citation_rag import CitationRAGPipeline, CitationRAGError
@@ -239,32 +249,14 @@ def ask_with_citations(request: HttpRequest) -> JsonResponse:
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def settings_handler(request: HttpRequest) -> JsonResponse:
-    from app.config import settings as app_settings
-
     if request.method == "GET":
-        stored_settings = _load_persisted_settings()
-        provider = stored_settings.get("provider") or app_settings.LLM_PROVIDER
-        if provider not in VALID_PROVIDERS:
-            provider = app_settings.LLM_PROVIDER
-
-        if provider == "gemini":
-            default_model = app_settings.GEMINI_MODEL
-            default_key = app_settings.GEMINI_API_KEY
-        elif provider == "local_llm":
-            default_model = app_settings.LOCAL_LLM_MODEL
-            default_key = None
-        else:
-            default_model = "anthropic/claude-3-haiku"
-            default_key = app_settings.OPENROUTER_API_KEY
-
-        model = stored_settings.get("model") or default_model
-        api_key = stored_settings.get("api_key") or default_key
+        runtime_settings = _build_runtime_llm_settings()
 
         return JsonResponse(
             {
-                "provider": provider,
-                "model": model,
-                "has_api_key": bool(api_key),
+                "provider": runtime_settings["provider"],
+                "model": runtime_settings["model"],
+                "has_api_key": bool(runtime_settings["api_key"]),
             }
         )
 
@@ -305,6 +297,10 @@ def settings_handler(request: HttpRequest) -> JsonResponse:
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with SETTINGS_FILE.open("w", encoding="utf-8") as settings_file:
             json.dump(data_to_store, settings_file)
+
+        rag_config = _load_rag_config()
+        rag_config["llm_model"] = model
+        _save_rag_config(rag_config)
     except OSError as exc:
         return _error_response(f"Failed to save settings: {str(exc)}", status=500)
 
@@ -341,25 +337,14 @@ LLM_PROVIDERS_CATALOG = [
 @csrf_exempt
 @require_http_methods(["GET"])
 def providers_handler(request: HttpRequest) -> JsonResponse:
-    from app.config import settings as app_settings
-
+    runtime_settings = _build_runtime_llm_settings()
     stored_settings = _load_persisted_settings()
-    current_provider = stored_settings.get("provider") or app_settings.LLM_PROVIDER
-    if current_provider not in VALID_PROVIDERS:
-        current_provider = app_settings.LLM_PROVIDER
+    current_provider = runtime_settings["provider"] or settings.LLM_PROVIDER
+    current_model = runtime_settings["model"] or ""
 
-    current_model = stored_settings.get("model") or ""
-    if not current_model:
-        if current_provider == "gemini":
-            current_model = app_settings.GEMINI_MODEL
-        elif current_provider == "local_llm":
-            current_model = app_settings.LOCAL_LLM_MODEL
-        else:
-            current_model = "anthropic/claude-3-haiku"
-
-    has_gemini_key = bool(app_settings.GEMINI_API_KEY or stored_settings.get("api_key"))
+    has_gemini_key = bool(settings.GEMINI_API_KEY or stored_settings.get("api_key"))
     has_openrouter_key = bool(
-        app_settings.OPENROUTER_API_KEY or stored_settings.get("api_key")
+        settings.OPENROUTER_API_KEY or stored_settings.get("api_key")
     )
 
     providers = []
@@ -395,7 +380,9 @@ def update_rag_config(request: HttpRequest) -> JsonResponse:
     except ValueError as exc:
         return _error_response(str(exc), status=400)
 
-    llm_model = str(payload.get("llm_model", settings.LOCAL_LLM_MODEL)).strip()
+    runtime_settings = _build_runtime_llm_settings()
+    default_model = runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+    llm_model = str(payload.get("llm_model", default_model)).strip()
     top_k = int(payload.get("top_k", 3))
     temperature = float(payload.get("temperature", 0.7))
 
@@ -438,6 +425,7 @@ def reset_faiss_index(request: HttpRequest) -> JsonResponse:
     if index_path.exists():
         shutil.rmtree(index_path)
         index_path.mkdir(parents=True, exist_ok=True)
+    _invalidate_index_dependent_caches()
 
     return JsonResponse({"status": "success", "message": "FAISS index has been reset"})
 
@@ -458,7 +446,7 @@ def chat_htmx(request: HttpRequest) -> HttpResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
+    llm_model = rag_config.get("llm_model") or _build_runtime_llm_settings()["model"]
     temperature = rag_config.get("temperature", 0.7)
 
     retrieved_sources: List[Dict[str, Any]] = []
@@ -623,7 +611,7 @@ def compare_documents(request: HttpRequest) -> JsonResponse:
 
     rag_config = _load_rag_config()
     top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model", settings.LOCAL_LLM_MODEL)
+    llm_model = rag_config.get("llm_model") or _build_runtime_llm_settings()["model"]
     temperature = rag_config.get("temperature", 0.7)
 
     results: List[Dict[str, Any]] = []

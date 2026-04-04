@@ -1,7 +1,7 @@
 """Centralized LLM call wrapper with logging."""
 
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, Union
 
 import requests
 
@@ -141,8 +141,9 @@ def call_llm(
     messages: List[Dict[str, str]],
     timeout: int = 60,
     query_text: str = "",
+    return_log: bool = False,
     **kwargs: Any,
-) -> str:
+) -> Union[str, Tuple[str, int]]:
     if provider not in _PROVIDER_DISPATCH:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -158,7 +159,7 @@ def call_llm(
         )
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
 
-        QueryLog.objects.create(
+        log_entry = QueryLog.objects.create(
             query=query_text or (messages[-1].get("content", "") if messages else ""),
             latency_ms=elapsed_ms,
             llm_model=model,
@@ -167,6 +168,8 @@ def call_llm(
             call_type=call_type,
             answer_length=len(result),
         )
+        if return_log:
+            return result, int(log_entry.id)
         return result
 
     except Exception as exc:

@@ -39,6 +39,30 @@ class VectorStore:
         _GLOBAL_INDEX_CACHE[key] = store
         return store
 
+    @classmethod
+    def set_cached(cls, store: "VectorStore") -> None:
+        """Update the cache with the provided store instance."""
+        _GLOBAL_INDEX_CACHE[(store.index_path, store.embedding_dim)] = store
+
+    @classmethod
+    def invalidate_cached(
+        cls,
+        index_path: Optional[str] = None,
+        embedding_dim: Optional[int] = None,
+    ) -> None:
+        """Invalidate cached stores matching the provided scope."""
+        keys_to_delete: List[Tuple[str, int]] = []
+        for key in _GLOBAL_INDEX_CACHE:
+            key_index_path, key_embedding_dim = key
+            if index_path is not None and key_index_path != index_path:
+                continue
+            if embedding_dim is not None and key_embedding_dim != embedding_dim:
+                continue
+            keys_to_delete.append(key)
+
+        for key in keys_to_delete:
+            _GLOBAL_INDEX_CACHE.pop(key, None)
+
     @staticmethod
     def _normalize_chunk(item: Any) -> Dict[str, Any]:
         if isinstance(item, dict):

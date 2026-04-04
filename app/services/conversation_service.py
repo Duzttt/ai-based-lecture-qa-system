@@ -3,8 +3,9 @@
 import re
 from typing import Optional
 
-from django_app.models import Conversation, Message
 from app.config import settings
+from app.services.runtime_llm import load_runtime_llm_settings
+from django_app.models import Conversation, Message
 
 
 PRONOUN_PATTERN = re.compile(
@@ -18,23 +19,28 @@ def _call_llm_for_rewrite(prompt: str) -> str:
     """Call LLM for query rewriting. Uses the configured provider."""
     from app.services.llm_client import call_llm
 
-    provider = settings.LLM_PROVIDER
+    runtime_settings = load_runtime_llm_settings()
+    provider = runtime_settings["provider"] or settings.LLM_PROVIDER
 
-    if provider == "gemini":
-        model = settings.GEMINI_MODEL
-    elif provider == "local_llm":
-        model = settings.LOCAL_LLM_MODEL
+    call_kwargs = {
+        "timeout": 15,
+        "query_text": prompt[:100],
+        "temperature": 0.0,
+    }
+    if provider == "local_llm":
+        call_kwargs["base_url"] = (
+            runtime_settings["base_url"] or settings.LOCAL_LLM_BASE_URL
+        )
     else:
-        model = settings.OPENROUTER_MODEL
+        call_kwargs["api_key"] = runtime_settings["api_key"]
+        call_kwargs["base_url"] = runtime_settings["base_url"]
 
     return call_llm(
         provider=provider,
-        model=model,
+        model=runtime_settings["model"] or settings.LOCAL_LLM_MODEL,
         call_type="rewrite",
         messages=[{"role": "user", "content": prompt}],
-        timeout=15,
-        query_text=prompt[:100],
-        temperature=0.0,
+        **call_kwargs,
     )
 
 

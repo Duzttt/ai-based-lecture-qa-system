@@ -1,8 +1,9 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
 from app.services.llm_client import call_llm
+from app.services.runtime_llm import load_runtime_llm_settings
 from app.services.vector_store import VectorStore, VectorStoreError
 
 SYSTEM_PROMPT = """You are an academic teaching assistant for lecture notes Q&A.
@@ -90,24 +91,29 @@ def generate_with_local_llm(
     model: Optional[str] = None,
     base_url: Optional[str] = None,
     timeout_seconds: Optional[int] = 30,
-) -> str:
+    return_log: bool = False,
+) -> Union[str, Tuple[str, int]]:
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
-    resolved_model = model or settings.LOCAL_LLM_MODEL
-    resolved_base_url = base_url or settings.LOCAL_LLM_BASE_URL
+    runtime_settings = load_runtime_llm_settings()
+    resolved_model = model or runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+    resolved_base_url = (
+        base_url or runtime_settings["base_url"] or settings.LOCAL_LLM_BASE_URL
+    )
     resolved_timeout = timeout_seconds or settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     try:
         return call_llm(
             provider="local_llm",
             model=resolved_model,
-            call_type="rag",
+            call_type="qa",
             messages=build_rag_messages(query, context),
             timeout=resolved_timeout,
             query_text=query,
             base_url=resolved_base_url,
             keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
+            return_log=return_log,
         )
     except ValueError as exc:
         raise LocalRAGError(str(exc)) from exc
@@ -118,14 +124,20 @@ def generate_with_openrouter(
     context: str,
     model: Optional[str] = None,
     api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
     temperature: float = 0.7,
     timeout_seconds: int = 60,
-) -> str:
+    return_log: bool = False,
+) -> Union[str, Tuple[str, int]]:
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
-    resolved_model = model or settings.OPENROUTER_MODEL
-    resolved_key = api_key or settings.OPENROUTER_API_KEY
+    runtime_settings = load_runtime_llm_settings()
+    resolved_model = model or runtime_settings["model"] or settings.OPENROUTER_MODEL
+    resolved_key = api_key or runtime_settings["api_key"] or settings.OPENROUTER_API_KEY
+    resolved_base_url = (
+        base_url or runtime_settings["base_url"] or settings.OPENROUTER_BASE_URL
+    )
 
     if not resolved_key:
         raise LocalRAGError("OPENROUTER_API_KEY is not configured")
@@ -134,13 +146,14 @@ def generate_with_openrouter(
         return call_llm(
             provider="openrouter",
             model=resolved_model,
-            call_type="rag",
+            call_type="qa",
             messages=build_rag_messages(query, context),
             timeout=timeout_seconds,
             query_text=query,
             api_key=resolved_key,
-            base_url=settings.OPENROUTER_BASE_URL,
+            base_url=resolved_base_url,
             temperature=temperature,
+            return_log=return_log,
         )
     except ValueError as exc:
         raise LocalRAGError(str(exc)) from exc
@@ -151,18 +164,22 @@ def generate_with_gemini(
     context: str,
     model: Optional[str] = None,
     api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
     temperature: float = 0.7,
     timeout_seconds: int = 60,
-) -> str:
+    return_log: bool = False,
+) -> Union[str, Tuple[str, int]]:
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
+    runtime_settings = load_runtime_llm_settings()
     requested_model = str(model or "").strip()
     if requested_model and "gemini" in requested_model.lower():
         resolved_model = requested_model
     else:
-        resolved_model = settings.GEMINI_MODEL
-    resolved_key = api_key or settings.GEMINI_API_KEY
+        resolved_model = runtime_settings["model"] or settings.GEMINI_MODEL
+    resolved_key = api_key or runtime_settings["api_key"] or settings.GEMINI_API_KEY
+    resolved_base_url = base_url or runtime_settings["base_url"] or settings.GEMINI_BASE_URL
 
     if not resolved_key:
         raise LocalRAGError("GEMINI_API_KEY is not configured")
@@ -171,13 +188,14 @@ def generate_with_gemini(
         return call_llm(
             provider="gemini",
             model=resolved_model,
-            call_type="rag",
+            call_type="qa",
             messages=build_rag_messages(query, context),
             timeout=timeout_seconds,
             query_text=query,
             api_key=resolved_key,
-            base_url=settings.GEMINI_BASE_URL,
+            base_url=resolved_base_url,
             temperature=temperature,
+            return_log=return_log,
         )
     except ValueError as exc:
         raise LocalRAGError(str(exc)) from exc
@@ -189,8 +207,10 @@ def generate(
     model: Optional[str] = None,
     temperature: float = 0.7,
     timeout_seconds: int = 60,
-) -> str:
-    provider = settings.LLM_PROVIDER
+    return_log: bool = False,
+) -> Union[str, Tuple[str, int]]:
+    runtime_settings = load_runtime_llm_settings()
+    provider = runtime_settings["provider"] or settings.LLM_PROVIDER
 
     if provider == "gemini":
         return generate_with_gemini(
@@ -199,6 +219,9 @@ def generate(
             model=model,
             temperature=temperature,
             timeout_seconds=timeout_seconds,
+            api_key=runtime_settings["api_key"],
+            base_url=runtime_settings["base_url"],
+            return_log=return_log,
         )
     elif provider == "openrouter":
         return generate_with_openrouter(
@@ -207,6 +230,9 @@ def generate(
             model=model,
             temperature=temperature,
             timeout_seconds=timeout_seconds,
+            api_key=runtime_settings["api_key"],
+            base_url=runtime_settings["base_url"],
+            return_log=return_log,
         )
     elif provider == "local_llm":
         return generate_with_local_llm(
@@ -214,6 +240,8 @@ def generate(
             context=context,
             model=model,
             timeout_seconds=timeout_seconds,
+            base_url=runtime_settings["base_url"],
+            return_log=return_log,
         )
     else:
         raise LocalRAGError(f"Unsupported LLM_PROVIDER: {provider}")

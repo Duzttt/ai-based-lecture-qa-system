@@ -22,6 +22,7 @@ from django_app.views.helpers import (
     _error_response,
     _get_json_body,
     _get_upload_indexing_state,
+    _invalidate_index_dependent_caches,
     _resolve_upload_indexing_strategy,
 )
 
@@ -117,6 +118,7 @@ def upload_pdf(request: HttpRequest) -> JsonResponse:
             f"Failed to process embeddings: {str(exc)}",
             status=500,
         )
+    _invalidate_index_dependent_caches()
 
     return JsonResponse(
         {
@@ -208,6 +210,7 @@ def delete_document(request: HttpRequest) -> JsonResponse:
             f"Failed to rebuild embeddings after delete: {str(exc)}",
             status=500,
         )
+    _invalidate_index_dependent_caches()
 
     return JsonResponse(
         {
