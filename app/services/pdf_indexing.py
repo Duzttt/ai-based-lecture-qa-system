@@ -5,12 +5,40 @@ import numpy as np
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
-from app.services.pdf_chunking import chunk_pdf_with_metadata, read_pdf_text
+from app.services.pdf_chunking import (
+    chunk_pdf_with_metadata,
+    read_pdf_pages,
+    read_pdf_text,
+)
 from app.services.vector_store import VectorStore, VectorStoreError
 
 
 class PDFIndexingError(Exception):
     pass
+
+
+def get_pdf_parser() -> Dict[str, Any]:
+    """Return the configured PDF parser backend."""
+    if settings.PDF_PARSER == "opendataloader":
+        from app.services.opendataloader_pdf_service import (
+            chunk_pdf_with_metadata_opendataloader,
+            read_pdf_pages_opendataloader,
+            read_pdf_text_opendataloader,
+        )
+
+        return {
+            "name": "opendataloader",
+            "read_text": read_pdf_text_opendataloader,
+            "read_pages": read_pdf_pages_opendataloader,
+            "chunk_with_metadata": chunk_pdf_with_metadata_opendataloader,
+        }
+
+    return {
+        "name": "pypdf",
+        "read_text": read_pdf_text,
+        "read_pages": read_pdf_pages,
+        "chunk_with_metadata": chunk_pdf_with_metadata,
+    }
 
 
 def _normalize_path_arg(path: str) -> str:
@@ -46,8 +74,10 @@ def index_pdf_file(
     Returns stats useful for API response / logging.
     """
     cleaned_pdf_path = _normalize_path_arg(pdf_path)
+    parser = get_pdf_parser()
+
     try:
-        text = read_pdf_text(cleaned_pdf_path)
+        text = parser["read_text"](cleaned_pdf_path)
     except FileNotFoundError as exc:
         raise PDFIndexingError(str(exc)) from exc
     except OSError as exc:
@@ -58,7 +88,7 @@ def index_pdf_file(
         raise PDFIndexingError("No text extracted from PDF")
 
     source_name = Path(cleaned_pdf_path).name
-    chunk_records = chunk_pdf_with_metadata(
+    chunk_records = parser["chunk_with_metadata"](
         pdf_path=cleaned_pdf_path,
         chunk_size=chunk_size,
         source_name=source_name,

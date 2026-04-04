@@ -10,8 +10,8 @@ from app.config import settings
 
 SETTINGS_FILE = Path(__file__).resolve().parents[2] / "data" / "settings.json"
 RAG_CONFIG_FILE = Path(__file__).resolve().parents[2] / "data" / "rag_config.json"
-VALID_PROVIDERS = {"gemini", "openrouter", "local_qwen"}
-LOCAL_QWEN_MODELS = [
+VALID_PROVIDERS = {"gemini", "openrouter", "local_llm"}
+LOCAL_LLM_MODELS = [
     " ",
     " ",
     "qwen2.5:3b",
@@ -222,7 +222,7 @@ def _load_persisted_settings() -> Dict[str, Any]:
 
 def _load_rag_config() -> Dict[str, Any]:
     default_config = {
-        "llm_model": settings.LOCAL_QWEN_MODEL,
+        "llm_model": settings.LOCAL_LLM_MODEL,
         "top_k": 3,
         "temperature": 0.7,
     }
@@ -256,8 +256,8 @@ def _build_runtime_llm_settings() -> Dict[str, Optional[str]]:
     if provider == "gemini":
         default_model = settings.GEMINI_MODEL
         default_key = settings.GEMINI_API_KEY
-    elif provider == "local_qwen":
-        default_model = settings.LOCAL_QWEN_MODEL
+    elif provider == "local_llm":
+        default_model = settings.LOCAL_LLM_MODEL
         default_key = None
     else:
         default_model = "anthropic/claude-3-haiku"

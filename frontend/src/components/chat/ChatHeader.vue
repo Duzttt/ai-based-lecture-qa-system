@@ -18,10 +18,10 @@ const toggleDocumentListTooltip = () => {
 <template>
   <div class="chat-header">
     <div class="chat-title">
-      <span class="chat-title-main">Chat</span>
+      <h2 class="chat-title-main">Chat</h2>
       <span class="chat-title-sub">Ask anything about your notes</span>
     </div>
-    
+
     <RetrievalScopeIndicator
       :has-selection="hasSelection"
       :selected-count="selectedCount"
@@ -35,13 +35,12 @@ const toggleDocumentListTooltip = () => {
 
 <style scoped>
 .chat-header {
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(31, 41, 55, 0.9);
-  font-size: 12px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  background: var(--surface-container);
 }
 
 .chat-title {
@@ -51,12 +50,15 @@ const toggleDocumentListTooltip = () => {
 }
 
 .chat-title-main {
-  font-size: 13px;
+  font-family: var(--font-headline);
+  font-size: 15px;
   font-weight: 600;
+  color: var(--on-surface);
+  margin: 0;
 }
 
 .chat-title-sub {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--on-surface-variant);
 }
 </style>

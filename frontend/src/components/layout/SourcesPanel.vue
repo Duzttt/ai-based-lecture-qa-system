@@ -5,6 +5,8 @@ import { uploadPDF, getFiles, deleteFile } from '../../services/api'
 
 const documentStore = useDocumentStore()
 
+const emit = defineEmits(['selection-change', 'toggle-compare', 'open-settings'])
+
 const sources = ref([])
 const showUploadModal = ref(false)
 const searchQuery = ref('')
@@ -12,10 +14,10 @@ const uploading = ref(false)
 const uploadProgress = ref(0)
 const uploadError = ref('')
 const uploadSuccess = ref(false)
+const uploadResults = ref([])
 const compareMode = ref(false)
-const showSelectionTooltip = ref(false)
+const deletingFiles = ref(new Set())
 
-// Computed from store
 const selectedDocs = computed(() => documentStore.selectedDocIds)
 const selectedCount = computed(() => documentStore.selectedCount)
 const allSelected = computed(() => documentStore.allSelected)
@@ -31,82 +33,113 @@ const loadFiles = async () => {
   }
 }
 
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
+const uploadFile = async (file) => {
   if (!file.name.toLowerCase().endsWith('.pdf')) {
-    uploadError.value = 'Please upload a PDF file'
-    return
+    return { filename: file.name, success: false, error: 'Not a PDF file' }
   }
+  try {
+    await uploadPDF(file, null)
+    return { filename: file.name, success: true }
+  } catch (err) {
+    return { filename: file.name, success: false, error: err.response?.data?.error || 'Upload failed' }
+  }
+}
+
+const handleFileUpload = async (event) => {
+  const files = Array.from(event.target.files)
+  if (files.length === 0) return
 
   uploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
   uploadSuccess.value = false
+  uploadResults.value = []
 
-  try {
-    await uploadPDF(file, (progress) => {
-      uploadProgress.value = progress
-    })
-    await loadFiles()
-    uploadSuccess.value = true
-    setTimeout(() => {
-      uploadSuccess.value = false
-      showUploadModal.value = false
-    }, 900)
-  } catch (err) {
-    uploadError.value = err.response?.data?.error || 'Failed to upload file'
-  } finally {
-    uploading.value = false
+  for (let i = 0; i < files.length; i++) {
+    const result = await uploadFile(files[i])
+    uploadResults.value.push(result)
+    uploadProgress.value = Math.round(((i + 1) / files.length) * 100)
   }
+
+  const successCount = uploadResults.value.filter(r => r.success).length
+  const failCount = uploadResults.value.length - successCount
+
+  if (failCount > 0) {
+    uploadError.value = `${failCount} of ${uploadResults.value.length} file${uploadResults.value.length > 1 ? 's' : ''} failed to upload`
+  } else {
+    uploadSuccess.value = true
+  }
+
+  await loadFiles()
+
+  setTimeout(() => {
+    uploadSuccess.value = false
+    uploadError.value = ''
+    uploadResults.value = []
+    showUploadModal.value = false
+  }, 1500)
 }
 
 const handleDrop = async (event) => {
   event.preventDefault()
-  const file = event.dataTransfer.files[0]
-  if (!file) return
-
-  if (!file.name.toLowerCase().endsWith('.pdf')) {
-    uploadError.value = 'Please upload a PDF file'
-    return
-  }
+  const files = Array.from(event.dataTransfer.files)
+  if (files.length === 0) return
 
   uploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
   uploadSuccess.value = false
+  uploadResults.value = []
 
-  try {
-    await uploadPDF(file, (progress) => {
-      uploadProgress.value = progress
-    })
-    await loadFiles()
-    uploadSuccess.value = true
-    setTimeout(() => {
-      uploadSuccess.value = false
-      showUploadModal.value = false
-    }, 900)
-  } catch (err) {
-    uploadError.value = err.response?.data?.error || 'Failed to upload file'
-  } finally {
-    uploading.value = false
+  for (let i = 0; i < files.length; i++) {
+    const result = await uploadFile(files[i])
+    uploadResults.value.push(result)
+    uploadProgress.value = Math.round(((i + 1) / files.length) * 100)
   }
+
+  const successCount = uploadResults.value.filter(r => r.success).length
+  const failCount = uploadResults.value.length - successCount
+
+  if (failCount > 0) {
+    uploadError.value = `${failCount} of ${uploadResults.value.length} file${uploadResults.value.length > 1 ? 's' : ''} failed to upload`
+  } else {
+    uploadSuccess.value = true
+  }
+
+  await loadFiles()
+
+  setTimeout(() => {
+    uploadSuccess.value = false
+    uploadError.value = ''
+    uploadResults.value = []
+    showUploadModal.value = false
+  }, 1500)
 }
 
-const handleDragOver = (event) => {
-  event.preventDefault()
-}
+const handleDragOver = (event) => { event.preventDefault() }
 
-const removeFile = async (fileId) => {
-  const filename = fileId.name || fileId
-  if (!confirm(`Delete ${filename}?`)) return
+const removeFile = async (filename) => {
+  if (!filename) return
+
+  const sourceKey = filename
+  if (deletingFiles.value.has(sourceKey)) return
+
+  // Mark as deleting
+  deletingFiles.value.add(sourceKey)
+
+  // Deselect if selected
+  if (documentStore.isDocSelected(filename)) {
+    documentStore.deselectDoc(filename)
+  }
 
   try {
     await deleteFile(filename)
-    await loadFiles()
+    // Remove from sources after successful delete
+    sources.value = sources.value.filter(s => (s.name || s.filename) !== filename)
   } catch (err) {
     uploadError.value = err.response?.data?.error || 'Failed to delete file'
+  } finally {
+    deletingFiles.value.delete(sourceKey)
   }
 }
 
@@ -114,22 +147,19 @@ const toggleDocSelection = (docName) => {
   documentStore.toggleDocSelection(docName)
 }
 
-const isSelected = (docName) => {
-  return documentStore.isDocSelected(docName)
+const onSourceRowKeydown = (event, docName) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    toggleDocSelection(docName)
+  }
 }
 
-const toggleSelectAll = () => {
-  documentStore.toggleSelectAll()
-}
-
-const toggleCompareMode = () => {
-  compareMode.value = !compareMode.value
-}
+const isSelected = (docName) => documentStore.isDocSelected(docName)
+const toggleSelectAll = () => { documentStore.toggleSelectAll() }
+const toggleCompareMode = () => { compareMode.value = !compareMode.value }
 
 const filteredSources = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return sources.value
-  }
+  if (!searchQuery.value.trim()) return sources.value
   const query = searchQuery.value.toLowerCase()
   return sources.value.filter(source => {
     const name = source.name || source.filename
@@ -137,135 +167,131 @@ const filteredSources = computed(() => {
   })
 })
 
-onMounted(() => {
-  loadFiles()
-})
+onMounted(() => { loadFiles() })
 </script>
 
 <template>
   <div class="panel sources-panel">
     <div class="panel-header">
-      <div>
-        <span class="panel-header-title">Sources</span>
-        <span class="panel-header-sub">{{ sources.length }} documents</span>
+      <div class="header-title-group">
+        <h2 class="panel-title">Lecture Vault</h2>
+        <span class="panel-subtitle">Academic Year 2024</span>
       </div>
-      <div class="panel-header-actions">
-        <button
-          class="compare-mode-btn"
-          :class="{ active: compareMode }"
-          @click="toggleCompareMode"
-          title="Toggle Compare Mode"
-        >
-          ⚖
-        </button>
-        <button class="sources-add" @click="showUploadModal = true">
-          <span>+</span> Add
-        </button>
-      </div>
+      <button type="button" class="select-all-btn" @click="toggleSelectAll" :disabled="sources.length === 0">
+        {{ allSelected ? 'Deselect All' : 'Select All' }}
+      </button>
     </div>
-    <div class="sources-body">
+
+    <div class="panel-body">
       <div class="sources-search">
-        <span>🔍</span>
+        <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search sources..."
+          placeholder="Search sources…"
+          aria-label="Search sources"
         />
       </div>
-      
-      <!-- Selection Controls -->
-      <div class="selection-controls">
-        <button 
-          class="btn-select-all"
-          @click="toggleSelectAll"
-          :disabled="sources.length === 0"
-        >
-          {{ allSelected ? '✓ Deselect All' : '☐ Select All' }}
-        </button>
-        <div class="selected-count" :class="{ 'has-selection': hasSelection }">
-          <span class="count-icon">📄</span>
-          <span class="count-text">{{ selectedCount }} / {{ sources.length }} selected</span>
-        </div>
-      </div>
-      
-      <div class="chip-row">
-        <span class="chip">📄 PDF</span>
-        <span class="chip">📝 Notes</span>
-      </div>
-      
+
       <div v-if="sources.length === 0" class="sources-empty">
-        <div class="empty-icon">📚</div>
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
         <div class="empty-text">No sources yet</div>
         <div class="empty-sub">Add your first document to start</div>
       </div>
-      
+
       <div v-else-if="filteredSources.length === 0" class="sources-empty">
         No documents match "{{ searchQuery }}"
       </div>
-      
+
       <div v-else class="sources-list">
-        <div
-          v-for="source in filteredSources"
-          :key="source.id || source.name"
-          class="source-item"
-          :class="{
-            'selected': isSelected(source.name || source.filename),
-            'compare-mode': compareMode
-          }"
-        >
-          <input
-            type="checkbox"
-            :checked="isSelected(source.name || source.filename)"
-            @change="toggleDocSelection(source.name || source.filename)"
-            class="source-checkbox"
-          />
-          <span class="source-icon">📄</span>
-          <span class="source-name" :title="source.name || source.filename">
-            {{ source.name || source.filename }}
-          </span>
-          <button class="source-remove" @click.stop="removeFile(source.id)">✕</button>
-        </div>
+        <TransitionGroup name="source-list">
+          <div
+            v-for="source in filteredSources"
+            :key="source.name"
+            class="source-item"
+            role="button"
+            tabindex="0"
+            :aria-pressed="isSelected(source.name || source.filename)"
+            :aria-label="`Select ${source.name || source.filename}`"
+            :class="{
+              'selected': isSelected(source.name || source.filename),
+              'compare-mode': compareMode,
+              'deleting': deletingFiles.has(source.name || source.filename)
+            }"
+            @click="toggleDocSelection(source.name || source.filename)"
+            @keydown="onSourceRowKeydown($event, source.name || source.filename)"
+          >
+            <svg class="source-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span class="source-name" :title="source.name || source.filename">
+              {{ source.name || source.filename }}
+            </span>
+            <button type="button" class="source-remove" @click.stop="removeFile(source.name)" :class="{ deleting: deletingFiles.has(source.name || source.filename) }" :aria-label="`Remove ${source.name || source.filename}`">
+              <svg v-if="deletingFiles.has(source.name || source.filename)" class="deleting-spinner" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+              <svg v-else viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+        </TransitionGroup>
       </div>
     </div>
 
+    <div class="panel-footer">
+      <button type="button" class="footer-btn" @click="showUploadModal = true">
+        <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+        Manage Sources
+      </button>
+      <button
+        type="button"
+        class="footer-btn-icon"
+        aria-label="Settings"
+        @click="emit('open-settings')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </div>
+
     <!-- Upload Modal -->
-    <div v-if="showUploadModal" class="upload-overlay" @click.self="showUploadModal = false">
+    <div
+      v-if="showUploadModal"
+      class="upload-overlay"
+      role="presentation"
+      @click.self="showUploadModal = false"
+    >
       <div class="upload-modal" @drop="handleDrop" @dragover="handleDragOver">
         <div class="upload-header">
           <h3>Upload PDF</h3>
-          <button class="upload-close" @click="showUploadModal = false">✕</button>
+          <button type="button" class="upload-close" @click="showUploadModal = false" aria-label="Close upload dialog">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          </button>
         </div>
         <div class="upload-body">
           <label class="upload-area">
-            <input
-              type="file"
-              accept=".pdf"
-              @change="handleFileUpload"
-              :disabled="uploading"
-              hidden
-            />
-            <div class="upload-icon">📁</div>
+            <input type="file" accept=".pdf" multiple @change="handleFileUpload" :disabled="uploading" hidden />
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
             <div class="upload-text">
               <span class="primary">Click to upload</span> or drag and drop
             </div>
-            <div class="upload-hint">PDF files only (max 10MB)</div>
+            <div class="upload-hint">PDF files only, multiple files supported (max 10MB each)</div>
           </label>
           <div v-if="uploading" class="upload-progress">
             <div class="upload-progress-bar" :style="{ width: uploadProgress + '%' }"></div>
             <div class="upload-spinner-wrap">
               <div class="upload-spinner"></div>
-              <span class="upload-spinner-text">Uploading, please wait...</span>
+              <span>Uploading {{ uploadResults.length }} file{{ uploadResults.length !== 1 ? 's' : '' }}…</span>
             </div>
           </div>
           <div v-else-if="uploadSuccess" class="upload-success">
-            <div class="success-icon-wrap">
-              <div class="success-ring"></div>
-              <div class="success-icon">✔</div>
-            </div>
-            <div class="success-text-main">Upload complete</div>
-            <div class="success-text-sub">Returning to home...</div>
+            <svg class="success-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>{{ uploadResults.length }} file{{ uploadResults.length !== 1 ? 's' : '' }} uploaded</span>
           </div>
           <div v-if="uploadError" class="upload-error">{{ uploadError }}</div>
+          <div v-if="uploadResults.length > 0 && !uploading" class="upload-results-list">
+            <div v-for="(result, idx) in uploadResults" :key="idx" :class="['upload-result-item', result.success ? 'success' : 'error']">
+              <svg v-if="result.success" class="result-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              <svg v-else class="result-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <span class="result-filename">{{ result.filename }}</span>
+              <span v-if="!result.success" class="result-error">{{ result.error }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -274,124 +300,97 @@ onMounted(() => {
 
 <style scoped>
 .sources-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(15, 25, 45, 0.4) 0%,
-    rgba(25, 35, 60, 0.5) 100%
-  );
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.12);
-  border-left-color: rgba(255, 255, 255, 0.12);
+  background: var(--surface-container-low);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  backdrop-filter: blur(15px) saturate(180%);
-  -webkit-backdrop-filter: blur(15px) saturate(180%);
-  box-shadow:
-    0 15px 30px -15px rgba(0, 0, 0, 0.6),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    inset 0 -2px 2px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.sources-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.7),
-    inset 0 1px 2px rgba(255, 255, 255, 0.15);
 }
 
 .panel-header {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+  padding: 16px 16px 12px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  font-size: 12px;
 }
 
-.panel-header-actions {
+.header-title-group {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.compare-mode-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.panel-title {
+  font-family: var(--font-headline);
   font-size: 16px;
-  transition: all 0.2s;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.compare-mode-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
-  color: white;
+.panel-subtitle {
+  font-size: 12px;
+  color: var(--on-surface-variant);
 }
 
-.compare-mode-btn.active {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
-  border-color: var(--accent);
-  color: white;
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-}
-
-.panel-header-title {
-  font-weight: 600;
-  display: block;
-}
-
-.panel-header-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.sources-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px dashed rgba(75, 85, 99, 0.9);
-  font-size: 11px;
-  color: var(--text-main);
-  cursor: pointer;
+.select-all-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--outline-variant);
   background: transparent;
-  transition: all 0.2s;
+  color: var(--primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
-.sources-add:hover {
-  border-color: var(--accent);
-  background: rgba(99, 102, 241, 0.1);
+.select-all-btn:hover:not(:disabled) {
+  background: rgba(129, 140, 248, 0.1);
+  border-color: var(--primary-container);
 }
 
-.sources-body {
-  padding: calc(var(--spacing-unit) + 2px);
+.select-all-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.select-all-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.panel-body {
+  flex: 1;
+  padding: 0 12px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 12px;
 }
 
 .sources-search {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: #020617;
-  border: 1px solid rgba(55, 65, 81, 0.8);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--surface-container);
+  border: 1px solid rgba(69, 70, 83, 0.15);
+  transition: border-color 0.2s;
+}
+
+.sources-search:focus-within {
+  border-color: var(--primary-container);
+}
+
+.search-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
 }
 
 .sources-search input {
@@ -399,227 +398,292 @@ onMounted(() => {
   border: none;
   outline: none;
   background: transparent;
-  color: var(--text-main);
-  font-size: 12px;
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  font-size: 13px;
 }
 
-/* Selection Controls */
-.selection-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  background: rgba(2, 6, 23, 0.6);
-  border-radius: 8px;
-  border: 1px solid rgba(55, 65, 81, 0.8);
+.sources-search input:focus {
+  outline: none;
 }
 
-.btn-select-all {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+.sources-search input:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.btn-select-all:hover:not(:disabled) {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
-}
-
-.btn-select-all:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.selected-count {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 10px;
-  color: var(--text-muted);
-  transition: all 0.2s;
-}
-
-.selected-count.has-selection {
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: var(--accent);
-}
-
-.count-icon {
-  font-size: 12px;
-}
-
-.count-text {
-  font-weight: 600;
-}
-
-.chip-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.chip {
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: var(--bg-chip);
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  font-size: 11px;
-  color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.sources-search input::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 0.6;
 }
 
 .sources-empty {
-  margin-top: var(--spacing-unit);
-  padding: 20px 10px;
+  margin-top: 16px;
+  padding: 24px 16px;
   border-radius: 10px;
-  border: 1px dashed rgba(55, 65, 81, 0.9);
-  background: rgba(15, 23, 42, 0.4);
-  color: var(--text-muted);
-  font-size: 11px;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: 12px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .empty-icon {
-  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  color: var(--outline);
   opacity: 0.5;
 }
 
 .empty-text {
-  font-size: 12px;
-  color: var(--text-main);
+  font-size: 13px;
+  color: var(--on-surface);
   font-weight: 600;
+  font-family: var(--font-headline);
 }
 
 .empty-sub {
-  font-size: 10px;
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  opacity: 0.7;
 }
 
 .sources-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-  max-height: 300px;
-  overflow-y: auto;
+  gap: 2px;
 }
 
 .source-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.15s;
+}
+
+.source-item:focus {
+  outline: none;
+}
+
+.source-item:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 .source-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.3);
-}
-
-.source-item.compare-mode {
-  cursor: pointer;
+  background: var(--surface-container);
 }
 
 .source-item.selected {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+  background: rgba(129, 140, 248, 0.12);
 }
 
 .source-item.selected .source-name {
-  color: white;
-  font-weight: 600;
-}
-
-.source-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--accent);
-  flex-shrink: 0;
+  color: var(--primary);
+  font-weight: 500;
 }
 
 .source-icon {
-  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  color: var(--on-surface-variant);
   flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.source-item.selected .source-icon {
+  color: var(--primary-container);
+  opacity: 1;
 }
 
 .source-name {
-  font-size: 12px;
-  color: var(--text-main);
+  font-size: 13px;
+  color: var(--on-surface);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
 }
 
+.source-item.deleting {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.source-list-move,
+.source-list-enter-active,
+.source-list-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.source-list-leave-active {
+  position: absolute;
+}
+
+.source-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.source-list-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.source-list-move {
+  transition: transform 0.2s;
+}
+
 .source-remove {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--on-surface-variant);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  transition: all 0.2s;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
   flex-shrink: 0;
 }
 
+.source-remove svg {
+  width: 16px;
+  height: 16px;
+}
+
+.source-item:hover .source-remove {
+  opacity: 0.6;
+}
+
 .source-remove:hover {
-  background: rgba(239, 68, 68, 0.2);
+  opacity: 1 !important;
+  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
+}
+
+.source-remove:focus-visible {
+  opacity: 1 !important;
+  outline: 2px solid #ef4444;
+  outline-offset: 1px;
+}
+
+.source-remove.deleting {
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+.deleting-spinner {
+  width: 16px;
+  height: 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+.panel-footer {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid rgba(69, 70, 83, 0.1);
+  margin-top: auto;
+}
+
+.footer-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.footer-btn:hover {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+}
+
+.footer-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.footer-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.footer-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.footer-btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.footer-btn-icon:hover {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+}
+
+.footer-btn-icon:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Upload Modal */
 .upload-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  inset: 0;
+  background: rgba(6, 14, 32, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   animation: fadeIn 0.2s ease;
+  overscroll-behavior: contain;
 }
 
 .upload-modal {
   width: 90%;
-  max-width: 400px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  max-width: 380px;
+  background: var(--surface-container);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(6, 14, 32, 0.6);
   animation: slideUp 0.3s ease;
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .upload-header {
@@ -627,96 +691,104 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .upload-header h3 {
   margin: 0;
+  font-family: var(--font-headline);
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--on-surface);
 }
 
 .upload-close {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--on-surface-variant);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.upload-close svg {
+  width: 18px;
+  height: 18px;
 }
 
 .upload-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  transform: rotate(90deg);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface);
+}
+
+.upload-close:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 .upload-body {
-  padding: 20px;
+  padding: 0 20px 20px;
 }
 
 .upload-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px;
-  border: 2px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 32px 20px;
+  border: 2px dashed rgba(69, 70, 83, 0.3);
+  border-radius: 10px;
+  background: var(--surface-container-lowest);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
   text-align: center;
 }
 
 .upload-area:hover {
-  border-color: var(--accent);
-  background: rgba(99, 102, 241, 0.05);
-}
-
-.upload-area.drag-over {
-  border-color: var(--accent);
-  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-container);
+  background: rgba(129, 140, 248, 0.04);
 }
 
 .upload-icon {
-  font-size: 40px;
+  width: 40px;
+  height: 40px;
   margin-bottom: 12px;
+  color: var(--primary-container);
 }
 
 .upload-text {
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 6px;
-  color: var(--text-main);
+  color: var(--on-surface);
 }
 
 .upload-text .primary {
-  color: var(--accent);
+  color: var(--primary);
   font-weight: 500;
 }
 
 .upload-hint {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--on-surface-variant);
 }
 
 .upload-progress {
   margin-top: 12px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+}
+
+.upload-progress-bar {
+  height: 3px;
+  background: var(--surface-container-highest);
   border-radius: 2px;
   overflow: hidden;
-  position: relative;
 }
 
 .upload-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), #a855f7);
+  background: linear-gradient(90deg, var(--primary-container), #6366f1);
   transition: width 0.3s;
 }
 
@@ -725,110 +797,108 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--on-surface-variant);
 }
 
 .upload-spinner {
   width: 16px;
   height: 16px;
-  border-radius: 999px;
-  border: 2px solid rgba(148, 163, 184, 0.4);
-  border-top-color: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--outline-variant);
+  border-top-color: var(--primary-container);
   animation: spin 0.8s linear infinite;
 }
 
 .upload-success {
   margin-top: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(34, 197, 94, 0.5);
-  background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.35), transparent),
-    rgba(22, 163, 74, 0.15);
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.08);
   text-align: center;
-}
-
-.success-icon-wrap {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  margin: 0 auto 6px;
-}
-
-.success-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  border: 2px solid rgba(74, 222, 128, 0.4);
-  border-top-color: rgba(190, 242, 100, 0.9);
-  animation: spin 0.9s ease-out;
-}
-
-.success-icon {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #22c55e, #a3e635);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  color: #022c22;
-  box-shadow:
-    0 8px 18px rgba(22, 163, 74, 0.5),
-    inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  gap: 8px;
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.success-text-main {
-  font-size: 12px;
-  font-weight: 600;
-  color: #bbf7d0;
-}
-
-.success-text-sub {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--text-muted);
+.success-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .upload-error {
   margin-top: 12px;
   padding: 8px 12px;
   border-radius: 8px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
   color: #fca5a5;
   font-size: 12px;
   text-align: center;
 }
 
+.upload-results-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.upload-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.upload-result-item.success {
+  background: rgba(34, 197, 94, 0.06);
+  color: #4ade80;
+}
+
+.upload-result-item.error {
+  background: rgba(239, 68, 68, 0.06);
+  color: #fca5a5;
+}
+
+.result-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.result-filename {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-error {
+  font-size: 11px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -10,32 +10,43 @@ const emit = defineEmits(['toggle-tooltip', 'close-tooltip'])
 </script>
 
 <template>
-  <div 
-    v-if="hasSelection" 
-    class="retrieval-scope" 
-    @click="emit('toggle-tooltip')"
-  >
-    <span class="scope-icon">🔍</span>
-    <span class="scope-label">Retrieval scope:</span>
-    <span class="scope-value">
-      {{ selectedCount }} document{{ selectedCount > 1 ? 's' : '' }}
-      <svg class="scope-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </span>
-    
-    <div v-if="showTooltip" class="document-tooltip" @click.stop>
+  <div v-if="hasSelection" class="retrieval-scope-wrap">
+    <button
+      type="button"
+      class="retrieval-scope"
+      :aria-expanded="showTooltip"
+      aria-controls="retrieval-scope-tooltip"
+      @click="emit('toggle-tooltip')"
+    >
+      <span class="scope-icon" aria-hidden="true">🔍</span>
+      <span class="scope-label">Retrieval scope:</span>
+      <span class="scope-value">
+        {{ selectedCount }} document{{ selectedCount > 1 ? 's' : '' }}
+        <svg class="scope-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </button>
+
+    <div
+      v-if="showTooltip"
+      id="retrieval-scope-tooltip"
+      class="document-tooltip"
+      role="region"
+      aria-label="Selected documents"
+      @click.stop
+    >
       <div class="tooltip-header">
         <span>📄 Selected documents</span>
-        <button class="tooltip-close" @click="emit('close-tooltip')">✕</button>
+        <button type="button" class="tooltip-close" aria-label="Close" @click="emit('close-tooltip')">✕</button>
       </div>
       <div class="tooltip-content">
-        <div 
-          v-for="doc in selectedDocuments" 
+        <div
+          v-for="doc in selectedDocuments"
           :key="doc.name || doc.filename"
           class="tooltip-doc-item"
         >
-          <span class="doc-icon">📄</span>
+          <span class="doc-icon" aria-hidden="true">📄</span>
           <span class="doc-name" :title="doc.name || doc.filename">
             {{ doc.name || doc.filename }}
           </span>
@@ -46,14 +57,19 @@ const emit = defineEmits(['toggle-tooltip', 'close-tooltip'])
       </div>
     </div>
   </div>
-  
+
   <div v-else class="retrieval-scope empty">
-    <span class="scope-icon">⚠️</span>
+    <span class="scope-icon" aria-hidden="true">⚠️</span>
     <span class="scope-label">No documents selected</span>
   </div>
 </template>
 
 <style scoped>
+.retrieval-scope-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .retrieval-scope {
   display: flex;
   align-items: center;
@@ -63,9 +79,17 @@ const emit = defineEmits(['toggle-tooltip', 'close-tooltip'])
   background: rgba(99, 102, 241, 0.15);
   border: 1px solid rgba(99, 102, 241, 0.3);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
   position: relative;
   white-space: nowrap;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.retrieval-scope:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .retrieval-scope:hover {
@@ -155,7 +179,12 @@ const emit = defineEmits(['toggle-tooltip', 'close-tooltip'])
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tooltip-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .tooltip-close:hover {
@@ -181,7 +210,7 @@ const emit = defineEmits(['toggle-tooltip', 'close-tooltip'])
   background: rgba(255, 255, 255, 0.03);
   font-size: 11px;
   color: var(--text-main);
-  transition: all 0.2s;
+  transition: background-color 0.2s;
 }
 
 .tooltip-doc-item:hover {

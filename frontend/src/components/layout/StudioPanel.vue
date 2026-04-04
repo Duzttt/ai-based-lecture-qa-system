@@ -2,22 +2,38 @@
 import { ref, computed } from 'vue'
 import { useDocumentStore } from '../../stores/documentStore'
 import { useSummaryStore } from '../../stores/summaryStore'
-import EmbeddingModelSelector from '../settings/EmbeddingModelSelector.vue'
-import ModelComparison from '../dashboard/ModelComparison.vue'
 import SummaryModal from '../studio/SummaryModal.vue'
 import SummaryViewer from '../studio/SummaryViewer.vue'
 
 const documentStore = useDocumentStore()
 const summaryStore = useSummaryStore()
 
-const studioOptions = [
-  { id: 1, title: '📝 文档摘要', sub: '生成选中文档的智能摘要', action: 'summary' },
-  { id: 2, title: '📚 测验', sub: '创建知识测验', action: 'quiz' },
-  { id: 3, title: '🃏 抽认卡', sub: '学习卡片', action: 'flashcards' },
-  { id: 4, title: '🎙️ 播客', sub: '音频笔记', action: 'podcast' },
+const studioTools = [
+  {
+    id: 'summary',
+    title: 'Summarize PDF',
+    desc: 'Condense complex papers into high-level editorial abstracts.',
+    icon: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
+    action: 'summary',
+  },
+  {
+    id: 'quiz',
+    title: 'Create Quiz',
+    desc: 'Generate active recall tests based on your selected sources.',
+    icon: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 4h2v5l-1-.75L9 9V4zm9 16H6V4h1v9l3-2.25L13 13V4h5v16z',
+    action: 'quiz',
+    disabled: true,
+  },
+  {
+    id: 'flashcards',
+    title: 'Study Cards',
+    desc: 'Convert lecture notes into digital flashcards automatically.',
+    icon: 'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z',
+    action: 'flashcards',
+    disabled: true,
+  },
 ]
 
-const showModelComparison = ref(false)
 const showSummaryModal = ref(false)
 const showSummaryViewer = ref(false)
 
@@ -26,25 +42,19 @@ const selectedCount = computed(() => selectedDocs.value.length)
 const currentSummary = computed(() => summaryStore.currentSummary)
 const isGenerating = computed(() => summaryStore.isGenerating)
 
-const handleStudioClick = (option) => {
-  if (option.action === 'summary') {
+const handleToolClick = (tool) => {
+  if (tool.disabled) return
+  if (tool.action === 'summary') {
     openSummaryModal()
-  } else {
-    // Placeholder for other features
-    alert(`${option.title} 功能开发中...`)
   }
 }
 
 const openSummaryModal = () => {
   if (selectedCount.value === 0) {
-    alert('请先在 Sources 面板中选择至少一个文档')
+    alert('Please select at least one document in the sidebar first')
     return
   }
   showSummaryModal.value = true
-}
-
-const closeSummaryModal = () => {
-  showSummaryModal.value = false
 }
 
 const handleSummaryGenerate = async (config) => {
@@ -62,61 +72,50 @@ const handleSummaryRegenerate = async () => {
 
 const handleSummaryFeedback = (rating) => {
   console.log('Feedback:', rating)
-  // TODO: Send feedback to backend
 }
 
 const closeSummaryViewer = () => {
   showSummaryViewer.value = false
   summaryStore.clearCurrent()
 }
-
-const handleModelChanged = (model) => {
-  console.log('Model changed to:', model)
-}
-
-const openModelComparison = () => {
-  showModelComparison.value = true
-}
-
-const closeModelComparison = () => {
-  showModelComparison.value = false
-}
 </script>
 
 <template>
   <div class="panel studio-panel">
     <div class="panel-header">
-      <div>
-        <span class="panel-header-title">Studio</span>
-        <span class="panel-header-sub">AI Tools</span>
-      </div>
+      <h2 class="panel-title">Studio Tools</h2>
     </div>
-    <div class="studio-body">
-      <!-- Embedding Model Selector -->
-      <EmbeddingModelSelector @model-changed="handleModelChanged" />
-      
-      <!-- Studio Tools Grid -->
-      <div class="studio-grid">
-        <div
-          v-for="option in studioOptions"
-          :key="option.id"
-          class="studio-card"
-          :class="{ 'disabled': option.action !== 'summary' }"
-          @click="handleStudioClick(option)"
+
+    <div class="panel-body">
+      <div class="tools-list">
+        <button
+          v-for="tool in studioTools"
+          :key="tool.id"
+          type="button"
+          class="tool-card"
+          :class="{ disabled: tool.disabled }"
+          :disabled="tool.disabled"
+          @click="handleToolClick(tool)"
         >
-          <span class="title">{{ option.title }}</span>
-          <span class="sub">{{ option.sub }}</span>
-          <span v-if="option.action === 'summary' && selectedCount > 0" class="doc-count-badge">
-            {{ selectedCount }} 文档
+          <div class="tool-icon-wrap">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="tool.icon" /></svg>
+          </div>
+          <div class="tool-content">
+            <span class="tool-title">{{ tool.title }}</span>
+            <span class="tool-desc">{{ tool.desc }}</span>
+          </div>
+          <span v-if="tool.action === 'summary' && selectedCount > 0" class="tool-badge" aria-hidden="true">
+            {{ selectedCount }}
           </span>
-        </div>
+        </button>
       </div>
-      
-      <!-- Summary Viewer -->
+
       <div v-if="showSummaryViewer" class="summary-viewer-container">
         <div class="viewer-header">
-          <span class="viewer-title">摘要查看</span>
-          <button class="viewer-close" @click="closeSummaryViewer">✕</button>
+          <span class="viewer-title">Summary</span>
+          <button type="button" class="viewer-close" aria-label="Close summary" @click="closeSummaryViewer">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          </button>
         </div>
         <SummaryViewer
           :summary="currentSummary"
@@ -126,234 +125,293 @@ const closeModelComparison = () => {
           @feedback="handleSummaryFeedback"
         />
       </div>
-      
-      <!-- Studio Footer -->
-      <div class="studio-footer">
-        <button class="btn-compare-models" @click="openModelComparison">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16">
-            <path d="M18 20V10M12 20V4M6 20v-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          对比模型
+
+      <div class="pro-section">
+        <div class="pro-header">
+          <svg class="pro-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <span class="pro-title">Deep Focus Mode</span>
+        </div>
+        <span class="pro-badge">Pro Feature</span>
+        <button type="button" class="pro-btn" aria-label="Upgrade workspace (coming soon)" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Upgrade Workspace
         </button>
-        <span class="tools-hint">更多工具即将推出...</span>
       </div>
     </div>
-    
-    <!-- Model Comparison Modal -->
-    <ModelComparison 
-      v-model:show="showModelComparison" 
-      @close="closeModelComparison" 
-    />
-    
-    <!-- Summary Configuration Modal -->
+
     <SummaryModal
       v-model:show="showSummaryModal"
       :selected-docs="selectedDocs"
       @generate="handleSummaryGenerate"
-      @close="closeSummaryModal"
+      @close="showSummaryModal = false"
     />
   </div>
 </template>
 
 <style scoped>
 .studio-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(15, 25, 45, 0.4) 0%,
-    rgba(25, 35, 60, 0.5) 100%
-  );
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.12);
-  border-left-color: rgba(255, 255, 255, 0.12);
+  background: var(--surface-container-low);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  backdrop-filter: blur(15px) saturate(180%);
-  -webkit-backdrop-filter: blur(15px) saturate(180%);
-  box-shadow:
-    0 15px 30px -15px rgba(0, 0, 0, 0.6),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    inset 0 -2px 2px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.studio-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.7),
-    inset 0 1px 2px rgba(255, 255, 255, 0.15);
 }
 
 .panel-header {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(31, 41, 55, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
+  padding: 16px 16px 12px;
 }
 
-.panel-header-title {
+.panel-title {
+  font-family: var(--font-headline);
+  font-size: 14px;
   font-weight: 600;
+  color: var(--on-surface-variant);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.panel-header-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.studio-body {
-  padding: calc(var(--spacing-unit) + 2px);
+.panel-body {
+  flex: 1;
+  padding: 0 12px 12px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
+  gap: 12px;
 }
 
-.studio-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+.tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.studio-card {
-  padding: 10px 10px;
+.tool-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border-strong);
-  background: #020617;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border: none;
+  width: 100%;
+  text-align: left;
+  background: var(--surface-container);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s;
   position: relative;
+  font: inherit;
+  color: inherit;
 }
 
-.studio-card:hover:not(.disabled) {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.8);
+.tool-card:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
-.studio-card.disabled {
-  opacity: 0.5;
+.tool-card:disabled {
   cursor: not-allowed;
 }
 
-.studio-card.disabled:hover {
-  transform: none;
-  border-color: var(--border-strong);
-  box-shadow: none;
+.tool-card:hover:not(.disabled) {
+  background: var(--surface-container-high);
 }
 
-.studio-card span.title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
+.tool-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.studio-card span.sub {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.doc-count-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  font-size: 9px;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* Summary Viewer Container */
-.summary-viewer-container {
-  margin-top: 8px;
+.tool-icon-wrap {
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(129, 140, 248, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-container);
+}
+
+.tool-card.disabled .tool-icon-wrap {
+  background: rgba(69, 70, 83, 0.15);
+}
+
+.tool-card.disabled .tool-icon {
+  color: var(--on-surface-variant);
+}
+
+.tool-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tool-title {
+  font-family: var(--font-headline);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.tool-desc {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  line-height: 1.4;
+}
+
+.tool-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.summary-viewer-container {
+  border-radius: 10px;
+  background: var(--surface-container);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 500px;
+  max-height: 400px;
 }
 
 .viewer-header {
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(129, 140, 248, 0.06);
 }
 
 .viewer-title {
-  font-size: 12px;
+  font-family: var(--font-headline);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--primary);
 }
 
 .viewer-close {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--on-surface-variant);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.viewer-close:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
+}
+
+.viewer-close svg {
+  width: 16px;
+  height: 16px;
 }
 
 .viewer-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--on-surface);
 }
 
-.studio-footer {
-  margin-top: 10px;
-  padding: 8px 8px 10px;
+.pro-section {
+  margin-top: auto;
+  padding: 16px;
   border-radius: 10px;
-  border: 1px dashed rgba(55, 65, 81, 0.9);
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--surface-container);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  align-items: center;
+  gap: 10px;
+  align-items: flex-start;
 }
 
-.btn-compare-models {
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(99, 102, 241, 0.5);
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
+.pro-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
+  gap: 8px;
 }
 
-.btn-compare-models:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+.pro-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--tertiary);
 }
 
-.tools-hint {
-  font-size: 10px;
-  color: var(--text-muted);
+.pro-title {
+  font-family: var(--font-headline);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.pro-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(247, 189, 62, 0.1);
+  color: var(--tertiary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pro-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.pro-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pro-btn:focus-visible:not(:disabled) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.pro-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pro-btn:hover {
+  box-shadow: 0 4px 16px rgba(129, 140, 248, 0.25);
+  transform: translateY(-1px);
 }
 </style>

@@ -1,13 +1,42 @@
+from functools import lru_cache
+from typing import Dict, List, Optional
+
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from django_app.views.helpers import _error_response, _get_json_body
 
+# Cache for document text to avoid repeated vector store lookups
+_document_text_cache: Dict[str, str] = {}
+_cache_valid: bool = False
 
-def _get_document_text(filename: str):
-    from app.services.vector_store import VectorStore
+
+def _clear_document_cache():
+    """Clear the document text cache."""
+    global _document_text_cache, _cache_valid
+    _document_text_cache.clear()
+    _cache_valid = False
+
+
+def _get_document_text(filename: str) -> Optional[str]:
+    """
+    Get document text from vector store with caching.
+
+    Args:
+        filename: Name of the document file
+
+    Returns:
+        Combined text from all chunks of the document, or None if not found
+    """
+    global _document_text_cache, _cache_valid
+
+    # Return from cache if available
+    if _cache_valid and filename in _document_text_cache:
+        return _document_text_cache[filename]
+
     from app.config import settings
+    from app.services.vector_store import VectorStore
 
     try:
         vector_store = VectorStore.get_cached(
@@ -15,29 +44,48 @@ def _get_document_text(filename: str):
             embedding_dim=settings.EMBEDDING_DIM,
         )
 
-        doc_chunks = []
-        for chunk in vector_store.chunks:
-            chunk_source = str(chunk.get("source", ""))
-            if filename in chunk_source or chunk_source.endswith(filename):
-                doc_chunks.append(chunk)
+        # Build cache for all documents if cache is invalid
+        if not _cache_valid:
+            doc_chunks_map: Dict[str, List[Dict]] = {}
+            for chunk in vector_store.chunks:
+                chunk_source = str(chunk.get("source", ""))
+                if chunk_source not in doc_chunks_map:
+                    doc_chunks_map[chunk_source] = []
+                doc_chunks_map[chunk_source].append(chunk)
 
-        if not doc_chunks:
-            return None
+            # Build text cache for each document
+            for doc_name, chunks in doc_chunks_map.items():
+                chunks.sort(key=lambda c: c.get("page", 0) or 0)
+                full_text = " ".join([str(c.get("text", "")) for c in chunks])
+                _document_text_cache[doc_name] = full_text
 
-        doc_chunks.sort(key=lambda c: c.get("page", 0) or 0)
-        full_text = " ".join([str(c.get("text", "")) for c in doc_chunks])
+            _cache_valid = True
 
-        return full_text
+        # Try exact match first, then partial match
+        if filename in _document_text_cache:
+            return _document_text_cache[filename]
+
+        # Fallback: partial filename matching
+        for cached_name, text in _document_text_cache.items():
+            if filename in cached_name or cached_name.endswith(filename):
+                return text
+
+        return None
+
     except Exception:
         return None
 
 
 @require_http_methods(["GET"])
 def get_question_suggestions(request: HttpRequest) -> JsonResponse:
+    import time
+
     from app.services.question_suggestions import (
         generate_question_suggestions,
         QuestionSuggestionError,
     )
+
+    start_time = time.time()
 
     doc_ids_param = request.GET.get("doc_ids", "")
     num_suggestions = int(request.GET.get("num_suggestions", 3))
@@ -53,6 +101,7 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
     num_suggestions = min(max(1, num_suggestions), 5)
 
     try:
+        # Pre-fetch all document texts to avoid repeated lookups
         documents = []
         for doc_id in doc_ids:
             text = _get_document_text(doc_id)
@@ -60,7 +109,9 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
                 documents.append(
                     {
                         "name": doc_id,
-                        "content": text,
+                        "content": text[
+                            :5000
+                        ],  # Limit content length for faster processing
                     }
                 )
 
@@ -69,12 +120,15 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
 
         result = generate_question_suggestions(documents, num_suggestions)
 
+        elapsed_ms = (time.time() - start_time) * 1000
+
         return JsonResponse(
             {
                 "success": True,
                 "suggestions": result.get("suggestions", []),
                 "generated_from": result.get("generated_from", []),
                 "document_count": len(documents),
+                "generation_time_ms": round(elapsed_ms, 1),
             }
         )
 

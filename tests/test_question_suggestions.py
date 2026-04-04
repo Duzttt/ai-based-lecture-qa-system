@@ -23,7 +23,7 @@ class TestKeywordExtraction:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = QuestionSuggestionService(llm_provider="local_qwen")
+        self.service = QuestionSuggestionService(llm_provider="local_llm")
 
     def test_extract_keywords_basic(self):
         """Test basic keyword extraction from text."""
@@ -33,18 +33,18 @@ class TestKeywordExtraction:
         programmed. Machine learning algorithms build mathematical models based 
         on sample data, known as training data, to make predictions or decisions.
         """
-        
+
         keywords = self.service.extract_keywords(text, top_k=5)
-        
+
         assert len(keywords) > 0
         assert len(keywords) <= 5
-        
+
         # Check that keywords are tuples of (word, score)
         for keyword, score in keywords:
             assert isinstance(keyword, str)
             assert isinstance(score, (int, float))
             assert len(keyword) >= 3  # Minimum word length
-        
+
         # Should contain important terms
         keyword_words = [kw[0] for kw in keywords]
         assert any("machine" in kw for kw in keyword_words)
@@ -65,10 +65,10 @@ class TestKeywordExtraction:
     def test_extract_keywords_filters_stop_words(self):
         """Test that stop words are filtered out."""
         text = "The quick brown fox jumps over the lazy dog in the park"
-        
+
         keywords = self.service.extract_keywords(text, top_k=10)
         keyword_words = [kw[0] for kw in keywords]
-        
+
         # Stop words should not appear
         assert "the" not in keyword_words
         assert "in" not in keyword_words
@@ -81,7 +81,7 @@ class TestKeywordExtraction:
         They consist of layers of interconnected nodes that process information.
         Deep learning uses multiple layers of neural networks for complex patterns.
         """
-        
+
         for k in [3, 5, 10]:
             keywords = self.service.extract_keywords(text, top_k=k)
             assert len(keywords) <= k
@@ -92,7 +92,7 @@ class TestKeyphraseExtraction:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = QuestionSuggestionService(llm_provider="local_qwen")
+        self.service = QuestionSuggestionService(llm_provider="local_llm")
 
     def test_extract_keyphrases_basic(self):
         """Test basic key phrase extraction."""
@@ -108,12 +108,12 @@ class TestKeyphraseExtraction:
         Deep learning applications include image recognition, natural language 
         processing, and speech recognition systems.
         """
-        
+
         phrases = self.service.extract_keyphrases(text, max_phrase_length=3, top_k=5)
-        
+
         assert len(phrases) > 0
         assert len(phrases) <= 5
-        
+
         # Check format
         for phrase, score in phrases:
             assert isinstance(phrase, str)
@@ -130,7 +130,7 @@ class TestCandidateQuestionGeneration:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = QuestionSuggestionService(llm_provider="local_qwen")
+        self.service = QuestionSuggestionService(llm_provider="local_llm")
 
     def test_generate_candidate_questions_basic(self):
         """Test generating candidate questions from keywords."""
@@ -143,14 +143,14 @@ class TestCandidateQuestionGeneration:
         keyphrases = [
             ("artificial intelligence", 3.0),
         ]
-        
+
         candidates = self.service.generate_candidate_questions(
             keywords, keyphrases, num_candidates=10
         )
-        
+
         assert len(candidates) > 0
         assert len(candidates) <= 10
-        
+
         # Check structure
         for candidate in candidates:
             assert "type" in candidate
@@ -166,11 +166,11 @@ class TestCandidateQuestionGeneration:
             ("deep learning", 4.0),
         ]
         keyphrases = []
-        
+
         candidates = self.service.generate_candidate_questions(
             keywords, keyphrases, num_candidates=15
         )
-        
+
         # Should have multiple question types
         question_types = set(c["type"] for c in candidates)
         assert len(question_types) >= 2  # At least 2 different types
@@ -181,22 +181,42 @@ class TestDiverseQuestionSelection:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = QuestionSuggestionService(llm_provider="local_qwen")
+        self.service = QuestionSuggestionService(llm_provider="local_llm")
 
     def test_select_diverse_questions_basic(self):
         """Test selecting diverse questions."""
         candidates = [
-            {"type": "concept", "text": "What is machine learning?", "keywords": ["machine learning"]},
-            {"type": "method", "text": "How does machine learning work?", "keywords": ["machine learning"]},
-            {"type": "comparison", "text": "What's the difference between AI and ML?", "keywords": ["AI", "ML"]},
-            {"type": "example", "text": "Can you give an example of machine learning?", "keywords": ["machine learning"]},
-            {"type": "reason", "text": "Why is machine learning important?", "keywords": ["machine learning"]},
+            {
+                "type": "concept",
+                "text": "What is machine learning?",
+                "keywords": ["machine learning"],
+            },
+            {
+                "type": "method",
+                "text": "How does machine learning work?",
+                "keywords": ["machine learning"],
+            },
+            {
+                "type": "comparison",
+                "text": "What's the difference between AI and ML?",
+                "keywords": ["AI", "ML"],
+            },
+            {
+                "type": "example",
+                "text": "Can you give an example of machine learning?",
+                "keywords": ["machine learning"],
+            },
+            {
+                "type": "reason",
+                "text": "Why is machine learning important?",
+                "keywords": ["machine learning"],
+            },
         ]
-        
+
         selected = self.service._select_diverse_questions(candidates, num_final=3)
-        
+
         assert len(selected) == 3
-        
+
         # All selected questions should be from candidates
         candidate_texts = set(c["text"] for c in candidates)
         for question in selected:
@@ -205,13 +225,25 @@ class TestDiverseQuestionSelection:
     def test_select_diverse_questions_avoids_similarity(self):
         """Test that similar questions are avoided."""
         candidates = [
-            {"type": "concept", "text": "What is machine learning?", "keywords": ["machine learning"]},
-            {"type": "concept", "text": "What is ML?", "keywords": ["ML"]},  # Very similar
-            {"type": "method", "text": "How do neural networks work?", "keywords": ["neural networks"]},
+            {
+                "type": "concept",
+                "text": "What is machine learning?",
+                "keywords": ["machine learning"],
+            },
+            {
+                "type": "concept",
+                "text": "What is ML?",
+                "keywords": ["ML"],
+            },  # Very similar
+            {
+                "type": "method",
+                "text": "How do neural networks work?",
+                "keywords": ["neural networks"],
+            },
         ]
-        
+
         selected = self.service._select_diverse_questions(candidates, num_final=2)
-        
+
         # Should not select both very similar questions
         assert len(selected) <= 2
 
@@ -221,17 +253,21 @@ class TestDiverseQuestionSelection:
         question1 = "What are machine learning algorithms"  # 4 words
         question2 = "What are machine learning techniques"  # 3/4 words overlap = 0.75 similarity with union of 5
         question3 = "How do neural networks work"  # Different topic
-        
+
         # Similar questions (share most words - Jaccard > 0.5)
         # question1: {what, are, machine, learning, algorithms} = 5 words
         # question2: {what, are, machine, learning, techniques} = 5 words
         # intersection: {what, are, machine, learning} = 4 words
         # union: {what, are, machine, learning, algorithms, techniques} = 6 words
         # Jaccard = 4/6 = 0.67
-        assert self.service._is_similar_to_selected(question1, [question2], threshold=0.5)
-        
+        assert self.service._is_similar_to_selected(
+            question1, [question2], threshold=0.5
+        )
+
         # Dissimilar questions
-        assert not self.service._is_similar_to_selected(question1, [question3], threshold=0.5)
+        assert not self.service._is_similar_to_selected(
+            question1, [question3], threshold=0.5
+        )
 
 
 class TestFullSuggestionPipeline:
@@ -239,7 +275,7 @@ class TestFullSuggestionPipeline:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = QuestionSuggestionService(llm_provider="local_qwen")
+        self.service = QuestionSuggestionService(llm_provider="local_llm")
 
     def test_generate_suggestions_basic(self):
         """Test full suggestion generation with sample documents."""
@@ -269,15 +305,15 @@ class TestFullSuggestionPipeline:
                 """,
             }
         ]
-        
+
         result = self.service.generate_suggestions(documents, num_suggestions=3)
-        
+
         assert "suggestions" in result
         assert "generated_from" in result
-        
+
         suggestions = result["suggestions"]
         assert len(suggestions) > 0
-        
+
         # Check suggestion format
         for suggestion in suggestions:
             assert isinstance(suggestion, str)
@@ -296,16 +332,16 @@ class TestFullSuggestionPipeline:
                 "content": "Natural language processing enables computers to understand text.",
             },
         ]
-        
+
         result = self.service.generate_suggestions(documents, num_suggestions=3)
-        
+
         assert len(result["suggestions"]) > 0
         assert len(result["generated_from"]) == 2
 
     def test_generate_suggestions_empty_documents(self):
         """Test suggestion generation with no documents."""
         result = self.service.generate_suggestions([], num_suggestions=3)
-        
+
         assert result["suggestions"] == []
         assert result["generated_from"] == []
 
@@ -314,9 +350,9 @@ class TestFullSuggestionPipeline:
         documents = [
             {"name": "empty.pdf", "content": ""},
         ]
-        
+
         result = self.service.generate_suggestions(documents, num_suggestions=3)
-        
+
         # Should return empty suggestions for empty content
         assert result["suggestions"] == []
 
@@ -332,9 +368,9 @@ class TestConvenienceFunction:
                 "content": "Artificial intelligence is transforming many industries.",
             }
         ]
-        
+
         result = generate_question_suggestions(documents, num_suggestions=3)
-        
+
         assert isinstance(result, dict)
         assert "suggestions" in result
         assert "generated_from" in result
@@ -347,7 +383,7 @@ class TestQuestionSuggestionError:
         """Test that QuestionSuggestionError can be raised and caught."""
         with pytest.raises(QuestionSuggestionError) as exc_info:
             raise QuestionSuggestionError("Test error message")
-        
+
         assert "Test error message" in str(exc_info.value)
 
 
@@ -357,18 +393,18 @@ class TestIntegration:
 
     def test_fallback_without_llm(self):
         """Test that fallback works when LLM is unavailable."""
-        service = QuestionSuggestionService(llm_provider="local_qwen")
-        
+        service = QuestionSuggestionService(llm_provider="local_llm")
+
         # Create candidates manually
         candidates = [
             {"type": "concept", "text": "What is AI?", "keywords": ["AI"]},
             {"type": "method", "text": "How does AI work?", "keywords": ["AI"]},
             {"type": "example", "text": "Give an AI example.", "keywords": ["AI"]},
         ]
-        
+
         # Test fallback selection (doesn't require LLM)
         selected = service._select_diverse_questions(candidates, num_final=2)
-        
+
         assert len(selected) >= 1
         assert all(isinstance(q, str) for q in selected)
         assert all(len(q) > 0 for q in selected)

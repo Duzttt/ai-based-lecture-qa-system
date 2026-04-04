@@ -25,7 +25,8 @@ const getMessageCitationTitle = (msg) => {
 
 <template>
   <div class="message" :class="message.role">
-    <div class="message-avatar">{{ message.role === 'user' ? '👤' : '🤖' }}</div>
+    <div class="message-avatar" aria-hidden="true">{{ message.role === 'user' ? '👤' : '🤖' }}</div>
+    <span class="sr-only">{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
     <div
       class="message-content"
       :class="{
@@ -48,6 +49,7 @@ const getMessageCitationTitle = (msg) => {
 
 <style scoped>
 .message {
+  position: relative;
   display: flex;
   gap: 10px;
   padding: 12px;
@@ -66,6 +68,18 @@ const getMessageCitationTitle = (msg) => {
   align-self: flex-start;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .message-avatar {

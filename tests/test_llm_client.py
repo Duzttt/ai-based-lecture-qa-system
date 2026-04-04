@@ -69,25 +69,25 @@ def test_call_llm_success_gemini():
 
 
 @pytest.mark.django_db
-def test_call_llm_success_local_qwen():
+def test_call_llm_success_local_llm():
     from app.services.llm_client import call_llm
 
     mock_response = MagicMock()
-    mock_response.json.return_value = {"message": {"content": "Qwen response"}}
+    mock_response.json.return_value = {"message": {"content": "Local LLM response"}}
     mock_response.raise_for_status.return_value = None
 
     with patch("app.services.llm_client.requests.post", return_value=mock_response):
         result = call_llm(
-            provider="local_qwen",
+            provider="local_llm",
             model="qwen2.5:3b",
             call_type="citation",
             messages=[{"role": "user", "content": "cite"}],
             base_url="http://localhost:11434",
         )
 
-    assert result == "Qwen response"
+    assert result == "Local LLM response"
     log = QueryLog.objects.latest("created_at")
-    assert log.llm_provider == "local_qwen"
+    assert log.llm_provider == "local_llm"
     assert log.call_type == "citation"
 
 

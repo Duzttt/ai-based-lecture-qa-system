@@ -10,8 +10,6 @@ import string
 from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple
 
-import httpx
-
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -148,9 +146,8 @@ class QuestionSuggestionService:
         "under",
     }
 
-    def __init__(self, llm_provider: str = "local_qwen"):
+    def __init__(self, llm_provider: str = "local_llm"):
         self.llm_provider = llm_provider
-        self._http_client: Optional[httpx.Client] = None
 
     def extract_keywords(
         self, text: str, top_k: int = 15, min_word_length: int = 3
@@ -367,21 +364,74 @@ class QuestionSuggestionService:
         doc_names: List[str],
         keywords: List[Tuple[str, float]],
         num_final: int = 3,
+        timeout_seconds: int = 30,
     ) -> List[str]:
         """
         Use LLM to directly generate questions from document content.
 
-        Falls back to template-based selection if LLM is unavailable.
+        Falls back to template-based selection if LLM is unavailable or times out.
+
+        Args:
+            document_context: Combined text from documents
+            doc_names: List of document names
+            keywords: Extracted keywords with scores
+            num_final: Number of questions to generate
+            timeout_seconds: Maximum time to wait for LLM response
+
+        Returns:
+            List of generated question strings
         """
+        import signal
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError("LLM call timed out")
+
         prompt = self._build_direct_generation_prompt(
             document_context, doc_names, keywords, num_final
         )
 
         try:
-            response = self._call_llm(prompt)
+            # Set timeout for LLM call
+            if hasattr(signal, "SIGALRM"):  # Unix-like systems
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout_seconds)
+                try:
+                    response = self._call_llm(prompt)
+                finally:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+            else:
+                # Windows - use threading timeout as fallback
+                import threading
+
+                result = [None]
+                exception = [None]
+
+                def call_llm_thread():
+                    try:
+                        result[0] = self._call_llm(prompt)
+                    except Exception as e:
+                        exception[0] = e
+
+                thread = threading.Thread(target=call_llm_thread)
+                thread.start()
+                thread.join(timeout=timeout_seconds)
+
+                if thread.is_alive():
+                    raise TimeoutError(f"LLM call timed out after {timeout_seconds}s")
+                if exception[0]:
+                    raise exception[0]
+                response = result[0]
+
             questions = self._parse_llm_response(response, num_final)
             if questions:
+                logger.info(f"Generated {len(questions)} questions via LLM")
                 return questions
+
+        except TimeoutError:
+            logger.warning(
+                "LLM question generation timed out, falling back to templates"
+            )
         except Exception as exc:
             logger.warning("LLM question generation failed: %s", exc)
 
@@ -389,8 +439,8 @@ class QuestionSuggestionService:
 
     def _call_llm(self, prompt: str) -> str:
         """Dispatch to the configured LLM provider."""
-        if self.llm_provider == "local_qwen":
-            return self._call_local_qwen(prompt)
+        if self.llm_provider == "local_llm":
+            return self._call_local_llm(prompt)
         elif self.llm_provider == "gemini":
             return self._call_gemini(prompt)
         elif self.llm_provider == "openrouter":
@@ -436,23 +486,23 @@ Respond with EXACTLY {num_final} questions, one per line, numbered like:
 
 Do NOT add any other text, explanation, or commentary."""
 
-    def _call_local_qwen(self, prompt: str) -> str:
-        """Call local Qwen model via Ollama."""
+    def _call_local_llm(self, prompt: str) -> str:
+        """Call local LLM via Ollama."""
         try:
             from app.services.llm_client import call_llm
 
             return call_llm(
-                provider="local_qwen",
-                model=settings.LOCAL_QWEN_MODEL,
+                provider="local_llm",
+                model=settings.LOCAL_LLM_MODEL,
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
-                base_url=settings.LOCAL_QWEN_BASE_URL,
-                timeout=settings.LOCAL_QWEN_TIMEOUT_SECONDS,
-                keep_alive=settings.LOCAL_QWEN_KEEP_ALIVE,
+                base_url=settings.LOCAL_LLM_BASE_URL,
+                timeout=settings.LOCAL_LLM_TIMEOUT_SECONDS,
+                keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
         except Exception as e:
-            raise QuestionSuggestionError(f"Local Qwen call failed: {e}")
+            raise QuestionSuggestionError(f"Local LLM call failed: {e}")
 
     def _call_gemini(self, prompt: str) -> str:
         """Call Gemini API."""
@@ -489,26 +539,8 @@ Do NOT add any other text, explanation, or commentary."""
                 temperature=0.7,
                 max_tokens=500,
             )
-        except httpx.HTTPStatusError as e:
-            if e.response is not None and e.response.status_code in {
-                401,
-                402,
-                403,
-                429,
-            }:
-                return self._call_local_qwen(prompt)
+        except Exception as e:
             raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
-        except Exception as e:
-            try:
-                return self._call_local_qwen(prompt)
-            except Exception:
-                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
-        except Exception as e:
-            # Last-resort fallback to local Qwen for network/transport issues.
-            try:
-                return self._call_local_qwen(prompt)
-            except Exception:
-                raise QuestionSuggestionError(f"OpenRouter call failed: {e}")
 
     def _parse_llm_response(self, response: str, num_final: int) -> List[str]:
         """Parse LLM response to extract generated questions.
@@ -692,6 +724,47 @@ Do NOT add any other text, explanation, or commentary."""
 
 
 _service_instance: Optional[QuestionSuggestionService] = None
+_suggestion_cache: Dict[str, Dict[str, Any]] = {}
+CACHE_MAX_SIZE = 100
+CACHE_TTL_SECONDS = 300  # 5 minutes
+
+
+def _get_cache_key(doc_names: List[str], num_suggestions: int) -> str:
+    """Generate cache key from document names and suggestion count."""
+    sorted_names = sorted(doc_names)
+    return f"{'|'.join(sorted_names)}:{num_suggestions}"
+
+
+def _get_cached_suggestions(cache_key: str) -> Optional[Dict[str, Any]]:
+    """Get cached suggestions if still valid."""
+    import time
+
+    if cache_key in _suggestion_cache:
+        cached = _suggestion_cache[cache_key]
+        if time.time() - cached.get("timestamp", 0) < CACHE_TTL_SECONDS:
+            return cached.get("data")
+        else:
+            # Expired - remove from cache
+            del _suggestion_cache[cache_key]
+    return None
+
+
+def _cache_suggestions(cache_key: str, data: Dict[str, Any]):
+    """Cache suggestions with timestamp."""
+    import time
+
+    # Evict oldest entries if cache is full
+    if len(_suggestion_cache) >= CACHE_MAX_SIZE:
+        oldest_key = min(
+            _suggestion_cache.keys(),
+            key=lambda k: _suggestion_cache[k].get("timestamp", 0),
+        )
+        del _suggestion_cache[oldest_key]
+
+    _suggestion_cache[cache_key] = {
+        "data": data,
+        "timestamp": time.time(),
+    }
 
 
 def get_question_suggestion_service(
@@ -703,7 +776,7 @@ def get_question_suggestion_service(
     current one so runtime provider changes take effect immediately.
     """
     global _service_instance
-    provider = llm_provider or getattr(settings, "LLM_PROVIDER", "local_qwen")
+    provider = llm_provider or getattr(settings, "LLM_PROVIDER", "local_llm")
 
     if _service_instance is None or _service_instance.llm_provider != provider:
         _service_instance = QuestionSuggestionService(provider)
@@ -715,6 +788,31 @@ def generate_question_suggestions(
     documents: List[Dict[str, Any]],
     num_suggestions: int = 3,
 ) -> Dict[str, Any]:
-    """Convenience function to generate question suggestions."""
+    """
+    Convenience function to generate question suggestions with caching.
+
+    Uses an LLM-first approach: ask the LLM to generate questions directly
+    from the document content. Falls back to template-based candidate
+    selection when the LLM is unavailable or returns an unusable response.
+
+    Results are cached for 5 minutes to avoid repeated LLM calls.
+    """
+    if not documents:
+        return {"suggestions": [], "generated_from": []}
+
+    doc_names = [doc.get("name") or doc.get("filename", "Unknown") for doc in documents]
+
+    # Check cache first
+    cache_key = _get_cache_key(doc_names, num_suggestions)
+    cached_result = _get_cached_suggestions(cache_key)
+    if cached_result is not None:
+        logger.debug(f"Cache hit for suggestions: {cache_key}")
+        return cached_result
+
     service = get_question_suggestion_service()
-    return service.generate_suggestions(documents, num_suggestions)
+    result = service.generate_suggestions(documents, num_suggestions)
+
+    # Cache the result
+    _cache_suggestions(cache_key, result)
+
+    return result

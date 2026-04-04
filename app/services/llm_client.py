@@ -16,6 +16,9 @@ def _call_gemini(
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    if not api_key or str(api_key).strip().lower() in {"none", "null"}:
+        raise ValueError("GEMINI_API_KEY is not configured")
+
     prompt_parts = []
     for msg in messages:
         prompt_parts.append(f"[{msg['role']}]: {msg['content']}")
@@ -54,6 +57,9 @@ def _call_openrouter(
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    if not api_key or str(api_key).strip().lower() in {"none", "null"}:
+        raise ValueError("OPENROUTER_API_KEY is not configured")
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -84,21 +90,27 @@ def _call_openrouter(
     return choices[0]["message"]["content"]
 
 
-def _call_local_qwen(
+def _call_local_llm(
     messages: List[Dict[str, str]],
     model: str,
     base_url: str,
     timeout: int,
     **kwargs: Any,
 ) -> str:
+    options: Dict[str, Any] = {}
+    if "temperature" in kwargs:
+        options["temperature"] = kwargs["temperature"]
+    if "num_predict" in kwargs:
+        options["num_predict"] = kwargs["num_predict"]
+
     payload = {
         "model": model,
         "messages": messages,
         "stream": False,
         "keep_alive": kwargs.get("keep_alive", "30m"),
     }
-    if "temperature" in kwargs:
-        payload["options"] = {"temperature": kwargs["temperature"]}
+    if options:
+        payload["options"] = options
 
     response = requests.post(
         f"{base_url.rstrip('/')}/api/chat",
@@ -110,7 +122,7 @@ def _call_local_qwen(
     data = response.json()
     message = data.get("message", {}).get("content")
     if not message:
-        raise ValueError("Invalid response from local Qwen model")
+        raise ValueError("Invalid response from local LLM")
 
     return str(message).strip()
 
@@ -118,7 +130,7 @@ def _call_local_qwen(
 _PROVIDER_DISPATCH = {
     "gemini": _call_gemini,
     "openrouter": _call_openrouter,
-    "local_qwen": _call_local_qwen,
+    "local_llm": _call_local_llm,
 }
 
 
