@@ -15,6 +15,7 @@ from app.services.pdf_indexing import (
     index_pdf_directory,
     index_pdf_file,
 )
+from app.services.runtime_embedding import load_runtime_embedding_settings
 
 from django_app.views.helpers import (
     _error_response,
@@ -93,7 +94,7 @@ def admin_stats(request: HttpRequest) -> JsonResponse:
                 "pages": len(unique_pages),
             },
             "vectors": {
-                "dimension": settings.EMBEDDING_DIM,
+                "dimension": load_runtime_embedding_settings()["embedding_dim"],
                 "count": total_vectors,
                 "index_type": "IndexFlatL2",
             },
@@ -170,11 +171,12 @@ def admin_debug_retrieval(request: HttpRequest) -> JsonResponse:
     }
 
     try:
+        rt = load_runtime_embedding_settings()
         vector_store = VectorStore.get_cached(
             index_path=settings.FAISS_INDEX_PATH,
-            embedding_dim=settings.EMBEDDING_DIM,
+            embedding_dim=rt["embedding_dim"],
         )
-        embedding_service = EmbeddingService()
+        embedding_service = EmbeddingService(model_name=rt["model_id"])
 
         if not vector_store.chunks:
             return _error_response("No indexed documents found", status=400)
@@ -436,7 +438,7 @@ def admin_delete_document(request: HttpRequest, doc_id: str) -> JsonResponse:
             data_source_dir=settings.DOCUMENTS_PATH,
             chunk_size=settings.CHUNK_SIZE,
             index_path=settings.FAISS_INDEX_PATH,
-            model_name=settings.EMBEDDING_MODEL,
+            model_name=load_runtime_embedding_settings()["model_id"],
             clear_existing=True,
         )
     except Exception as exc:
@@ -466,7 +468,7 @@ def admin_reindex_document(request: HttpRequest, doc_id: str) -> JsonResponse:
         index_stats = index_pdf_file(
             pdf_path=str(file_path),
             chunk_size=settings.CHUNK_SIZE,
-            model_name=settings.EMBEDDING_MODEL,
+            model_name=load_runtime_embedding_settings()["model_id"],
             clear_existing=False,
         )
     except Exception as exc:

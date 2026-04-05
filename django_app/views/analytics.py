@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from app.config import settings
+from app.services.runtime_embedding import load_runtime_embedding_settings
 
 from django_app.views.helpers import _error_response, _get_json_body
 
@@ -288,12 +289,13 @@ def admin_embedding_visualization(request: HttpRequest) -> JsonResponse:
 
     embeddings = np.array([c["embedding"] for c in chunks_with_embeddings])
 
-    if embeddings.shape[1] != settings.EMBEDDING_DIM:
+    rt = load_runtime_embedding_settings()
+    if embeddings.shape[1] != rt["embedding_dim"]:
         return JsonResponse(
             {
                 "points": [],
                 "documents": documents,
-                "error": f"Embedding dimension mismatch: {embeddings.shape[1]} vs {settings.EMBEDDING_DIM}",
+                "error": f"Embedding dimension mismatch: {embeddings.shape[1]} vs {rt['embedding_dim']}",
             }
         )
 
@@ -493,11 +495,12 @@ def admin_retrieval_trace(request: HttpRequest) -> JsonResponse:
     )
 
     try:
+        rt = load_runtime_embedding_settings()
         vector_store = VectorStore.get_cached(
             index_path=settings.FAISS_INDEX_PATH,
-            embedding_dim=settings.EMBEDDING_DIM,
+            embedding_dim=rt["embedding_dim"],
         )
-        embedding_service = EmbeddingService()
+        embedding_service = EmbeddingService(model_name=rt["model_id"])
 
         start = time.perf_counter()
         query_embedding = embedding_service.embed_query(query)
@@ -508,7 +511,7 @@ def admin_retrieval_trace(request: HttpRequest) -> JsonResponse:
                 "name": "embedding_generation",
                 "time_ms": round(embed_time, 2),
                 "details": {
-                    "model": settings.EMBEDDING_MODEL,
+                    "model": rt["model_id"],
                     "dimension": len(query_embedding),
                 },
             }

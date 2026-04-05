@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from typing import Any, Dict
 
 from django.http import HttpRequest, JsonResponse
@@ -7,6 +5,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from app.config import settings
+from app.services.runtime_embedding import (
+    _load_embedding_model_settings_raw,
+    save_embedding_model_settings,
+)
 
 from django_app.views.helpers import (
     INDEXING_STATUS_RUNNING,
@@ -16,35 +18,16 @@ from django_app.views.helpers import (
     _get_upload_indexing_state,
 )
 
-EMBEDDING_MODEL_SETTINGS_FILE = (
-    Path(__file__).resolve().parents[2] / "data" / "embedding_model_settings.json"
-)
-
 
 def _load_embedding_model_settings() -> Dict[str, Any]:
     default_settings = {
         "current_model": settings.EMBEDDING_MODEL,
         "model_cache": [],
     }
-
-    if not EMBEDDING_MODEL_SETTINGS_FILE.exists():
-        return default_settings
-
-    try:
-        with EMBEDDING_MODEL_SETTINGS_FILE.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                return {**default_settings, **data}
-    except (OSError, json.JSONDecodeError):
-        pass
-
+    persisted = _load_embedding_model_settings_raw()
+    if persisted:
+        return {**default_settings, **persisted}
     return default_settings
-
-
-def _save_embedding_model_settings(data: Dict[str, Any]) -> None:
-    EMBEDDING_MODEL_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with EMBEDDING_MODEL_SETTINGS_FILE.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
 
 
 @require_http_methods(["GET"])
@@ -119,7 +102,11 @@ def switch_embedding_model(request: HttpRequest) -> JsonResponse:
 
         saved_settings = _load_embedding_model_settings()
         saved_settings["current_model"] = model_id
-        _save_embedding_model_settings(saved_settings)
+        save_embedding_model_settings(saved_settings)
+
+        from django_app.views.helpers import _invalidate_index_dependent_caches
+
+        _invalidate_index_dependent_caches()
 
         if reindex:
             current_state = _get_upload_indexing_state()

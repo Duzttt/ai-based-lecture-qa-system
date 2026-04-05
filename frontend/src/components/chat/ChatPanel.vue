@@ -180,6 +180,7 @@ const handleSuggestionSelect = (questionText) => {
       :is-loading="isLoading"
       :is-retrieving="isRetrieving"
       :has-selection="hasSelection"
+      :selected-documents="selectedDocuments"
       @chunk-click="handleChunkClick"
       @chunk-rightclick="handleChunkRightClick"
       @suggestion-click="handleSuggestionSelect"

@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b:free"
     LLM_PROVIDER: str = "gemini"
+    LLM_MAX_OUTPUT_TOKENS: int = 2048
+    CITATION_MAX_OUTPUT_TOKENS: int = 3072
 
     LOCAL_LLM_MODEL: str = "qwen2.5:3b"
     LOCAL_LLM_BASE_URL: str = "http://localhost:11434"

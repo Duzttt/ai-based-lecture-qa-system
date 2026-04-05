@@ -11,6 +11,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  centered: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['question-select'])
@@ -195,7 +199,7 @@ onUnmounted(() => {
     <div
       v-if="hasSelection && (visible || error)"
       class="question-suggestions"
-      :class="{ 'is-disabled': disabled }"
+      :class="{ 'is-disabled': disabled, 'is-centered': centered }"
     >
       <div class="suggestions-row">
         <!-- Label chip -->
@@ -266,6 +270,10 @@ onUnmounted(() => {
 .question-suggestions.is-disabled {
   opacity: 0.5;
   pointer-events: none;
+}
+
+.question-suggestions.is-centered .suggestions-row {
+  justify-content: center;
 }
 
 /* --- Layout --- */

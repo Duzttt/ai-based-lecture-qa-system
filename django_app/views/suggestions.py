@@ -36,12 +36,14 @@ def _get_document_text(filename: str) -> Optional[str]:
         return _document_text_cache[filename]
 
     from app.config import settings
+    from app.services.runtime_embedding import load_runtime_embedding_settings
     from app.services.vector_store import VectorStore
 
     try:
+        rt = load_runtime_embedding_settings()
         vector_store = VectorStore.get_cached(
             index_path=settings.FAISS_INDEX_PATH,
-            embedding_dim=settings.EMBEDDING_DIM,
+            embedding_dim=rt["embedding_dim"],
         )
 
         # Build cache for all documents if cache is invalid

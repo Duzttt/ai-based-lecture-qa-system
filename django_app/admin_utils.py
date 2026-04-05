@@ -15,6 +15,7 @@ import numpy as np
 from django.db.models import Avg, Count
 
 from app.config import settings
+from app.services.runtime_embedding import load_runtime_embedding_settings
 from app.services.vector_store import VectorStore
 from django_app.models import ConfigHistory, QueryLog, SystemMetric
 
@@ -69,6 +70,8 @@ def get_system_stats() -> Dict[str, Any]:
     faiss_index_size_kb = index_size / 1024
     documents_size_kb = total_docs_size / 1024
 
+    rt = load_runtime_embedding_settings()
+
     return {
         "documents": {
             "total": total_documents,
@@ -76,7 +79,7 @@ def get_system_stats() -> Dict[str, Any]:
             "total_chunks": total_chunks,
         },
         "vectors": {
-            "dimension": settings.EMBEDDING_DIM,
+            "dimension": rt["embedding_dim"],
             "index_type": "IndexFlatL2",
             "total_vectors": total_chunks,
         },
@@ -357,11 +360,11 @@ def get_retrieval_debug_results(
     alpha = params.get("alpha", 0.3)
     fusion_method = params.get("fusion", "rrf")
 
-    # Initialize services
-    embedding_service = EmbeddingService(model_name=settings.EMBEDDING_MODEL)
+    rt = load_runtime_embedding_settings()
+    embedding_service = EmbeddingService(model_name=rt["model_id"])
     vector_store = VectorStore.get_cached(
         index_path=settings.FAISS_INDEX_PATH,
-        embedding_dim=settings.EMBEDDING_DIM,
+        embedding_dim=rt["embedding_dim"],
     )
 
     results = {}

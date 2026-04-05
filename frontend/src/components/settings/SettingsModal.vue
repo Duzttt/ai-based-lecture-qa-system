@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import EmbeddingModelSelector from './EmbeddingModelSelector.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -117,6 +118,13 @@ watch(() => props.show, async (newVal) => {
             />
           </div>
         </div>
+        <div class="modal-section">
+          <h4>Embedding Model</h4>
+          <p class="section-hint">
+            Switching to a model with a different vector dimension requires reindexing your documents.
+          </p>
+          <EmbeddingModelSelector compact />
+        </div>
         <div v-if="error" class="settings-error">{{ error }}</div>
       </div>
       <div class="modal-footer">
@@ -213,6 +221,14 @@ watch(() => props.show, async (newVal) => {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.section-hint {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.8;
+  line-height: 1.4;
 }
 
 .form-row {

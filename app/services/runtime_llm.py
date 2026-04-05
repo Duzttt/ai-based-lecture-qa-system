@@ -10,6 +10,15 @@ VALID_PROVIDERS = {"gemini", "openrouter", "local_llm"}
 SETTINGS_FILE = Path(__file__).resolve().parents[2] / "data" / "settings.json"
 
 
+def resolve_gemini_api_model(*candidates: Optional[str]) -> str:
+    """First candidate containing 'gemini' wins; else ``settings.GEMINI_MODEL``."""
+    for candidate in candidates:
+        name = str(candidate or "").strip()
+        if name and "gemini" in name.lower():
+            return name
+    return settings.GEMINI_MODEL
+
+
 def get_default_model_for_provider(provider: str) -> str:
     """Return the default model for the requested provider."""
     if provider == "gemini":
@@ -55,6 +64,10 @@ def load_runtime_llm_settings() -> Dict[str, Optional[str]]:
 
     default_model = get_default_model_for_provider(provider)
     model = str(persisted.get("model") or default_model).strip() or default_model
+    # Ollama-style names (e.g. qwen2.5:3b) in persisted settings after switching
+    # from local_llm would otherwise be sent to the Generative Language API (404).
+    if provider == "gemini" and "gemini" not in model.lower():
+        model = default_model
 
     raw_api_key = persisted.get("api_key")
     api_key: Optional[str]
@@ -79,4 +92,5 @@ __all__ = [
     "get_default_api_key_for_provider",
     "get_default_model_for_provider",
     "load_runtime_llm_settings",
+    "resolve_gemini_api_model",
 ]

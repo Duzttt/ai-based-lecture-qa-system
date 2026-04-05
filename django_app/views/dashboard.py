@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from app.config import settings
+from app.services.runtime_embedding import load_runtime_embedding_settings
 
 from django_app.views.helpers import (
     INDEXING_STATUS_RUNNING,
@@ -32,7 +33,7 @@ def dashboard_stats(request: HttpRequest) -> JsonResponse:
     chunks_file = index_path / "chunks.npy"
 
     total_vectors = 0
-    embedding_dim = settings.EMBEDDING_DIM
+    embedding_dim = load_runtime_embedding_settings()["embedding_dim"]
     index_type = "IndexFlatL2"
     total_pages = 0
     total_chunks = 0
@@ -89,9 +90,11 @@ def dashboard_metrics(request: HttpRequest) -> JsonResponse:
     from app.services.embedding import EmbeddingService
     from app.services.vector_store import VectorStore
 
+    rt = load_runtime_embedding_settings()
+
     embedding_time_ms = 0
     try:
-        embedding_service = EmbeddingService()
+        embedding_service = EmbeddingService(model_name=rt["model_id"])
         test_text = "This is a test sentence for measuring embedding performance."
         start = time.perf_counter()
         embedding_service.embed_query(test_text)
@@ -102,10 +105,10 @@ def dashboard_metrics(request: HttpRequest) -> JsonResponse:
     retrieval_time_ms = 0
     try:
         vector_store = VectorStore.get_cached(
-            settings.FAISS_INDEX_PATH, settings.EMBEDDING_DIM
+            settings.FAISS_INDEX_PATH, rt["embedding_dim"]
         )
         if vector_store.index and vector_store.index.ntotal > 0:
-            embedding_service = EmbeddingService()
+            embedding_service = EmbeddingService(model_name=rt["model_id"])
             query_embedding = embedding_service.embed_query("test query")
             start = time.perf_counter()
             vector_store.search(query_embedding, top_k=3)
@@ -195,11 +198,12 @@ def dashboard_similarity_distribution(request: HttpRequest) -> JsonResponse:
     similarity_scores = []
 
     try:
+        rt = load_runtime_embedding_settings()
         vector_store = VectorStore.get_cached(
-            settings.FAISS_INDEX_PATH, settings.EMBEDDING_DIM
+            settings.FAISS_INDEX_PATH, rt["embedding_dim"]
         )
         if vector_store.index and vector_store.index.ntotal > 0:
-            embedding_service = EmbeddingService()
+            embedding_service = EmbeddingService(model_name=rt["model_id"])
 
             test_queries = ["what is", "explain", "describe", "define", "list"]
 

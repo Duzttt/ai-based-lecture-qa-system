@@ -95,8 +95,5 @@ const getMessageCitationTitle = (msg) => {
 
 .message-content.has-citations {
   position: relative;
-  border-bottom: 1px dotted rgba(148, 163, 184, 0.8);
-  padding-bottom: 2px;
-  cursor: help;
 }
 </style>

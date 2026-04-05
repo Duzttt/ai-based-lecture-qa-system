@@ -111,6 +111,46 @@ class EmbeddingModelManager:
             "description": "Small model with good retrieval performance",
             "recommended": False,
         },
+        "sentence-transformers/all-MiniLM-L12-v2": {
+            "name": "MiniLM (L12-v2)",
+            "dimension": 384,
+            "speed": "Very Fast",
+            "memory": "~120 MB",
+            "description": "12-layer MiniLM with better accuracy than L6 variant",
+            "recommended": False,
+        },
+        "thenlper/gte-small": {
+            "name": "GTE-small",
+            "dimension": 384,
+            "speed": "Very Fast",
+            "memory": "~70 MB",
+            "description": "Alibaba GTE small model, strong MTEB score for its size",
+            "recommended": False,
+        },
+        "intfloat/e5-small-v2": {
+            "name": "E5-small",
+            "dimension": 384,
+            "speed": "Very Fast",
+            "memory": "~130 MB",
+            "description": "Microsoft E5 small model for efficient text retrieval",
+            "recommended": False,
+        },
+        "Snowflake/snowflake-arctic-embed-s": {
+            "name": "Arctic-embed-s",
+            "dimension": 384,
+            "speed": "Very Fast",
+            "memory": "~130 MB",
+            "description": "Snowflake retrieval-optimized small model, SOTA for its size",
+            "recommended": False,
+        },
+        "nomic-ai/nomic-embed-text-v1.5": {
+            "name": "Nomic-embed-v1.5",
+            "dimension": 768,
+            "speed": "Fast",
+            "memory": "~550 MB",
+            "description": "8K context model with Matryoshka flexible dimensions",
+            "recommended": False,
+        },
         "BAAI/bge-large-en-v1.5": {
             "name": "BGE-large",
             "dimension": 1024,
@@ -141,6 +181,46 @@ class EmbeddingModelManager:
             "speed": "Medium",
             "memory": "~420 MB",
             "description": "Strong all-around performance model",
+            "recommended": False,
+        },
+        "BAAI/bge-m3": {
+            "name": "BGE-M3",
+            "dimension": 1024,
+            "speed": "Medium",
+            "memory": "~2.3 GB",
+            "description": "Multilingual model with dense, sparse, and ColBERT retrieval",
+            "recommended": False,
+        },
+        "nvidia/NV-Embed-v2": {
+            "name": "NV-Embed-v2",
+            "dimension": 4096,
+            "speed": "Very Slow",
+            "memory": "~15 GB",
+            "description": "NVIDIA top-ranked MTEB model based on Mistral-7B",
+            "recommended": False,
+        },
+        "Qwen/Qwen3-Embedding-8B": {
+            "name": "Qwen3-8B",
+            "dimension": 4096,
+            "speed": "Very Slow",
+            "memory": "~16 GB",
+            "description": "Qwen3 8B embedding model with 32K context and MRL support",
+            "recommended": False,
+        },
+        "BAAI/bge-en-icl": {
+            "name": "BGE-en-ICL",
+            "dimension": 4096,
+            "speed": "Very Slow",
+            "memory": "~14 GB",
+            "description": "In-context learning retrieval model based on Mistral-7B",
+            "recommended": False,
+        },
+        "Alibaba-NLP/gte-Qwen2-7B-instruct": {
+            "name": "GTE-Qwen2-7B",
+            "dimension": 3584,
+            "speed": "Very Slow",
+            "memory": "~26 GB",
+            "description": "Alibaba GTE 7B instruct model for multilingual embeddings",
             "recommended": False,
         },
     }
@@ -367,13 +447,31 @@ _manager_lock = threading.Lock()
 
 
 def get_embedding_manager() -> EmbeddingModelManager:
-    """Get or create the global embedding model manager."""
+    """Get or create the global embedding model manager.
+
+    On first creation, applies the persisted model from
+    ``embedding_model_settings.json`` so the in-memory state matches disk.
+    """
     global _embedding_manager
-    
+
     with _manager_lock:
         if _embedding_manager is None:
             _embedding_manager = EmbeddingModelManager()
+            _sync_manager_from_persisted(_embedding_manager)
         return _embedding_manager
+
+
+def _sync_manager_from_persisted(manager: EmbeddingModelManager) -> None:
+    """Apply the persisted embedding model selection (if valid) to *manager*."""
+    try:
+        from app.services.runtime_embedding import load_runtime_embedding_settings
+
+        rt = load_runtime_embedding_settings()
+        model_id = rt["model_id"]
+        if model_id in manager.AVAILABLE_MODELS and model_id != manager.default_model:
+            manager._current_model_id = model_id
+    except Exception:
+        pass
 
 
 def reset_embedding_manager() -> None:

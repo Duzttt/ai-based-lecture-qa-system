@@ -29,6 +29,12 @@ const props = defineProps({
 
 const activeTooltip = ref(null)
 const tooltipPosition = ref({ x: 0, y: 0 })
+const WORD_TOKEN_RE = /[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'in', 'into',
+  'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'their', 'this', 'to',
+  'was', 'were', 'with',
+])
 
 /**
  * Get source info for a citation ID
@@ -54,6 +60,136 @@ const hasCitations = (sentence) => {
   return sentence.citations && sentence.citations.length > 0
 }
 
+const tokenizeWords = (text) => {
+  if (!text) return []
+
+  return Array.from(text.matchAll(WORD_TOKEN_RE))
+    .map((match) => {
+      const raw = match[0]
+      const normalized = raw.toLowerCase().replace(/[^a-z0-9]+/g, '')
+      if (!normalized) return null
+
+      return {
+        raw,
+        normalized,
+        start: match.index,
+        end: match.index + raw.length,
+      }
+    })
+    .filter(Boolean)
+}
+
+const chunkWordCache = computed(() => {
+  const cache = new Map()
+
+  Object.entries(props.sources).forEach(([id, info]) => {
+    const normalizedWords = tokenizeWords(info?.text || '')
+      .map((token) => token.normalized)
+      .join(' ')
+    cache.set(id, ` ${normalizedWords} `)
+  })
+
+  return cache
+})
+
+const shouldHighlightPhrase = (phraseWords) => {
+  if (phraseWords.length === 0) return false
+
+  const nonStopWords = phraseWords.filter((word) => !STOP_WORDS.has(word))
+  if (phraseWords.length === 1) {
+    return nonStopWords.length === 1 && phraseWords[0].length >= 8
+  }
+
+  return nonStopWords.length >= 2 && phraseWords.join(' ').length >= 12
+}
+
+const getEvidenceSpans = (sentence) => {
+  if (!hasCitations(sentence)) return []
+
+  const wordTokens = tokenizeWords(sentence.text)
+  if (wordTokens.length === 0) return []
+
+  const chunkTexts = sentence.citations
+    .map((id) => chunkWordCache.value.get(String(id)))
+    .filter(Boolean)
+
+  if (chunkTexts.length === 0) return []
+
+  const spans = []
+  let startIndex = 0
+
+  while (startIndex < wordTokens.length) {
+    let matchedLength = 0
+    const maxLength = Math.min(12, wordTokens.length - startIndex)
+
+    for (let length = maxLength; length >= 1; length -= 1) {
+      const phraseWords = wordTokens
+        .slice(startIndex, startIndex + length)
+        .map((token) => token.normalized)
+
+      if (!shouldHighlightPhrase(phraseWords)) {
+        continue
+      }
+
+      const phrase = ` ${phraseWords.join(' ')} `
+      const hasMatch = chunkTexts.some((chunkText) => chunkText.includes(phrase))
+      if (hasMatch) {
+        matchedLength = length
+        break
+      }
+    }
+
+    if (matchedLength > 0) {
+      const firstToken = wordTokens[startIndex]
+      const lastToken = wordTokens[startIndex + matchedLength - 1]
+      spans.push({
+        start: firstToken.start,
+        end: lastToken.end,
+      })
+      startIndex += matchedLength
+      continue
+    }
+
+    startIndex += 1
+  }
+
+  return spans
+}
+
+const getSentenceSegments = (sentence) => {
+  const spans = getEvidenceSpans(sentence)
+  if (spans.length === 0) {
+    return [{ text: sentence.text, matched: false }]
+  }
+
+  const segments = []
+  let cursor = 0
+
+  spans.forEach((span) => {
+    if (span.start > cursor) {
+      segments.push({
+        text: sentence.text.slice(cursor, span.start),
+        matched: false,
+      })
+    }
+
+    segments.push({
+      text: sentence.text.slice(span.start, span.end),
+      matched: true,
+    })
+    cursor = span.end
+  })
+
+  if (cursor < sentence.text.length) {
+    segments.push({
+      text: sentence.text.slice(cursor),
+      matched: false,
+    })
+  }
+
+  return segments
+}
+
 /**
  * Format file name for display (just the base name)
  */
@@ -69,7 +205,7 @@ const formatFileName = (fileName) => {
 const handleMouseEnter = (event, sentence, index) => {
   if (!props.showTooltip || !hasCitations(sentence)) return
 
-  const rect = event.target.getBoundingClientRect()
+  const rect = event.currentTarget.getBoundingClientRect()
   tooltipPosition.value = {
     x: rect.left + rect.width / 2,
     y: rect.bottom + 8,
@@ -104,7 +240,13 @@ const getCitationLabel = (citations) => {
         @mouseenter="handleMouseEnter($event, sentence, idx)"
         @mouseleave="handleMouseLeave"
       >
-        {{ sentence.text }}
+        <template v-for="(segment, segmentIdx) in getSentenceSegments(sentence)" :key="`${idx}-${segmentIdx}`">
+          <span
+            :class="{ 'retrieved-phrase': segment.matched }"
+          >
+            {{ segment.text }}
+          </span>
+        </template>
         <sup v-if="hasCitations(sentence)" class="citation-marker">
           {{ getCitationLabel(sentence.citations) }}
         </sup>
@@ -166,19 +308,20 @@ const getCitationLabel = (citations) => {
 }
 
 .sentence.has-citations {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
   cursor: pointer;
-  border-bottom: 1px dotted rgba(99, 102, 241, 0.5);
 }
 
 .sentence.has-citations:hover {
   background: rgba(99, 102, 241, 0.1);
   border-radius: 2px;
-  text-decoration-style: solid;
-  border-bottom-style: solid;
+}
+
+.retrieved-phrase {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(129, 140, 248, 0.9);
 }
 
 .citation-marker {

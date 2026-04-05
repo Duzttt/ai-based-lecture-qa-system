@@ -14,7 +14,8 @@ from typing import Any, Dict, List, Optional
 from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.llm_client import call_llm
-from app.services.runtime_llm import load_runtime_llm_settings
+from app.services.runtime_embedding import load_runtime_embedding_settings
+from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_api_model
 from app.services.vector_store import VectorStore
 
 
@@ -41,12 +42,13 @@ class CitationRAGPipeline:
         timeout_seconds: Optional[int] = None,
     ):
         runtime_settings = load_runtime_llm_settings()
+        rt_embed = load_runtime_embedding_settings()
         self.embedding_service = embedding_service or EmbeddingService(
-            model_name=settings.EMBEDDING_MODEL
+            model_name=rt_embed["model_id"]
         )
         self.vector_store = vector_store or VectorStore.get_cached(
             index_path=settings.FAISS_INDEX_PATH,
-            embedding_dim=settings.EMBEDDING_DIM,
+            embedding_dim=rt_embed["embedding_dim"],
         )
         self.model = model or runtime_settings["model"] or settings.LOCAL_LLM_MODEL
         self.base_url = (
@@ -138,6 +140,8 @@ Rules for citations:
 4. A sentence can cite multiple chunks if it combines information from multiple sources
 5. Only cite chunks that actually support the statement
 6. Do not make up information not found in the provided context
+7. Unless the user asks for a one-line answer, write 2 to 4 complete sentences
+8. For definition or explanation questions, define the term first and then explain why it matters in context
 
 Reference Materials:
 {context_text}
@@ -168,7 +172,7 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             query_text=prompt,
             base_url=self.base_url or runtime_settings["base_url"],
             temperature=0.3,
-            num_predict=2048,
+            num_predict=settings.CITATION_MAX_OUTPUT_TOKENS,
         )
 
     def _generate_with_openrouter(self, prompt: str) -> str:
@@ -194,6 +198,7 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             api_key=api_key,
             base_url=runtime_settings["base_url"] or settings.OPENROUTER_BASE_URL,
             temperature=0.3,
+            max_tokens=settings.CITATION_MAX_OUTPUT_TOKENS,
         )
 
     def _generate_with_gemini(self, prompt: str) -> str:
@@ -212,13 +217,14 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
             raise CitationRAGError("GEMINI_API_KEY is not configured")
         return call_llm(
             provider="gemini",
-            model=self.model or runtime_settings["model"] or settings.GEMINI_MODEL,
+            model=resolve_gemini_api_model(self.model, runtime_settings["model"]),
             call_type="citation",
             messages=[{"role": "user", "content": prompt}],
             query_text=prompt,
             api_key=api_key,
             base_url=runtime_settings["base_url"] or settings.GEMINI_BASE_URL,
             temperature=0.3,
+            max_tokens=settings.CITATION_MAX_OUTPUT_TOKENS,
             response_format="json",
         )
 
@@ -279,6 +285,53 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
 
         return parsed
 
+    def _recover_sentences_from_malformed_response(
+        self, raw_response: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Recover sentence text from JSON-like model output that is malformed.
+
+        Models sometimes follow the requested schema but forget to escape quotes
+        inside the "text" value. In those cases we still want to surface the
+        answer text instead of replacing it with a generic error message.
+        """
+        response_text = str(raw_response or "").strip()
+        if not response_text:
+            return None
+
+        recovered_sentences: List[Dict[str, Any]] = []
+        text_matches = re.finditer(
+            r'"text"\s*:\s*"(?P<text>[\s\S]*?)"\s*,\s*"citations"\s*:\s*\[(?P<citations>[^\]]*)\]',
+            response_text,
+        )
+        for match in text_matches:
+            text_value = match.group("text").strip()
+            if not text_value:
+                continue
+
+            citations_raw = match.group("citations").strip()
+            citation_ids = [int(item) for item in re.findall(r"\d+", citations_raw)]
+            recovered_sentences.append(
+                {
+                    "text": text_value,
+                    "citations": citation_ids,
+                }
+            )
+
+        if recovered_sentences:
+            return {"sentences": recovered_sentences}
+
+        answer_match = re.search(
+            r'"(?:answer|response|text)"\s*:\s*"(?P<text>[\s\S]*?)"\s*(?:[,}])',
+            response_text,
+        )
+        if answer_match:
+            text_value = answer_match.group("text").strip()
+            if text_value:
+                return {"sentences": [{"text": text_value, "citations": []}]}
+
+        return None
+
     def _build_response_with_sources(
         self,
         sentences_data: Dict[str, Any],
@@ -308,6 +361,40 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         return {
             "sentences": sentences_data.get("sentences", []),
             "sources": sources,
+        }
+
+    def _generate_plain_answer_fallback(
+        self, question: str, chunks: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Fall back to the standard RAG answer path when citation JSON generation
+        fails. This prefers returning a usable answer over surfacing a parser
+        error to the user.
+        """
+        if not chunks:
+            return None
+
+        try:
+            from app.services.local_rag import build_context_from_sources, generate
+
+            context = build_context_from_sources(chunks)
+            plain_answer = str(
+                generate(
+                    query=question,
+                    context=context,
+                    model=self.model,
+                    temperature=0.3,
+                )
+                or ""
+            ).strip()
+        except Exception:
+            return None
+
+        if not plain_answer:
+            return None
+
+        return {
+            "sentences": [{"text": plain_answer, "citations": []}],
         }
 
     def query(
@@ -363,19 +450,31 @@ Output ONLY the JSON object. No additional text, no markdown code blocks, no exp
         try:
             parsed_response = self._parse_llm_response(raw_response)
         except CitationRAGError:
-            fallback_text = str(raw_response or "").strip()
-            if not fallback_text:
-                raise
-            if fallback_text.startswith("{") and (
-                "sentences" in fallback_text or "text" in fallback_text
-            ):
-                fallback_text = (
-                    "The model returned a malformed response. "
-                    "Please try rephrasing your question or try again later."
+            recovered_response = self._recover_sentences_from_malformed_response(
+                raw_response
+            )
+            if recovered_response:
+                parsed_response = recovered_response
+            else:
+                plain_answer_response = self._generate_plain_answer_fallback(
+                    question, chunks
                 )
-            parsed_response = {
-                "sentences": [{"text": fallback_text, "citations": []}],
-            }
+                if plain_answer_response:
+                    parsed_response = plain_answer_response
+                else:
+                    fallback_text = str(raw_response or "").strip()
+                    if not fallback_text:
+                        raise
+                    if fallback_text.startswith("{") and (
+                        "sentences" in fallback_text or "text" in fallback_text
+                    ):
+                        fallback_text = (
+                            "The model returned a malformed response. "
+                            "Please try rephrasing your question or try again later."
+                        )
+                    parsed_response = {
+                        "sentences": [{"text": fallback_text, "citations": []}],
+                    }
 
         # Build final response with source metadata
         return self._build_response_with_sources(parsed_response, chunks)

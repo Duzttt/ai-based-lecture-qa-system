@@ -101,6 +101,8 @@ class TestCitationPromptBuilding:
                 assert "Each sentence MUST have a" in prompt
                 assert "citations" in prompt
                 assert "empty array" in prompt
+                assert "2 to 4 complete sentences" in prompt
+                assert "define the term first" in prompt
 
 
 class TestResponseParsing:
@@ -301,8 +303,11 @@ class TestMalformedJsonFallback:
                 pipeline = CitationRAGPipeline()
 
                 # Simulate LLM returning incomplete JSON
-                with patch.object(pipeline, "_generate") as mock_generate:
+                with patch.object(pipeline, "_generate") as mock_generate, patch.object(
+                    pipeline, "_generate_plain_answer_fallback"
+                ) as mock_plain_fallback:
                     mock_generate.return_value = '{ "sentences": ['
+                    mock_plain_fallback.return_value = None
 
                     result = pipeline.query("Test question?")
 
@@ -340,6 +345,73 @@ class TestMalformedJsonFallback:
                     assert (
                         "agents operate autonomously" in result["sentences"][0]["text"]
                     )
+
+    def test_malformed_json_with_unescaped_quotes_recovers_answer_text(self):
+        """Test recovery when the model forgets to escape quotes in sentence text."""
+        with patch("app.services.citation_rag.EmbeddingService") as mock_embedding:
+            with patch("app.services.citation_rag.VectorStore") as mock_vector_store:
+                mock_embedding_instance = Mock()
+                mock_embedding_instance.embed_query.return_value = [0.1] * 384
+                mock_embedding.return_value = mock_embedding_instance
+
+                mock_store_instance = Mock()
+                mock_store_instance.search_with_metadata.return_value = [
+                    {"text": "Test chunk", "source": "test.pdf", "page": 1},
+                ]
+                mock_vector_store.get_cached.return_value = mock_store_instance
+
+                pipeline = CitationRAGPipeline()
+
+                with patch.object(pipeline, "_generate") as mock_generate:
+                    mock_generate.return_value = (
+                        '{"sentences":[{"text":"In computing history, "ubiquity" '
+                        'describes technology becoming widely available across '
+                        'everyday environments.","citations":[1]}]}'
+                    )
+
+                    result = pipeline.query("What does ubiquity mean?")
+
+                    assert "sentences" in result
+                    assert len(result["sentences"]) == 1
+                    assert "ubiquity" in result["sentences"][0]["text"]
+                    assert "widely available" in result["sentences"][0]["text"]
+                    assert result["sentences"][0]["citations"] == [1]
+
+    def test_malformed_json_uses_plain_answer_fallback_when_recovery_fails(self):
+        """Test fallback to normal answer generation when citation JSON parsing fails."""
+        with patch("app.services.citation_rag.EmbeddingService") as mock_embedding:
+            with patch("app.services.citation_rag.VectorStore") as mock_vector_store:
+                mock_embedding_instance = Mock()
+                mock_embedding_instance.embed_query.return_value = [0.1] * 384
+                mock_embedding.return_value = mock_embedding_instance
+
+                mock_store_instance = Mock()
+                mock_store_instance.search_with_metadata.return_value = [
+                    {"text": "Test chunk", "source": "test.pdf", "page": 1},
+                ]
+                mock_vector_store.get_cached.return_value = mock_store_instance
+
+                pipeline = CitationRAGPipeline()
+
+                with patch.object(pipeline, "_generate") as mock_generate, patch.object(
+                    pipeline, "_generate_plain_answer_fallback"
+                ) as mock_plain_fallback:
+                    mock_generate.return_value = '{ "sentences": ['
+                    mock_plain_fallback.return_value = {
+                        "sentences": [
+                            {
+                                "text": "Ubiquitous computing means computation is embedded into many everyday environments.",
+                                "citations": [],
+                            }
+                        ]
+                    }
+
+                    result = pipeline.query("How does ubiquitous computing work?")
+
+                    assert "sentences" in result
+                    assert len(result["sentences"]) == 1
+                    assert "embedded into many everyday environments" in result["sentences"][0]["text"]
+                    assert result["sentences"][0]["citations"] == []
 
 
 class TestQueryWithCitationsFunction:

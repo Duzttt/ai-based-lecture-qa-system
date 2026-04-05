@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
 from app.services.llm_client import call_llm
-from app.services.runtime_llm import load_runtime_llm_settings
+from app.services.runtime_embedding import load_runtime_embedding_settings
+from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_api_model
 from app.services.vector_store import VectorStore, VectorStoreError
 
 SYSTEM_PROMPT = """You are an academic teaching assistant for lecture notes Q&A.
@@ -34,10 +35,11 @@ def retrieve_with_faiss(
     if not query.strip():
         raise LocalRAGError("Query cannot be empty")
 
-    embedding_service = EmbeddingService(model_name=settings.EMBEDDING_MODEL)
+    rt = load_runtime_embedding_settings()
+    embedding_service = EmbeddingService(model_name=rt["model_id"])
     vector_store = VectorStore.get_cached(
         index_path=settings.FAISS_INDEX_PATH,
-        embedding_dim=settings.EMBEDDING_DIM,
+        embedding_dim=rt["embedding_dim"],
     )
 
     try:
@@ -113,6 +115,7 @@ def generate_with_local_llm(
             query_text=query,
             base_url=resolved_base_url,
             keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
+            num_predict=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
         )
     except ValueError as exc:
@@ -153,6 +156,7 @@ def generate_with_openrouter(
             api_key=resolved_key,
             base_url=resolved_base_url,
             temperature=temperature,
+            max_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
         )
     except ValueError as exc:
@@ -173,13 +177,11 @@ def generate_with_gemini(
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
     runtime_settings = load_runtime_llm_settings()
-    requested_model = str(model or "").strip()
-    if requested_model and "gemini" in requested_model.lower():
-        resolved_model = requested_model
-    else:
-        resolved_model = runtime_settings["model"] or settings.GEMINI_MODEL
+    resolved_model = resolve_gemini_api_model(model, runtime_settings["model"])
     resolved_key = api_key or runtime_settings["api_key"] or settings.GEMINI_API_KEY
-    resolved_base_url = base_url or runtime_settings["base_url"] or settings.GEMINI_BASE_URL
+    resolved_base_url = (
+        base_url or runtime_settings["base_url"] or settings.GEMINI_BASE_URL
+    )
 
     if not resolved_key:
         raise LocalRAGError("GEMINI_API_KEY is not configured")
@@ -195,6 +197,7 @@ def generate_with_gemini(
             api_key=resolved_key,
             base_url=resolved_base_url,
             temperature=temperature,
+            max_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
         )
     except ValueError as exc:
