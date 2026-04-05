@@ -125,7 +125,7 @@ def test_invalidate_index_dependent_caches_clears_vector_and_document_caches(
 
     helpers._invalidate_index_dependent_caches()
 
-    assert cleared["vector"] == (settings.FAISS_INDEX_PATH, settings.EMBEDDING_DIM)
+    assert cleared["vector"] == (settings.FAISS_INDEX_PATH, None)
     assert cleared["documents"] is True
 
 

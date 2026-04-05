@@ -5,6 +5,7 @@ import numpy as np
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
+from app.services.runtime_embedding import load_runtime_embedding_settings
 from app.services.pdf_chunking import (
     chunk_pdf_with_metadata,
     read_pdf_pages,
@@ -96,8 +97,9 @@ def index_pdf_file(
     if not chunk_records:
         raise PDFIndexingError("No chunks created from text")
 
+    rt = load_runtime_embedding_settings()
     embedding_service = EmbeddingService(
-        model_name=model_name or settings.EMBEDDING_MODEL
+        model_name=model_name or rt["model_id"]
     )
 
     try:

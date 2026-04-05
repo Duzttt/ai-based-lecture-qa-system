@@ -112,11 +112,14 @@ def _full_rebuild_worker() -> None:
             _INDEXING_STATE["last_error"] = None
 
         try:
+            from app.services.runtime_embedding import load_runtime_embedding_settings
+
+            rt = load_runtime_embedding_settings()
             index_stats = index_pdf_directory(
                 data_source_dir=settings.DOCUMENTS_PATH,
                 chunk_size=settings.CHUNK_SIZE,
                 index_path=settings.FAISS_INDEX_PATH,
-                model_name=settings.EMBEDDING_MODEL,
+                model_name=rt["model_id"],
                 clear_existing=True,
             )
             _invalidate_index_dependent_caches()
@@ -149,10 +152,7 @@ def _invalidate_index_dependent_caches() -> None:
     try:
         from app.services.vector_store import VectorStore
 
-        VectorStore.invalidate_cached(
-            index_path=settings.FAISS_INDEX_PATH,
-            embedding_dim=settings.EMBEDDING_DIM,
-        )
+        VectorStore.invalidate_cached(index_path=settings.FAISS_INDEX_PATH)
     except Exception:
         pass
 

@@ -13,6 +13,7 @@ from app.services.pdf_indexing import (
     index_pdf_directory,
     index_pdf_file,
 )
+from app.services.runtime_embedding import load_runtime_embedding_settings
 
 from django_app.views.helpers import (
     INDEXING_STATUS_COMPLETED,
@@ -92,18 +93,19 @@ def upload_pdf(request: HttpRequest) -> JsonResponse:
 
     try:
         if indexing_strategy == INDEXING_STRATEGY_FULL_REBUILD:
+            rt = load_runtime_embedding_settings()
             index_stats = index_pdf_directory(
                 data_source_dir=settings.DOCUMENTS_PATH,
                 chunk_size=settings.CHUNK_SIZE,
                 index_path=settings.FAISS_INDEX_PATH,
-                model_name=settings.EMBEDDING_MODEL,
+                model_name=rt["model_id"],
                 clear_existing=True,
             )
         elif indexing_strategy == INDEXING_STRATEGY_APPEND:
             index_stats = index_pdf_file(
                 pdf_path=saved_file_path,
                 chunk_size=settings.CHUNK_SIZE,
-                model_name=settings.EMBEDDING_MODEL,
+                model_name=load_runtime_embedding_settings()["model_id"],
                 clear_existing=False,
             )
         else:
@@ -200,7 +202,7 @@ def delete_document(request: HttpRequest) -> JsonResponse:
             data_source_dir=settings.DOCUMENTS_PATH,
             chunk_size=settings.CHUNK_SIZE,
             index_path=settings.FAISS_INDEX_PATH,
-            model_name=settings.EMBEDDING_MODEL,
+            model_name=load_runtime_embedding_settings()["model_id"],
             clear_existing=True,
         )
     except PDFIndexingError as exc:

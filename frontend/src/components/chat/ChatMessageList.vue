@@ -1,21 +1,20 @@
 <script setup>
 import ChatMessage from './ChatMessage.vue'
+import QuestionSuggestions from './QuestionSuggestions.vue'
 import RetrievalChunks from './RetrievalChunks.vue'
 
 const props = defineProps({
   messages: Array,
   isLoading: Boolean,
   isRetrieving: Boolean,
-  hasSelection: Boolean
+  hasSelection: Boolean,
+  selectedDocuments: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['chunk-hover', 'chunk-click', 'chunk-rightclick', 'suggestion-click'])
-
-const quickSuggestions = [
-  'Summarize the key points',
-  'Identify common themes',
-  'List references',
-]
 </script>
 
 <template>
@@ -26,18 +25,16 @@ const quickSuggestions = [
       </div>
       <h3 class="empty-title">Ready to explore your notes.</h3>
       <p class="empty-title-line2">Ask anything about them.</p>
-      <p class="empty-desc">Your academic sources are indexed and ready for deep analysis.</p>
-      <div class="empty-suggestions">
-        <button
-          v-for="suggestion in quickSuggestions"
-          :key="suggestion"
-          type="button"
-          class="suggestion-chip"
-          @click="emit('suggestion-click', suggestion)"
-        >
-          {{ suggestion }}
-          <svg class="chip-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+      <p class="empty-desc">
+        Your selected notes are chunked and indexed. Start with a suggested
+        question below or ask your own.
+      </p>
+      <div v-if="hasSelection" class="empty-suggestions">
+        <QuestionSuggestions
+          :selected-documents="selectedDocuments"
+          :centered="true"
+          @question-select="(questionText) => emit('suggestion-click', questionText)"
+        />
       </div>
       <div v-if="!hasSelection" class="empty-hint">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
@@ -148,53 +145,10 @@ const quickSuggestions = [
 }
 
 .empty-suggestions {
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   justify-content: center;
   margin-bottom: 20px;
-}
-
-.suggestion-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: 1px solid rgba(69, 70, 83, 0.2);
-  background: var(--surface-container);
-  color: var(--on-surface);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
-  white-space: nowrap;
-}
-
-.suggestion-chip:focus-visible {
-  outline: 2px solid var(--primary-container);
-  outline-offset: 2px;
-}
-
-.suggestion-chip:hover {
-  background: var(--surface-container-high);
-  border-color: rgba(129, 140, 248, 0.3);
-  transform: translateY(-1px);
-}
-
-.chip-arrow {
-  width: 14px;
-  height: 14px;
-  color: var(--primary-container);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.suggestion-chip:hover .chip-arrow {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 .empty-hint {
