@@ -68,11 +68,10 @@ PROVIDER_META = {
         "default_model": "qwen2.5:3b",
         "requires_key": False,
         "models": [
+            "gemma4:latest",
+            "gemma4:e4b",
+            "qwen3.5:4b",
             "qwen2.5:3b",
-            "qwen2.5:7b",
-            "llama3.2:3b",
-            "mistral:7b",
-            "phi3:mini",
         ],
     },
 }
