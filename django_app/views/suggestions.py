@@ -86,11 +86,18 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
         generate_question_suggestions,
         QuestionSuggestionError,
     )
+    from app.services.runtime_llm import VALID_PROVIDERS, load_runtime_llm_settings
 
     start_time = time.time()
 
     doc_ids_param = request.GET.get("doc_ids", "")
     num_suggestions = int(request.GET.get("num_suggestions", 3))
+    refresh_nonce = str(request.GET.get("refresh_nonce", "")).strip()
+    provider_param = str(request.GET.get("provider", "")).strip().lower()
+    runtime_provider = load_runtime_llm_settings()["provider"] or "local_llm"
+    suggestion_provider = (
+        provider_param if provider_param in VALID_PROVIDERS else runtime_provider
+    )
 
     if not doc_ids_param:
         return _error_response("doc_ids query parameter is required", status=400)
@@ -120,7 +127,12 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
         if not documents:
             return _error_response("No valid documents found in index", status=404)
 
-        result = generate_question_suggestions(documents, num_suggestions)
+        result = generate_question_suggestions(
+            documents,
+            num_suggestions,
+            llm_provider=suggestion_provider,
+            cache_buster=refresh_nonce,
+        )
 
         elapsed_ms = (time.time() - start_time) * 1000
 
@@ -129,6 +141,7 @@ def get_question_suggestions(request: HttpRequest) -> JsonResponse:
                 "success": True,
                 "suggestions": result.get("suggestions", []),
                 "generated_from": result.get("generated_from", []),
+                "llm_provider": suggestion_provider,
                 "document_count": len(documents),
                 "generation_time_ms": round(elapsed_ms, 1),
             }

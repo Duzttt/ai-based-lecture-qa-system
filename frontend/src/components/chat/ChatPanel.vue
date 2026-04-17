@@ -51,6 +51,7 @@ const sendMessage = async (questionText) => {
   isRetrieving.value = true
   error.value = ''
   lastRetrievedChunks.value = []
+  let timeoutId = null
 
   try {
     const payload = { query: userQuestion }
@@ -59,10 +60,13 @@ const sendMessage = async (questionText) => {
       payload.sources = selectedSources.value
     }
 
-    const response = await fetch('/api/chat/citations', {
+    const controller = new AbortController()
+    timeoutId = setTimeout(() => controller.abort(), 30000)
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     })
 
     if (!response.ok) {
@@ -75,12 +79,13 @@ const sendMessage = async (questionText) => {
     const sentences = data.sentences || []
     const sources = data.sources || {}
     const chunks = data.retrieved_chunks || []
-
-    const answerText = sentences.map(s => s.text).join(' ') || 'No answer received.'
+    const reasoning = data.reasoning || null
+    const answerText = (data.answer || sentences.map(s => s.text).join(' ') || 'No answer received.').toString()
 
     messages.value.push({
       role: 'assistant',
       content: answerText,
+      reasoning: reasoning,
       sentences: sentences,
       sources: sources,
       chunks: chunks,
@@ -90,8 +95,15 @@ const sendMessage = async (questionText) => {
     registerCitations(messages.value[messages.value.length - 1].id, userQuestion, answerText, chunks)
     lastRetrievedChunks.value = chunks
   } catch (err) {
-    error.value = err.message
+    if (err.name === 'AbortError') {
+      error.value = 'Request timed out. Please try again with a shorter question.'
+    } else {
+      error.value = err.message
+    }
   } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
     isLoading.value = false
     isRetrieving.value = false
   }

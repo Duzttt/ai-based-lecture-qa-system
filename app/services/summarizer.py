@@ -6,6 +6,7 @@ using LLM-based generation.
 """
 
 import json
+import re
 from typing import Any, Dict, List, Optional
 
 from app.config import settings
@@ -140,24 +141,22 @@ Output the synthesized summary directly:"""
         return prompt
 
     def _call_llm(self, prompt: str, response_format: str = None) -> str:
-        """
-        Call the LLM to generate response.
+        raise SummarizerError("LLM summarization is temporarily disabled")
 
-        Args:
-            prompt: Input prompt
-            response_format: Expected format (e.g., 'json')
+    def _extractive_summary(self, text: str, length: str) -> str:
+        clean_text = re.sub(r"\s+", " ", text).strip()
+        if not clean_text:
+            return ""
 
-        Returns:
-            LLM response text
-        """
-        if self.llm_provider == "local_llm":
-            return self._call_local_llm(prompt, response_format)
-        elif self.llm_provider == "gemini":
-            return self._call_gemini(prompt, response_format)
-        elif self.llm_provider == "openrouter":
-            return self._call_openrouter(prompt, response_format)
-        else:
-            raise SummarizerError(f"Unsupported LLM provider: {self.llm_provider}")
+        sentence_candidates = re.split(r"(?<=[.!?。！？])\s+", clean_text)
+        sentences = [s.strip() for s in sentence_candidates if s.strip()]
+        if not sentences:
+            return clean_text[:300]
+
+        sentence_limit_map = {"short": 3, "medium": 6, "detailed": 10}
+        sentence_limit = sentence_limit_map.get(length, 6)
+        selected = sentences[:sentence_limit]
+        return " ".join(selected)
 
     def _build_messages(
         self, prompt: str, response_format: str = None
@@ -239,57 +238,22 @@ Output the synthesized summary directly:"""
         document: Dict[str, Any],
         summary: str,
     ) -> List[Dict[str, Any]]:
-        """
-        Extract key citations from document that support the summary.
-
-        Args:
-            document: Document dict with text and metadata
-            summary: Generated summary text
-
-        Returns:
-            List of citation dicts with point, citation, source, page
-        """
-        text = document["text"][:3000]  # Limit for citation extraction
-
-        prompt = f"""Given the original text and its summary, find the source passages that support each key point in the summary.
-
-**Original Text**:
-{text}
-
-**Summary**:
-{summary}
-
-Return a JSON array where each element contains:
-- point: A key point from the summary (brief)
-- citation: The corresponding passage from the original text (direct quote)
-- source: Document source name
-- page: Page number (if available)
-
-Example format:
-[
-    {{"point": "Key point 1", "citation": "Direct quote 1", "source": "doc_name", "page": 1}},
-    {{"point": "Key point 2", "citation": "Direct quote 2", "source": "doc_name", "page": 2}}
-]
-
-Output ONLY the JSON array, no other text:"""
-
-        try:
-            result = self._call_llm(prompt, response_format="json")
-            # Clean up response to extract JSON
-            result = result.strip()
-            if result.startswith("```json"):
-                result = result[7:]
-            if result.endswith("```"):
-                result = result[:-3]
-            result = result.strip()
-
-            citations = json.loads(result)
-            if isinstance(citations, list):
-                return citations
-            return []
-        except Exception:
-            # Return empty citations on error
-            return []
+        summary_sentences = [
+            s.strip()
+            for s in re.split(r"(?<=[.!?。！？])\s+", summary.strip())
+            if s.strip()
+        ]
+        citations: List[Dict[str, Any]] = []
+        for sentence in summary_sentences[:3]:
+            citations.append(
+                {
+                    "point": sentence[:120],
+                    "citation": sentence[:220],
+                    "source": document.get("name", "unknown"),
+                    "page": None,
+                }
+            )
+        return citations
 
     def generate_single_doc_summary(
         self,
@@ -306,8 +270,12 @@ Output ONLY the JSON array, no other text:"""
         Returns:
             Summary result dict with text, citations, document info
         """
-        prompt = self._build_prompt([document], config)
-        summary_text = self._call_llm(prompt)
+        summary_text = self._extractive_summary(
+            str(document.get("text", "")),
+            str(config.get("length", "medium")),
+        )
+        if not summary_text:
+            raise SummarizerError("Document content is empty")
 
         citations = []
         if config.get("include_citations", True):
@@ -336,8 +304,18 @@ Output ONLY the JSON array, no other text:"""
         Returns:
             Summary result dict with text, comparison, document count
         """
-        prompt = self._build_prompt(documents, config)
-        summary_text = self._call_llm(prompt)
+        doc_summaries: List[str] = []
+        for doc in documents:
+            summary_piece = self._extractive_summary(
+                str(doc.get("text", "")),
+                "short",
+            )
+            if summary_piece:
+                doc_summaries.append(f"[{doc.get('name', 'unknown')}] {summary_piece}")
+
+        if not doc_summaries:
+            raise SummarizerError("Document content is empty")
+        summary_text = "\n\n".join(doc_summaries)
 
         # Generate comparison table if requested
         comparison = []
@@ -365,54 +343,28 @@ Output ONLY the JSON array, no other text:"""
         Returns:
             List of comparison dicts per document
         """
-        comparison = []
-
+        comparison: List[Dict[str, Any]] = []
         for doc in documents:
-            text = doc["text"][:2000]  # Limit for comparison
-
-            prompt = f"""Analyze the following document and extract key information for a comparison table.
-
-**Document**: {doc["name"]}
-
-**Content**:
-{text}
-
-Return in JSON format:
-{{
-    "name": "Document name",
-    "mainPoints": "Core arguments (1-2 sentences)",
-    "keywords": ["keyword 1", "keyword 2", "keyword 3"],
-    "methodology": "Methodology (if any)",
-    "conclusions": "Main conclusions"
-}}
-
-Output ONLY the JSON object:"""
-
-            try:
-                result = self._call_llm(prompt, response_format="json")
-                # Clean up response
-                result = result.strip()
-                if result.startswith("```json"):
-                    result = result[7:]
-                if result.endswith("```"):
-                    result = result[:-3]
-                result = result.strip()
-
-                comparison_data = json.loads(result)
-                comparison_data["name"] = doc["name"]  # Ensure name is correct
-                comparison.append(comparison_data)
-            except Exception:
-                # Add basic info on error
-                comparison.append(
-                    {
-                        "name": doc["name"],
-                        "mainPoints": "Analysis failed",
-                        "keywords": [],
-                        "methodology": "",
-                        "conclusions": "",
-                    }
-                )
-
+            text = str(doc.get("text", ""))
+            summary = self._extractive_summary(text, "short")
+            tokens = [w.lower() for w in re.findall(r"[A-Za-z][A-Za-z0-9_-]{3,}", text)]
+            keyword_counts: Dict[str, int] = {}
+            for token in tokens:
+                keyword_counts[token] = keyword_counts.get(token, 0) + 1
+            top_keywords = sorted(
+                keyword_counts.keys(),
+                key=lambda k: keyword_counts[k],
+                reverse=True,
+            )[:3]
+            comparison.append(
+                {
+                    "name": doc.get("name", "unknown"),
+                    "mainPoints": summary or "No sufficient content",
+                    "keywords": top_keywords,
+                    "methodology": "",
+                    "conclusions": summary or "",
+                }
+            )
         return comparison
 
     def generate_summary(

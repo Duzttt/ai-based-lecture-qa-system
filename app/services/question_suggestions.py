@@ -11,6 +11,7 @@ from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import settings
+from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_api_model
 
 logger = logging.getLogger(__name__)
 
@@ -145,9 +146,19 @@ class QuestionSuggestionService:
         "between",
         "under",
     }
+    DOMAIN_STOP_WORDS = {
+        # Generic lecture domain words that cause repetitive suggestions.
+        "agent",
+        "agents",
+        "intelligent",
+    }
 
-    def __init__(self, llm_provider: str = "local_llm"):
-        self.llm_provider = llm_provider
+    def __init__(self, llm_provider: Optional[str] = None):
+        runtime = load_runtime_llm_settings()
+        self.llm_provider = llm_provider or runtime["provider"] or settings.LLM_PROVIDER
+        self._runtime_model = runtime["model"]
+        self._runtime_api_key = runtime["api_key"]
+        self._runtime_base_url = runtime["base_url"]
 
     def extract_keywords(
         self, text: str, top_k: int = 15, min_word_length: int = 3
@@ -176,7 +187,11 @@ class QuestionSuggestionService:
 
         # Filter stop words and short words
         filtered_words = [
-            w for w in words if len(w) >= min_word_length and w not in self.STOP_WORDS
+            w
+            for w in words
+            if len(w) >= min_word_length
+            and w not in self.STOP_WORDS
+            and w not in self.DOMAIN_STOP_WORDS
         ]
 
         # Count word frequencies
@@ -493,11 +508,11 @@ Do NOT add any other text, explanation, or commentary."""
 
             return call_llm(
                 provider="local_llm",
-                model=settings.LOCAL_LLM_MODEL,
+                model=self._runtime_model or settings.LOCAL_LLM_MODEL,
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
-                base_url=settings.LOCAL_LLM_BASE_URL,
+                base_url=self._runtime_base_url or settings.LOCAL_LLM_BASE_URL,
                 timeout=settings.LOCAL_LLM_TIMEOUT_SECONDS,
                 keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
@@ -508,15 +523,18 @@ Do NOT add any other text, explanation, or commentary."""
         """Call Gemini API."""
         try:
             from app.services.llm_client import call_llm
+            api_key = self._runtime_api_key or settings.GEMINI_API_KEY
+            if not api_key:
+                raise QuestionSuggestionError("GEMINI_API_KEY is not configured")
 
             return call_llm(
                 provider="gemini",
-                model=settings.GEMINI_MODEL,
+                model=resolve_gemini_api_model(self._runtime_model, settings.GEMINI_MODEL),
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
-                api_key=settings.GEMINI_API_KEY,
-                base_url=settings.GEMINI_BASE_URL,
+                api_key=api_key,
+                base_url=self._runtime_base_url or settings.GEMINI_BASE_URL,
                 temperature=0.7,
                 max_tokens=500,
             )
@@ -527,15 +545,18 @@ Do NOT add any other text, explanation, or commentary."""
         """Call OpenRouter API."""
         try:
             from app.services.llm_client import call_llm
+            api_key = self._runtime_api_key or settings.OPENROUTER_API_KEY
+            if not api_key:
+                raise QuestionSuggestionError("OPENROUTER_API_KEY is not configured")
 
             return call_llm(
                 provider="openrouter",
-                model=settings.OPENROUTER_MODEL,
+                model=self._runtime_model or settings.OPENROUTER_MODEL,
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
-                api_key=settings.OPENROUTER_API_KEY,
-                base_url=settings.OPENROUTER_BASE_URL,
+                api_key=api_key,
+                base_url=self._runtime_base_url or settings.OPENROUTER_BASE_URL,
                 temperature=0.7,
                 max_tokens=500,
             )
@@ -593,6 +614,7 @@ Do NOT add any other text, explanation, or commentary."""
         """
         selected: List[str] = []
         selected_types: set = set()
+        what_is_count = 0
 
         # Group candidates by type
         by_type: Dict[str, List[Dict[str, Any]]] = {}
@@ -623,12 +645,19 @@ Do NOT add any other text, explanation, or commentary."""
                 if len(question.split()) > 15:
                     continue
 
+                normalized_question = question.lower().strip()
+                # Keep only one "What is ..." style question.
+                if normalized_question.startswith("what is ") and what_is_count >= 1:
+                    continue
+
                 # Skip if similar to already selected
                 if self._is_similar_to_selected(question, selected):
                     continue
 
                 selected.append(question)
                 selected_types.add(q_type)
+                if normalized_question.startswith("what is "):
+                    what_is_count += 1
                 break
 
         # If still need more, add from any type
@@ -638,8 +667,18 @@ Do NOT add any other text, explanation, or commentary."""
                     break
 
                 question = candidate["text"]
-                if len(question.split()) <= 15 and question not in selected:
+                normalized_question = question.lower().strip()
+                if (
+                    len(question.split()) <= 15
+                    and question not in selected
+                    and not (
+                        normalized_question.startswith("what is ")
+                        and what_is_count >= 1
+                    )
+                ):
                     selected.append(question)
+                    if normalized_question.startswith("what is "):
+                        what_is_count += 1
 
         return selected[:num_final]
 
@@ -729,10 +768,12 @@ CACHE_MAX_SIZE = 100
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
-def _get_cache_key(doc_names: List[str], num_suggestions: int) -> str:
+def _get_cache_key(
+    doc_names: List[str], num_suggestions: int, cache_buster: str = ""
+) -> str:
     """Generate cache key from document names and suggestion count."""
     sorted_names = sorted(doc_names)
-    return f"{'|'.join(sorted_names)}:{num_suggestions}"
+    return f"{'|'.join(sorted_names)}:{num_suggestions}:{cache_buster}"
 
 
 def _get_cached_suggestions(cache_key: str) -> Optional[Dict[str, Any]]:
@@ -787,6 +828,8 @@ def get_question_suggestion_service(
 def generate_question_suggestions(
     documents: List[Dict[str, Any]],
     num_suggestions: int = 3,
+    llm_provider: Optional[str] = None,
+    cache_buster: str = "",
 ) -> Dict[str, Any]:
     """
     Convenience function to generate question suggestions with caching.
@@ -803,13 +846,13 @@ def generate_question_suggestions(
     doc_names = [doc.get("name") or doc.get("filename", "Unknown") for doc in documents]
 
     # Check cache first
-    cache_key = _get_cache_key(doc_names, num_suggestions)
+    cache_key = _get_cache_key(doc_names, num_suggestions, cache_buster)
     cached_result = _get_cached_suggestions(cache_key)
     if cached_result is not None:
         logger.debug(f"Cache hit for suggestions: {cache_key}")
         return cached_result
 
-    service = get_question_suggestion_service()
+    service = get_question_suggestion_service(llm_provider=llm_provider)
     result = service.generate_suggestions(documents, num_suggestions)
 
     # Cache the result

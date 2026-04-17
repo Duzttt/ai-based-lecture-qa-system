@@ -92,6 +92,101 @@ def test_call_llm_success_local_llm():
 
 
 @pytest.mark.django_db
+def test_call_llm_local_llm_falls_back_to_generate_on_chat_http_500():
+    from app.services.llm_client import call_llm
+    import requests
+
+    chat_response = MagicMock()
+    chat_response.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+
+    generate_response = MagicMock()
+    generate_response.raise_for_status.return_value = None
+    generate_response.json.return_value = {"response": "Fallback local response"}
+
+    with patch(
+        "app.services.llm_client.requests.post",
+        side_effect=[chat_response, generate_response],
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="gemma4:latest",
+            call_type="citation",
+            messages=[
+                {"role": "system", "content": "You are helpful"},
+                {"role": "user", "content": "test question"},
+            ],
+            base_url="http://localhost:11434",
+        )
+
+    assert result == "Fallback local response"
+    assert mocked_post.call_count == 2
+    first_url = mocked_post.call_args_list[0].args[0]
+    second_url = mocked_post.call_args_list[1].args[0]
+    assert first_url.endswith("/api/chat")
+    assert second_url.endswith("/api/generate")
+
+
+@pytest.mark.django_db
+def test_call_llm_local_llm_falls_back_to_fast_model_on_timeout():
+    from app.services.llm_client import call_llm
+    import requests
+
+    timeout_error = requests.Timeout("Read timed out")
+    fallback_response = MagicMock()
+    fallback_response.raise_for_status.return_value = None
+    fallback_response.json.return_value = {"message": {"content": "Fast fallback answer"}}
+
+    with patch(
+        "app.services.llm_client.requests.post",
+        side_effect=[timeout_error, fallback_response],
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="gemma4:latest",
+            call_type="qa",
+            messages=[{"role": "user", "content": "Explain this topic"}],
+            base_url="http://localhost:11434",
+        )
+
+    assert result == "Fast fallback answer"
+    assert mocked_post.call_count == 2
+    first_payload = mocked_post.call_args_list[0].kwargs["json"]
+    second_payload = mocked_post.call_args_list[1].kwargs["json"]
+    assert first_payload["model"] == "gemma4:latest"
+    assert second_payload["model"] == "qwen3.5:0.8b"
+
+
+@pytest.mark.django_db
+def test_call_llm_local_llm_falls_back_to_generate_when_chat_content_empty():
+    from app.services.llm_client import call_llm
+
+    chat_response = MagicMock()
+    chat_response.raise_for_status.return_value = None
+    chat_response.json.return_value = {"message": {"role": "assistant", "content": ""}}
+
+    generate_response = MagicMock()
+    generate_response.raise_for_status.return_value = None
+    generate_response.json.return_value = {"response": "Recovered from generate endpoint"}
+
+    with patch(
+        "app.services.llm_client.requests.post",
+        side_effect=[chat_response, generate_response],
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="qwen3.5:0.8b",
+            call_type="suggestion",
+            messages=[{"role": "user", "content": "Give 3 study questions"}],
+            base_url="http://localhost:11434",
+        )
+
+    assert result == "Recovered from generate endpoint"
+    assert mocked_post.call_count == 2
+    assert mocked_post.call_args_list[0].args[0].endswith("/api/chat")
+    assert mocked_post.call_args_list[1].args[0].endswith("/api/generate")
+
+
+@pytest.mark.django_db
 def test_call_llm_error_logs_and_reraises():
     from app.services.llm_client import call_llm
 
