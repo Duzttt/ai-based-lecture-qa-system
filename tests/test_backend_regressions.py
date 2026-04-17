@@ -4,6 +4,8 @@ from unittest.mock import Mock
 
 import django
 import pytest
+import requests
+from django.http import JsonResponse
 from django.test import Client
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
@@ -136,15 +138,15 @@ def test_ask_qwen_updates_existing_query_log(
     existing_log = QueryLog.objects.create(
         query="seed",
         latency_ms=1,
-        llm_model="openrouter/free",
-        llm_provider="openrouter",
+        llm_model="__test_model__",
+        llm_provider="local_llm",
         call_type="qa",
     )
 
     monkeypatch.setattr(
         "django_app.views.rag._load_rag_config",
         lambda: {
-            "llm_model": "openrouter/free",
+            "llm_model": "__test_model__",
             "top_k": 3,
             "temperature": 0.7,
             "similarity_threshold": 0.6,
@@ -162,17 +164,15 @@ def test_ask_qwen_updates_existing_query_log(
     )
     monkeypatch.setattr(
         "django_app.views.rag.generate",
-        lambda query,
-        context,
-        model=None,
-        temperature=0.7,
-        timeout_seconds=60,
-        return_log=False: ("Final answer", existing_log.id),
+        lambda query, context, model=None, temperature=0.7, timeout_seconds=60, return_log=False, return_thinking=False: (
+            "Final answer",
+            existing_log.id,
+        ),
     )
 
     response = client.post(
         "/api/ask_qwen",
-        data='{"query": "What is covered?"}',
+        data='{"query": "[TEST_ONLY] What is covered?"}',
         content_type="application/json",
     )
 
@@ -180,7 +180,197 @@ def test_ask_qwen_updates_existing_query_log(
     assert QueryLog.objects.count() == starting_count + 1
 
     existing_log.refresh_from_db()
-    assert existing_log.query == "What is covered?"
+    assert existing_log.query == "[TEST_ONLY] What is covered?"
     assert existing_log.results_count == 1
     assert existing_log.top_k == 3
     assert existing_log.answer_length == len("Final answer")
+
+
+def test_providers_handler_loads_local_models_from_ollama(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "local_llm",
+            "model": "gemma4:latest",
+            "api_key": None,
+            "base_url": "http://localhost:11434",
+        },
+    )
+    monkeypatch.setattr("django_app.views.rag._load_persisted_settings", lambda: {})
+
+    mock_response = Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "models": [{"name": "qwen3.5:0.8b"}, {"name": "gemma4:latest"}]
+    }
+    monkeypatch.setattr(
+        "django_app.views.rag.requests.get", lambda *args, **kwargs: mock_response
+    )
+
+    response = client.get("/api/settings/providers")
+
+    assert response.status_code == 200
+    payload = response.json()
+    local_provider = next(p for p in payload["providers"] if p["id"] == "local_llm")
+    assert local_provider["models"] == ["qwen3.5:0.8b", "gemma4:latest"]
+
+
+def test_providers_handler_uses_local_base_url_when_current_provider_not_local(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "api_key": "x",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        },
+    )
+    monkeypatch.setattr("django_app.views.rag._load_persisted_settings", lambda: {})
+
+    called = {"url": ""}
+    mock_response = Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"models": [{"name": "qwen3.5:0.8b"}]}
+
+    def fake_get(url, timeout=5):
+        called["url"] = url
+        return mock_response
+
+    monkeypatch.setattr("django_app.views.rag.requests.get", fake_get)
+    monkeypatch.setattr(
+        "django_app.views.rag.settings.LOCAL_LLM_BASE_URL", "http://localhost:11434"
+    )
+
+    response = client.get("/api/settings/providers")
+
+    assert response.status_code == 200
+    assert called["url"] == "http://localhost:11434/api/tags"
+
+
+def test_chat_citations_endpoint_degrades_to_plain_chat(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag.ask_qwen",
+        lambda request: JsonResponse(
+            {
+                "answer": "Plain answer",
+                "retrieved_chunks": [
+                    {
+                        "text": "chunk text",
+                        "source": "lecture.pdf",
+                        "page": 2,
+                    }
+                ],
+            }
+        ),
+    )
+
+    response = client.post(
+        "/api/chat/citations",
+        data='{"query":"test"}',
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sentences"][0]["text"] == "Plain answer"
+    assert data["sentences"][0]["citations"] == []
+    assert data["sources"]["1"]["file"] == "lecture.pdf"
+
+
+def test_llm_health_handler_reports_disconnected(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "local_llm",
+            "model": "qwen2.5:3b",
+            "api_key": None,
+            "base_url": "http://localhost:11434",
+        },
+    )
+
+    def raise_connect_error(*args, **kwargs):
+        raise requests.ConnectionError("connection refused")
+
+    monkeypatch.setattr("django_app.views.rag.requests.get", raise_connect_error)
+
+    response = client.get("/api/health/llm")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "disconnected"
+
+
+def test_llm_health_handler_reports_stalled_on_generation_timeout(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "local_llm",
+            "model": "qwen2.5:3b",
+            "api_key": None,
+            "base_url": "http://localhost:11434",
+        },
+    )
+
+    ok_response = Mock()
+    ok_response.raise_for_status.return_value = None
+    ok_response.json.return_value = {"version": "0.20.3"}
+
+    def fake_get(*args, **kwargs):
+        return ok_response
+
+    def timeout_post(*args, **kwargs):
+        raise requests.Timeout("timed out")
+
+    monkeypatch.setattr("django_app.views.rag.requests.get", fake_get)
+    monkeypatch.setattr("django_app.views.rag.requests.post", timeout_post)
+
+    response = client.get("/api/health/llm")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "stalled"
+
+
+def test_llm_health_handler_reports_healthy(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "local_llm",
+            "model": "qwen2.5:3b",
+            "api_key": None,
+            "base_url": "http://localhost:11434",
+        },
+    )
+
+    get_response = Mock()
+    get_response.raise_for_status.return_value = None
+    get_response.json.side_effect = [{"version": "0.20.3"}, {"models": []}]
+
+    post_response = Mock()
+    post_response.raise_for_status.return_value = None
+    post_response.json.return_value = {"response": "OK", "done": True}
+
+    monkeypatch.setattr(
+        "django_app.views.rag.requests.get", lambda *args, **kwargs: get_response
+    )
+    monkeypatch.setattr(
+        "django_app.views.rag.requests.post", lambda *args, **kwargs: post_response
+    )
+
+    response = client.get("/api/health/llm")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "healthy"

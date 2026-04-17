@@ -129,12 +129,27 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
             context=context,
             model=llm_model,
             temperature=temperature,
+            timeout_seconds=20,
             return_log=True,
+            return_thinking=True,
         )
+        # Handle different return types: (answer, log_id), (answer, thinking), or just answer
+        answer = generation_result
+        log_id = None
+        reasoning = None
+
         if isinstance(generation_result, tuple):
-            answer, log_id = generation_result
-        else:
-            answer = generation_result
+            if len(generation_result) == 2:
+                # Could be (answer, log_id) or (answer, thinking)
+                answer, second = generation_result
+                if isinstance(second, int):
+                    log_id = second
+                elif isinstance(second, str) or second is None:
+                    reasoning = second
+            elif len(generation_result) == 3:
+                # (answer, thinking, log_id) - unlikely but handle it
+                answer, reasoning, log_id = generation_result
+
         if not answer:
             raise LocalRAGError("Empty response from LLM")
     except requests.exceptions.Timeout:
@@ -176,6 +191,7 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
         {
             "answer": answer,
+            "reasoning": reasoning,
             "sources": source_files,
             "source_snippets": _build_source_snippets(retrieved_sources),
             "retrieved_chunks": _build_retrieved_chunks(retrieved_sources),
@@ -186,62 +202,31 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
 @csrf_exempt
 @require_http_methods(["POST"])
 def ask_with_citations(request: HttpRequest) -> JsonResponse:
-    try:
-        payload = _get_json_body(request)
-    except ValueError as exc:
-        return _error_response(str(exc), status=400)
-
-    query = str(payload.get("query") or "").strip()
-    source_filter = payload.get("sources")
-    if isinstance(source_filter, str):
-        source_filter = [source_filter]
-
-    if not query:
-        return _error_response("Query cannot be empty", status=400)
-
-    rag_config = _load_rag_config()
-    top_k = rag_config.get("top_k", 3)
-    llm_model = rag_config.get("llm_model") or _build_runtime_llm_settings()["model"]
+    # Citation mode is temporarily disabled: reuse the plain chat path.
+    plain_response = ask_qwen(request)
+    if plain_response.status_code != 200:
+        return plain_response
 
     try:
-        from app.services.citation_rag import CitationRAGPipeline, CitationRAGError
+        payload = json.loads(plain_response.content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return _error_response("Invalid response from chat endpoint", status=500)
 
-        pipeline = CitationRAGPipeline(model=llm_model)
-        result = pipeline.query(
-            question=query,
-            top_k=top_k,
-            source_filter=source_filter,
-        )
-    except requests.exceptions.Timeout:
-        return _error_response(
-            "LLM request timed out",
-            status=504,
-        )
-    except requests.exceptions.RequestException as exc:
-        return _error_response(f"Failed to call LLM: {str(exc)}", status=503)
-    except CitationRAGError as exc:
-        return _error_response(str(exc), status=503)
-    except Exception as exc:  # noqa: BLE001
-        return _error_response(f"Failed to process query: {str(exc)}", status=500)
-
-    retrieved_chunks = []
-    for chunk_id, source_info in result.get("sources", {}).items():
-        retrieved_chunks.append(
-            {
-                "chunk_id": int(chunk_id),
-                "text": source_info.get("text", ""),
-                "source": source_info.get("file", "unknown"),
-                "page": source_info.get("page"),
-            }
-        )
+    answer = str(payload.get("answer") or "").strip()
+    chunks = payload.get("retrieved_chunks", [])
+    sources: Dict[str, Dict[str, Any]] = {}
+    for idx, chunk in enumerate(chunks, start=1):
+        sources[str(idx)] = {
+            "file": chunk.get("source", "unknown"),
+            "page": chunk.get("page"),
+            "text": chunk.get("text", ""),
+        }
 
     return JsonResponse(
         {
-            "sentences": result.get("sentences", []),
-            "sources": result.get("sources", {}),
-            "retrieved_chunks": (
-                _build_retrieved_chunks(retrieved_chunks) if retrieved_chunks else []
-            ),
+            "sentences": [{"text": answer, "citations": []}] if answer else [],
+            "sources": sources,
+            "retrieved_chunks": chunks,
         }
     )
 
@@ -328,10 +313,29 @@ LLM_PROVIDERS_CATALOG = [
     {
         "id": "local_llm",
         "name": "Local LLM (Ollama)",
-        "models": [" ", " ", "qwen2.5:3b", "qwen3.5:4b"],
+        "models": [],
         "requires_api_key": False,
     },
 ]
+
+
+def _fetch_ollama_models(base_url: str, current_model: str) -> List[str]:
+    models: List[str] = []
+    try:
+        response = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=5)
+        response.raise_for_status()
+        payload = response.json()
+        for item in payload.get("models", []):
+            if isinstance(item, dict):
+                name = str(item.get("name") or "").strip()
+                if name and name not in models:
+                    models.append(name)
+    except (requests.RequestException, ValueError, TypeError):
+        pass
+
+    if current_model and current_model not in models:
+        models.append(current_model)
+    return models
 
 
 @csrf_exempt
@@ -356,12 +360,120 @@ def providers_handler(request: HttpRequest) -> JsonResponse:
             entry["has_api_key"] = has_openrouter_key
         else:
             entry["has_api_key"] = False
+            entry["models"] = _fetch_ollama_models(
+                settings.LOCAL_LLM_BASE_URL,
+                current_model if current_provider == "local_llm" else "",
+            )
         providers.append(entry)
 
     return JsonResponse(
         {
             "current": {"provider": current_provider, "model": current_model},
             "providers": providers,
+        }
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def llm_health_handler(request: HttpRequest) -> JsonResponse:
+    runtime_settings = _build_runtime_llm_settings()
+    provider = runtime_settings["provider"] or settings.LLM_PROVIDER
+    configured_model = runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+    base_url = settings.LOCAL_LLM_BASE_URL.rstrip("/")
+    model_for_probe = (
+        configured_model if provider == "local_llm" else settings.LOCAL_LLM_MODEL
+    )
+
+    checks: Dict[str, Any] = {}
+    started_at = time.perf_counter()
+
+    try:
+        version_resp = requests.get(f"{base_url}/api/version", timeout=5)
+        version_resp.raise_for_status()
+        checks["version_ms"] = int((time.perf_counter() - started_at) * 1000)
+    except requests.RequestException as exc:
+        return JsonResponse(
+            {
+                "status": "disconnected",
+                "detail": "Cannot reach Ollama service.",
+                "provider": provider,
+                "model": model_for_probe,
+                "base_url": base_url,
+                "checks": checks,
+                "error": str(exc),
+            }
+        )
+
+    try:
+        tags_started = time.perf_counter()
+        tags_resp = requests.get(f"{base_url}/api/tags", timeout=5)
+        tags_resp.raise_for_status()
+        checks["tags_ms"] = int((time.perf_counter() - tags_started) * 1000)
+    except requests.RequestException as exc:
+        return JsonResponse(
+            {
+                "status": "disconnected",
+                "detail": "Ollama metadata endpoint is unreachable.",
+                "provider": provider,
+                "model": model_for_probe,
+                "base_url": base_url,
+                "checks": checks,
+                "error": str(exc),
+            }
+        )
+
+    try:
+        generate_started = time.perf_counter()
+        generate_payload = {
+            "model": model_for_probe,
+            "prompt": "Reply with exactly OK",
+            "stream": False,
+            "options": {"num_predict": 6, "temperature": 0},
+        }
+        generate_resp = requests.post(
+            f"{base_url}/api/generate",
+            json=generate_payload,
+            timeout=20,
+        )
+        checks["generate_ms"] = int((time.perf_counter() - generate_started) * 1000)
+        generate_resp.raise_for_status()
+        generated = generate_resp.json()
+        response_text = str(generated.get("response") or "").strip()
+        if not response_text:
+            raise ValueError("Empty response from /api/generate")
+    except requests.Timeout:
+        return JsonResponse(
+            {
+                "status": "stalled",
+                "detail": "Ollama is reachable but generation timed out.",
+                "provider": provider,
+                "model": model_for_probe,
+                "base_url": base_url,
+                "checks": checks,
+            }
+        )
+    except (requests.RequestException, ValueError, TypeError) as exc:
+        return JsonResponse(
+            {
+                "status": "stalled",
+                "detail": "Ollama is reachable but generation failed.",
+                "provider": provider,
+                "model": model_for_probe,
+                "base_url": base_url,
+                "checks": checks,
+                "error": str(exc),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "status": "healthy",
+            "detail": "Ollama connectivity and generation checks passed.",
+            "provider": provider,
+            "model": model_for_probe,
+            "base_url": base_url,
+            "checks": checks,
         }
     )
 

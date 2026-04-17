@@ -16,22 +16,6 @@ const studioTools = [
     icon: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
     action: 'summary',
   },
-  {
-    id: 'quiz',
-    title: 'Create Quiz',
-    desc: 'Generate active recall tests based on your selected sources.',
-    icon: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 4h2v5l-1-.75L9 9V4zm9 16H6V4h1v9l3-2.25L13 13V4h5v16z',
-    action: 'quiz',
-    disabled: true,
-  },
-  {
-    id: 'flashcards',
-    title: 'Study Cards',
-    desc: 'Convert lecture notes into digital flashcards automatically.',
-    icon: 'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z',
-    action: 'flashcards',
-    disabled: true,
-  },
 ]
 
 const showSummaryModal = ref(false)
@@ -126,17 +110,6 @@ const closeSummaryViewer = () => {
         />
       </div>
 
-      <div class="pro-section">
-        <div class="pro-header">
-          <svg class="pro-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          <span class="pro-title">Deep Focus Mode</span>
-        </div>
-        <span class="pro-badge">Pro Feature</span>
-        <button type="button" class="pro-btn" aria-label="Upgrade workspace (coming soon)" disabled>
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          Upgrade Workspace
-        </button>
-      </div>
     </div>
 
     <SummaryModal
@@ -336,82 +309,4 @@ const closeSummaryViewer = () => {
   color: var(--on-surface);
 }
 
-.pro-section {
-  margin-top: auto;
-  padding: 16px;
-  border-radius: 10px;
-  background: var(--surface-container);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.pro-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pro-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--tertiary);
-}
-
-.pro-title {
-  font-family: var(--font-headline);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--on-surface);
-}
-
-.pro-badge {
-  padding: 3px 10px;
-  border-radius: 6px;
-  background: rgba(247, 189, 62, 0.1);
-  color: var(--tertiary);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.pro-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: var(--on-primary);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-}
-
-.pro-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.pro-btn:focus-visible:not(:disabled) {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.pro-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.pro-btn:hover {
-  box-shadow: 0 4px 16px rgba(129, 140, 248, 0.25);
-  transform: translateY(-1px);
-}
 </style>

@@ -94,7 +94,8 @@ def generate_with_local_llm(
     base_url: Optional[str] = None,
     timeout_seconds: Optional[int] = 30,
     return_log: bool = False,
-) -> Union[str, Tuple[str, int]]:
+    return_thinking: bool = False,
+) -> Union[str, Tuple[str, int], Tuple[str, Optional[str]]]:
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
@@ -117,6 +118,7 @@ def generate_with_local_llm(
             keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             num_predict=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
+            return_thinking=return_thinking,
         )
     except ValueError as exc:
         raise LocalRAGError(str(exc)) from exc
@@ -211,7 +213,8 @@ def generate(
     temperature: float = 0.7,
     timeout_seconds: int = 60,
     return_log: bool = False,
-) -> Union[str, Tuple[str, int]]:
+    return_thinking: bool = False,
+) -> Union[str, Tuple[str, int], Tuple[str, Optional[str]]]:
     runtime_settings = load_runtime_llm_settings()
     provider = runtime_settings["provider"] or settings.LLM_PROVIDER
 
@@ -245,6 +248,7 @@ def generate(
             timeout_seconds=timeout_seconds,
             base_url=runtime_settings["base_url"],
             return_log=return_log,
+            return_thinking=return_thinking,
         )
     else:
         raise LocalRAGError(f"Unsupported LLM_PROVIDER: {provider}")

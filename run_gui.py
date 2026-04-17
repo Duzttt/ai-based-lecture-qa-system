@@ -7,6 +7,7 @@ import threading
 from pathlib import Path
 from typing import Optional
 
+import requests
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QFont, QIcon, QPalette, QTextCharFormat
 from PyQt6.QtWidgets import (
@@ -31,6 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 ENV_FILE = BASE_DIR / ".env"
 SETTINGS_FILE = BASE_DIR / "data" / "settings.json"
+RAG_CONFIG_FILE = BASE_DIR / "data" / "rag_config.json"
 BACKEND_CMD = [sys.executable, "manage.py", "runserver", "0.0.0.0:8000"]
 FRONTEND_CMD = ["npm", "run", "dev"]
 
@@ -75,6 +77,24 @@ PROVIDER_META = {
         ],
     },
 }
+
+
+def _fetch_ollama_models() -> list[str]:
+    """Fetch installed local models from Ollama; fall back silently on error."""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response.raise_for_status()
+        payload = response.json()
+        models: list[str] = []
+        for item in payload.get("models", []):
+            if isinstance(item, dict):
+                name = str(item.get("name") or "").strip()
+                if name and name not in models:
+                    models.append(name)
+        return models
+    except (requests.RequestException, ValueError, TypeError):
+        return []
+
 
 # ── Catppuccin Mocha palette ───────────────────────────────────────────
 C_BASE = "#1e1e2e"
@@ -270,6 +290,28 @@ def _save_settings(data: dict) -> None:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def _sync_rag_model(model: str) -> None:
+    """Keep rag_config llm_model aligned with runtime LLM settings."""
+    model_name = model.strip()
+    if not model_name:
+        return
+
+    config: dict = {}
+    if RAG_CONFIG_FILE.exists():
+        try:
+            with RAG_CONFIG_FILE.open("r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                config = loaded
+        except (OSError, json.JSONDecodeError):
+            config = {}
+
+    config["llm_model"] = model_name
+    RAG_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with RAG_CONFIG_FILE.open("w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+
+
 # ── Background process reader ─────────────────────────────────────────
 
 class ProcessReader(QThread):
@@ -332,6 +374,7 @@ class ServerGUI(QMainWindow):
         self.backend_proc: Optional[subprocess.Popen] = None
         self.frontend_proc: Optional[subprocess.Popen] = None
         self._readers: list[ProcessReader] = []
+        self._suppress_llm_autosave = False
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -378,6 +421,10 @@ class ServerGUI(QMainWindow):
         btn_logs = QPushButton("LLM Logs")
         btn_logs.clicked.connect(self._open_llm_logs)
         header.addWidget(btn_logs)
+
+        btn_ollama = QPushButton("Ollama Serve")
+        btn_ollama.clicked.connect(self._start_ollama_serve)
+        header.addWidget(btn_ollama)
 
         parent_layout.addLayout(header)
 
@@ -503,6 +550,7 @@ class ServerGUI(QMainWindow):
         row2.addWidget(QLabel("Model"))
         self.combo_model = QComboBox()
         self.combo_model.setEditable(True)
+        self.combo_model.currentTextChanged.connect(self._on_model_changed)
         self.combo_model.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
@@ -683,6 +731,41 @@ class ServerGUI(QMainWindow):
     def _open_llm_logs(self) -> None:
         QDesktopServices.openUrl(QUrl("http://localhost:8000/llm-logs"))
 
+    def _is_ollama_ready(self) -> bool:
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
+
+    def _start_ollama_serve(self) -> None:
+        if self._is_ollama_ready():
+            self._log("OLLAMA", "Already running on http://localhost:11434", C_YELLOW)
+            return
+
+        self._log("OLLAMA", "Starting ollama serve...", C_TEAL)
+        kwargs: dict = dict(
+            cwd=str(BASE_DIR),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        if sys.platform == "win32":
+            kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        proc = subprocess.Popen(["ollama", "serve"], **kwargs)
+        self._attach_reader(proc, "OLLAMA", C_TEAL)
+
+        def _probe() -> None:
+            for _ in range(6):
+                if self._is_ollama_ready():
+                    self._log("OLLAMA", "Service is ready.", C_GREEN)
+                    return
+                threading.Event().wait(1.0)
+            self._log("OLLAMA", "Service may still be starting...", C_YELLOW)
+
+        threading.Thread(target=_probe, daemon=True).start()
+
     # ── PDF parser ─────────────────────────────────────────────────
 
     def _on_parser_changed(self, value: str) -> None:
@@ -694,6 +777,7 @@ class ServerGUI(QMainWindow):
 
     def _load_llm_state(self) -> None:
         """Populate controls from persisted settings.json + .env fallback."""
+        self._suppress_llm_autosave = True
         data = _load_settings()
         provider = data.get("provider", _read_env_var("LLM_PROVIDER", "gemini"))
         if provider not in VALID_PROVIDERS:
@@ -722,17 +806,25 @@ class ServerGUI(QMainWindow):
 
         self._update_provider_status(provider, api_key)
         self._update_active_label()
+        self._suppress_llm_autosave = False
 
     def _populate_models(self, provider: str) -> None:
         """Fill the model combo for the chosen provider."""
         self.combo_model.blockSignals(True)
         self.combo_model.clear()
         meta = PROVIDER_META.get(provider, {})
-        for m in meta.get("models", []):
+        models = list(meta.get("models", []))
+        if provider == "local_llm":
+            dynamic_models = _fetch_ollama_models()
+            if dynamic_models:
+                models = dynamic_models
+        for m in models:
             self.combo_model.addItem(m)
         self.combo_model.blockSignals(False)
 
     def _on_provider_changed(self, _index: int) -> None:
+        if self._suppress_llm_autosave:
+            return
         provider = self.combo_provider.currentData()
         if not provider:
             return
@@ -754,6 +846,12 @@ class ServerGUI(QMainWindow):
                 self.input_api_key.setText(_read_env_var("OPENROUTER_API_KEY", ""))
 
         self._update_provider_status(provider, self.input_api_key.text())
+        self._save_llm_settings(require_api_key=False, auto=True)
+
+    def _on_model_changed(self, _value: str) -> None:
+        if self._suppress_llm_autosave:
+            return
+        self._save_llm_settings(require_api_key=False, auto=True)
 
     def _update_provider_status(self, provider: str, api_key: str) -> None:
         meta = PROVIDER_META.get(provider, {})
@@ -785,7 +883,9 @@ class ServerGUI(QMainWindow):
             self.input_api_key.setEchoMode(QLineEdit.EchoMode.Password)
             self.btn_toggle_key.setText("Show")
 
-    def _save_llm_settings(self) -> None:
+    def _save_llm_settings(
+        self, require_api_key: bool = True, auto: bool = False
+    ) -> None:
         provider = self.combo_provider.currentData()
         model = self.combo_model.currentText().strip()
         api_key = self.input_api_key.text().strip()
@@ -794,7 +894,7 @@ class ServerGUI(QMainWindow):
             return
 
         meta = PROVIDER_META.get(provider, {})
-        if meta.get("requires_key") and not api_key:
+        if require_api_key and meta.get("requires_key") and not api_key:
             QMessageBox.warning(
                 self,
                 "Missing API Key",
@@ -813,14 +913,22 @@ class ServerGUI(QMainWindow):
             data["api_key"] = None
 
         _save_settings(data)
+        _sync_rag_model(str(data["model"]))
 
         self._update_provider_status(provider, api_key)
         self._update_active_label()
-        self._log(
-            "LLM",
-            f"Saved: provider={provider}  model={data['model']}",
-            C_MAUVE,
-        )
+        if auto:
+            self._log(
+                "LLM",
+                f"Auto-synced backend provider={provider}  model={data['model']}",
+                C_MAUVE,
+            )
+        else:
+            self._log(
+                "LLM",
+                f"Saved: provider={provider}  model={data['model']}",
+                C_MAUVE,
+            )
 
     def _reset_llm_settings(self) -> None:
         provider = _read_env_var("LLM_PROVIDER", "gemini")

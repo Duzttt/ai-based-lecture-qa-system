@@ -34,6 +34,8 @@ urlpatterns = [
     path("api/settings/", views.settings_handler),
     path("api/settings/providers", views.providers_handler),
     path("api/settings/providers/", views.providers_handler),
+    path("api/health/llm", views.llm_health_handler),
+    path("api/health/llm/", views.llm_health_handler),
     path("api/rag-config", views.get_rag_config),
     path("api/rag-config/", views.get_rag_config),
     path("api/rag-config/update", views.update_rag_config),

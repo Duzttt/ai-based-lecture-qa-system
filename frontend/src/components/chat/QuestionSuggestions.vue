@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { getQuestionSuggestions, recordSuggestionClick } from '../../services/api'
+import { useLlmSettingsStore } from '../../stores/llmSettingsStore'
 
 const props = defineProps({
   selectedDocuments: {
@@ -18,6 +19,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['question-select'])
+const llmStore = useLlmSettingsStore()
 
 const suggestions = ref([])
 const isLoading = ref(false)
@@ -47,8 +49,10 @@ const docIdKey = computed(() => {
     .sort()
     .join(',')
 })
+const activeProvider = computed(() => llmStore.currentProvider || '')
+const suggestionCacheKey = computed(() => `${activeProvider.value}|${docIdKey.value}`)
 
-watch(docIdKey, (newKey, oldKey) => {
+watch(suggestionCacheKey, (newKey, oldKey) => {
   if (!newKey) {
     suggestions.value = []
     error.value = ''
@@ -96,7 +100,7 @@ const generateSuggestions = async () => {
   if (!canGenerate.value) return
 
   // Check local cache first
-  const cacheKey = docIdKey.value
+  const cacheKey = suggestionCacheKey.value
   const cached = getCachedSuggestions(cacheKey)
   if (cached) {
     suggestions.value = cached.suggestions
@@ -116,7 +120,7 @@ const generateSuggestions = async () => {
 
   try {
     const docIds = props.selectedDocuments.map(doc => doc.name || doc.filename)
-    const response = await getQuestionSuggestions(docIds)
+    const response = await getQuestionSuggestions(docIds, 3, activeProvider.value)
 
     if (response.success && response.suggestions && response.suggestions.length > 0) {
       const mappedSuggestions = response.suggestions.map((text, index) => ({
@@ -177,9 +181,43 @@ const handleChipClick = async (suggestion) => {
 const handleRefresh = async () => {
   if (!canGenerate.value) return
   // Clear cache for current key to force regeneration
-  suggestionsCache.value.delete(docIdKey.value)
+  suggestionsCache.value.delete(suggestionCacheKey.value)
   collapsed.value = false
-  await generateSuggestions()
+  const docIds = props.selectedDocuments.map(doc => doc.name || doc.filename)
+  try {
+    isLoading.value = true
+    error.value = ''
+    generationTime.value = null
+    const response = await getQuestionSuggestions(
+      docIds,
+      3,
+      activeProvider.value,
+      Date.now()
+    )
+    if (response.success && response.suggestions && response.suggestions.length > 0) {
+      const mappedSuggestions = response.suggestions.map((text, index) => ({
+        id: `s_${Date.now()}_${index}`,
+        text,
+        position: index,
+      }))
+      suggestions.value = mappedSuggestions
+      generationTime.value = response.generation_time_ms
+      setCachedSuggestions(suggestionCacheKey.value, {
+        suggestions: mappedSuggestions,
+        generationTime: response.generation_time_ms,
+      })
+    } else {
+      error.value = response.message || 'No suggestions available'
+      generateFallbackSuggestions()
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      error.value = err.response?.data?.detail || err.message || 'Failed to generate suggestions'
+      generateFallbackSuggestions()
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 
 defineExpose({ generateSuggestions, refresh: handleRefresh })
