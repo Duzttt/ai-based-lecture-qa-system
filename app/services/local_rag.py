@@ -95,7 +95,12 @@ def generate_with_local_llm(
     timeout_seconds: Optional[int] = 30,
     return_log: bool = False,
     return_thinking: bool = False,
-) -> Union[str, Tuple[str, int], Tuple[str, Optional[str]]]:
+) -> Union[
+    str,
+    Tuple[str, int],
+    Tuple[str, Optional[str]],
+    Tuple[str, Optional[str], int],
+]:
     if not context.strip():
         return "No usable reference material was retrieved, so I cannot answer based on evidence."
 
@@ -214,7 +219,12 @@ def generate(
     timeout_seconds: int = 60,
     return_log: bool = False,
     return_thinking: bool = False,
-) -> Union[str, Tuple[str, int], Tuple[str, Optional[str]]]:
+) -> Union[
+    str,
+    Tuple[str, int],
+    Tuple[str, Optional[str]],
+    Tuple[str, Optional[str], int],
+]:
     runtime_settings = load_runtime_llm_settings()
     provider = runtime_settings["provider"] or settings.LLM_PROVIDER
 
