@@ -92,6 +92,44 @@ def test_call_llm_success_local_llm():
 
 
 @pytest.mark.django_db
+def test_call_llm_returns_log_id_with_thinking_when_both_flags_enabled():
+    from app.services.llm_client import call_llm
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "message": {
+            "content": "Local LLM response",
+            "thinking": "internal reasoning",
+        }
+    }
+    mock_response.raise_for_status.return_value = None
+
+    with patch("app.services.llm_client.requests.post", return_value=mock_response):
+        result = call_llm(
+            provider="local_llm",
+            model="qwen3:8b",
+            call_type="qa",
+            messages=[{"role": "user", "content": "Explain this"}],
+            query_text="Explain this",
+            base_url="http://localhost:11434",
+            return_log=True,
+            return_thinking=True,
+        )
+
+    assert isinstance(result, tuple)
+    assert len(result) == 3
+    answer, thinking, log_id = result
+    assert answer == "Local LLM response"
+    assert thinking == "internal reasoning"
+    assert isinstance(log_id, int)
+
+    log = QueryLog.objects.get(id=log_id)
+    assert log.query == "Explain this"
+    assert log.llm_provider == "local_llm"
+    assert log.llm_status == "success"
+
+
+@pytest.mark.django_db
 def test_call_llm_local_llm_falls_back_to_generate_on_chat_http_500():
     from app.services.llm_client import call_llm
     import requests

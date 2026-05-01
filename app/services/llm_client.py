@@ -250,7 +250,12 @@ def call_llm(
     return_log: bool = False,
     return_thinking: bool = False,
     **kwargs: Any,
-) -> Union[str, Tuple[str, int], Tuple[str, Optional[str]]]:
+) -> Union[
+    str,
+    Tuple[str, int],
+    Tuple[str, Optional[str]],
+    Tuple[str, Optional[str], int],
+]:
     if provider not in _PROVIDER_DISPATCH:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -280,12 +285,17 @@ def call_llm(
             answer_length=len(content_for_log),
         )
 
+        if return_thinking and return_log:
+            # Return (content, thinking, log_id) tuple when both are requested.
+            if isinstance(result, tuple):
+                return result[0], result[1], int(log_entry.id)
+            return result, None, int(log_entry.id)
         if return_thinking:
-            # Return (content, thinking) tuple
+            # Return (content, thinking) tuple.
             if isinstance(result, tuple):
                 return result
             return result, None
-        elif return_log:
+        if return_log:
             if isinstance(result, tuple):
                 return result[0], int(log_entry.id)
             return result, int(log_entry.id)

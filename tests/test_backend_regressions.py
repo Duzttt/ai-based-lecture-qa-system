@@ -186,6 +186,64 @@ def test_ask_qwen_updates_existing_query_log(
     assert existing_log.answer_length == len("Final answer")
 
 
+def test_ask_qwen_updates_existing_query_log_with_reasoning_and_log_id(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    starting_count = QueryLog.objects.count()
+    existing_log = QueryLog.objects.create(
+        query="seed",
+        latency_ms=1,
+        llm_model="__test_model__",
+        llm_provider="local_llm",
+        call_type="qa",
+    )
+
+    monkeypatch.setattr(
+        "django_app.views.rag._load_rag_config",
+        lambda: {
+            "llm_model": "__test_model__",
+            "top_k": 3,
+            "temperature": 0.7,
+            "similarity_threshold": 0.6,
+        },
+    )
+    monkeypatch.setattr(
+        "django_app.views.rag.retrieve_with_faiss",
+        lambda query, top_k=3, source_filter=None: [
+            {"text": "chunk text", "source": "lecture.pdf", "page": 1, "distance": 0.1}
+        ],
+    )
+    monkeypatch.setattr(
+        "django_app.views.rag.build_context_from_sources",
+        lambda sources: "mock context",
+    )
+    monkeypatch.setattr(
+        "django_app.views.rag.generate",
+        lambda query, context, model=None, temperature=0.7, timeout_seconds=60, return_log=False, return_thinking=False: (
+            "Final answer",
+            "internal reasoning",
+            existing_log.id,
+        ),
+    )
+
+    response = client.post(
+        "/api/ask_qwen",
+        data='{"query": "[TEST_ONLY] Explain this answer"}',
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["reasoning"] == "internal reasoning"
+    assert QueryLog.objects.count() == starting_count + 1
+
+    existing_log.refresh_from_db()
+    assert existing_log.query == "[TEST_ONLY] Explain this answer"
+    assert existing_log.results_count == 1
+    assert existing_log.top_k == 3
+    assert existing_log.answer_length == len("Final answer")
+
+
 def test_providers_handler_loads_local_models_from_ollama(
     client: Client, monkeypatch: pytest.MonkeyPatch
 ):
