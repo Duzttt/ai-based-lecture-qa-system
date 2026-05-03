@@ -45,7 +45,7 @@ const formatSize = (kb) => {
             class="search-input"
             @keyup.enter="emit('load-documents')"
           />
-          <button class="refresh-btn" @click="emit('load-documents')">↻</button>
+          <button class="refresh-btn" aria-label="Refresh documents" title="Refresh documents" @click="emit('load-documents')">↻</button>
         </div>
       </div>
 
