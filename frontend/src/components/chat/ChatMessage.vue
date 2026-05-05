@@ -47,6 +47,7 @@ const getMessageCitationTitle = (msg) => {
           class="reasoning-toggle" 
           @click="toggleReasoning"
           :aria-expanded="showReasoning"
+          :aria-controls="`reasoning-content-${message.id}`"
         >
           <span class="reasoning-icon">
             {{ showReasoning ? '▼' : '▶' }}
@@ -60,7 +61,7 @@ const getMessageCitationTitle = (msg) => {
         </button>
         
         <transition name="reasoning-expand">
-          <div v-show="showReasoning" class="reasoning-content">
+          <div v-show="showReasoning" :id="`reasoning-content-${message.id}`" class="reasoning-content">
             <div class="reasoning-text">{{ message.reasoning }}</div>
           </div>
         </transition>
