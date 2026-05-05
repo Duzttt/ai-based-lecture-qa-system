@@ -1,3 +1,6 @@
+## 2024-05-15 - Missing ARIA labels on refresh buttons
+**Learning:** Found multiple instances in `AdminDashboard.vue` and `DocumentsTab.vue` where the refresh button (`<button class="refresh-btn">↻</button>`) was an icon-only button without an accessible label, making it unreadable by screen readers.
+**Action:** Added context-specific `aria-label` and `title` attributes (e.g. `aria-label="Refresh documents"`) to all `.refresh-btn` components. Next time, always check icon-only buttons for missing ARIA labels and ensure tooltips are used where context is ambiguous.
 ## 2024-05-18 - Missing ARIA Controls on Collapsible Sections
 **Learning:** Found an accessibility issue where collapsible sections (like the "Reasoning" dropdown in ChatMessage) were toggled via buttons using `aria-expanded`, but lacked `aria-controls` to programmatically associate the button with the collapsible content. This prevents screen readers from understanding which section is being toggled.
 **Action:** Always pair `aria-expanded` with `aria-controls` on toggle buttons. Ensure the controlled container has a matching `id` (using dynamically generated IDs if rendered in a list).
