@@ -16,7 +16,7 @@ const emit = defineEmits(['close'])
       <span class="status-badge" :class="indexingStatus.status">
         {{ indexingStatus.status === 'running' ? '⏳ Indexing...' : '✓ Ready' }}
       </span>
-      <button class="close-btn" @click="emit('close')">✕</button>
+      <button class="close-btn" @click="emit('close')" aria-label="Close admin menu">✕</button>
     </div>
   </div>
 </template>

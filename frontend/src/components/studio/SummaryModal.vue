@@ -84,7 +84,7 @@ const resetConfig = () => {
       <div class="modal-container">
         <div class="modal-header">
           <h3>📝 Document Summary</h3>
-          <button class="modal-close" @click="handleClose">✕</button>
+          <button class="modal-close" @click="handleClose" aria-label="Close summary modal">✕</button>
         </div>
         <div class="modal-body">
           <!-- Selected Documents Info -->
