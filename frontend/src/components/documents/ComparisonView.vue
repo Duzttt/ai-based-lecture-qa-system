@@ -151,7 +151,7 @@ const exportAsMarkdown = () => {
       <div class="comparison-actions" v-if="hasRunComparison">
         <button class="action-btn" @click="saveAsNote">💾 Save</button>
         <button class="action-btn" @click="exportAsMarkdown">📤 Export</button>
-        <button class="action-btn close-btn" @click="emit('close')">✕ Close</button>
+        <button class="action-btn close-btn" @click="emit('close')" aria-label="Close comparison view">✕ Close</button>
       </div>
     </div>
 

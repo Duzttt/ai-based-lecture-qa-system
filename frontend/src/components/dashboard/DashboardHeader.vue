@@ -16,7 +16,7 @@ const emit = defineEmits(['close'])
       <span class="ws-status" :class="{ connected: wsConnected }">
         {{ wsConnected ? '● Live' : '○ Disconnected' }}
       </span>
-      <button class="close-btn" @click="emit('close')">✕</button>
+      <button class="close-btn" @click="emit('close')" aria-label="Close header">✕</button>
     </div>
   </div>
 </template>

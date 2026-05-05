@@ -57,7 +57,7 @@ const navigateToMessage = (messageId) => {
         <span>🔗</span>
         Citations to this text
       </span>
-      <button class="bidirectional-close" @click="$emit('close')">✕</button>
+      <button class="bidirectional-close" @click="$emit('close')" aria-label="Close citations">✕</button>
     </div>
 
     <div class="bidirectional-source-info" v-if="source || text">

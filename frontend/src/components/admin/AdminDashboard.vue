@@ -508,7 +508,7 @@ onMounted(async () => {
         <span class="status-badge" :class="indexingStatus.status">
           {{ indexingStatus.status === 'running' ? '⏳ Indexing...' : '✓ Ready' }}
         </span>
-        <button class="close-btn" @click="emit('close')">✕</button>
+        <button class="close-btn" @click="emit('close')" aria-label="Close">✕</button>
       </div>
     </div>
 
