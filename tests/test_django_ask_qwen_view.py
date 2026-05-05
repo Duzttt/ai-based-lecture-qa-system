@@ -30,7 +30,11 @@ def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
             self.timeout = timeout
 
         def chat(self, model, messages, stream, keep_alive, options=None):
-            return {"message": {"content": "根据资料，这五个趋势是 ..."}}
+            return {
+                "message": {
+                    "content": "According to the materials, these five trends are ..."
+                }
+            }
 
     monkeypatch.setattr("django_app.views.OllamaClient", FakeOllamaClient)
 
@@ -42,7 +46,7 @@ def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["answer"].startswith("根据资料")
+    assert data["answer"].startswith("According to the materials")
     assert data["sources"] == ["Intelligent_Agent.pdf"]
     assert len(data["source_snippets"]) == 2
 

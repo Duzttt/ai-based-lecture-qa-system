@@ -12,25 +12,25 @@ import pytest
 
 # Test documents
 CHINESE_TEXT = """
-# 机器学习简介
+# Introduction to Machine Learning
 
-机器学习是人工智能的一个分支，它使用算法来从数据中学习模式。
+Machine learning is a branch of artificial intelligence that uses algorithms to learn patterns from data.
 
-## 监督学习
+## Supervised Learning
 
-监督学习使用标记数据来训练模型。常见的任务包括分类和回归。
+Supervised learning uses labeled data to train models. Common tasks include classification and regression.
 
-### 分类任务
+### Classification Tasks
 
-分类任务预测离散标签，例如垃圾邮件检测或情感分析。
+Classification tasks predict discrete labels, such as spam detection or sentiment analysis.
 
-### 回归任务
+### Regression Tasks
 
-回归任务预测连续值，例如房价预测或股票价格预测。
+Regression tasks predict continuous values, such as house price prediction or stock price prediction.
 
-## 无监督学习
+## Unsupervised Learning
 
-无监督学习发现未标记数据中的模式。聚类是常见的无监督学习任务。
+Unsupervised learning discovers patterns in unlabeled data. Clustering is a common unsupervised learning task.
 """
 
 ENGLISH_TEXT = """
@@ -56,15 +56,15 @@ Unsupervised learning discovers patterns in unlabeled data. Clustering is a comm
 """
 
 MIXED_TEXT = """
-# 深度学习概述 / Deep Learning Overview
-
-深度学习是机器学习的子领域，基于人工神经网络。
+# Deep Learning Overview / Deep Learning Overview
 
 Deep learning is a subfield of machine learning based on artificial neural networks.
 
-## 卷积神经网络 / CNN
+Deep learning is a subfield of machine learning based on artificial neural networks.
 
-卷积神经网络主要用于图像处理任务。
+## Convolutional Neural Networks / CNN
+
+Convolutional Neural Networks are primarily used for image processing tasks.
 
 Convolutional Neural Networks are primarily used for image processing tasks.
 """
@@ -145,7 +145,7 @@ class TestSmartChunkerSentenceSplitting:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker()
-        text = "这是第一句。这是第二句！这是第三句？"
+        text = "This is the first sentence. This is the second sentence! Is this the third?"
         sentences = chunker._split_by_sentences(text)
 
         assert len(sentences) >= 3
@@ -165,7 +165,7 @@ class TestSmartChunkerSentenceSplitting:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker()
-        text = "这是中文句子。This is English sentence. 这是另一句中文。"
+        text = "This is a Chinese sentence. This is English sentence. This is another Chinese sentence."
         sentences = chunker._split_by_sentences(text)
 
         assert len(sentences) >= 3
@@ -179,7 +179,11 @@ class TestSmartChunkerMergeAndSplit:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker(min_paragraph_size=100)
-        paragraphs = ["短段落", "另一个短段落", "这也是短的"]
+        paragraphs = [
+            "Short paragraph",
+            "Another short paragraph",
+            "This is also short",
+        ]
 
         chunks = chunker._merge_and_split(paragraphs)
 
@@ -191,7 +195,7 @@ class TestSmartChunkerMergeAndSplit:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker(chunk_size=100, max_paragraph_size=200)
-        long_text = "这是一段很长的文本。" * 50  # Create very long text
+        long_text = "This is a very long piece of text. " * 50  # Create very long text
         paragraphs = [long_text]
 
         chunks = chunker._merge_and_split(paragraphs)
@@ -208,7 +212,11 @@ class TestSmartChunkerOverlap:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker(overlap=50)
-        chunks = ["这是第一个块。" * 10, "这是第二个块。" * 10, "这是第三个块。" * 10]
+        chunks = [
+            "This is the first chunk. " * 10,
+            "This is the second chunk. " * 10,
+            "This is the third chunk. " * 10,
+        ]
 
         overlapped = chunker._add_overlap(chunks)
 
@@ -221,7 +229,7 @@ class TestSmartChunkerOverlap:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker(overlap=50)
-        chunks = ["只有一个块"]
+        chunks = ["Only one chunk"]
 
         overlapped = chunker._add_overlap(chunks)
 
@@ -233,7 +241,7 @@ class TestSmartChunkerOverlap:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker(overlap=0)
-        chunks = ["块 1", "块 2", "块 3"]
+        chunks = ["Chunk 1", "Chunk 2", "Chunk 3"]
 
         overlapped = chunker._add_overlap(chunks)
 
@@ -318,8 +326,8 @@ class TestHeadingsExtraction:
         headings = chunker._extract_headings(CHINESE_TEXT)
 
         assert len(headings) > 0
-        assert "机器学习简介" in headings
-        assert "监督学习" in headings
+        assert "Introduction to Machine Learning" in headings
+        assert "Supervised Learning" in headings
 
     def test_extract_numbered_headings(self):
         """Test extraction of numbered headings."""
@@ -327,11 +335,11 @@ class TestHeadingsExtraction:
 
         chunker = SmartChunker()
         text = """
-1. 第一章 引言
+1. Chapter 1 Introduction
 
-1.1 研究背景
+1.1 Research Background
 
-1.1.1 问题陈述
+1.1.1 Problem Statement
 """
         headings = chunker._extract_headings(text)
 
@@ -376,7 +384,7 @@ class TestKeywordExtraction:
         from chunking.smart_chunker import SmartChunker
 
         chunker = SmartChunker()
-        keywords = chunker._extract_keywords("短文本", top_k=5)
+        keywords = chunker._extract_keywords("Short text", top_k=5)
 
         # May return empty or few keywords for very short text
         assert len(keywords) <= 5
@@ -403,7 +411,7 @@ class TestChunkMetadata:
         """Test word counting."""
         from chunking.smart_chunker import ChunkMetadata
 
-        text = "机器学习是人工智能的一个分支"
+        text = "Machine learning is a branch of artificial intelligence"
         count = ChunkMetadata.count_words(text)
         assert count > 0
 
@@ -411,7 +419,7 @@ class TestChunkMetadata:
         """Test character counting."""
         from chunking.smart_chunker import ChunkMetadata
 
-        text = "机器学习是人工智能的一个分支"
+        text = "Machine learning is a branch of artificial intelligence"
         count = ChunkMetadata.count_characters(text)
         assert count == len(text.replace(" ", ""))
 
@@ -424,7 +432,7 @@ class TestChunkDataClass:
         from chunking.smart_chunker import Chunk
 
         chunk = Chunk(
-            text="测试文本",
+            text="Test text",
             metadata={"source": "test.pdf"},
             position=0,
             total_chunks=5,
@@ -432,7 +440,7 @@ class TestChunkDataClass:
 
         result = chunk.to_dict()
 
-        assert result["text"] == "测试文本"
+        assert result["text"] == "Test text"
         assert result["metadata"]["source"] == "test.pdf"
         assert result["position"] == 0
         assert result["total_chunks"] == 5

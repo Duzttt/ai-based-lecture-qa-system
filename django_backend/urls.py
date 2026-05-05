@@ -32,6 +32,10 @@ urlpatterns = [
     path("api/chat/citations/", views.ask_with_citations),
     path("api/settings", views.settings_handler),
     path("api/settings/", views.settings_handler),
+    path("api/settings/providers", views.providers_handler),
+    path("api/settings/providers/", views.providers_handler),
+    path("api/health/llm", views.llm_health_handler),
+    path("api/health/llm/", views.llm_health_handler),
     path("api/rag-config", views.get_rag_config),
     path("api/rag-config/", views.get_rag_config),
     path("api/rag-config/update", views.update_rag_config),
@@ -159,6 +163,18 @@ urlpatterns = [
     path("api/suggestions/click/", views.record_suggestion_click),
     path("api/suggestions/history", views.get_suggestion_history),
     path("api/suggestions/history/", views.get_suggestion_history),
+    # LLM Monitoring
+    path("llm-logs", views.llm_logs_page, name="llm_logs_page"),
+    path("llm-logs/", views.llm_logs_page, name="llm_logs_page_slash"),
+    path("api/llm-logs/", views.llm_logs_list, name="llm_logs_list"),
+    path("api/llm-logs/stats/", views.llm_logs_stats, name="llm_logs_stats"),
+    # Conversations
+    path("api/conversations", views.list_conversations),
+    path("api/conversations/", views.list_conversations),
+    path("api/conversations/create", views.create_conversation),
+    path("api/conversations/<str:conversation_id>", views.get_conversation),
+    path("api/conversations/<str:conversation_id>/", views.get_conversation),
+    path("api/conversations/<str:conversation_id>/delete", views.delete_conversation),
     # SPA catch-all: serve Vue frontend for any non-API route
     re_path(r"^(?!api/).*$", views.index_page),
 ]

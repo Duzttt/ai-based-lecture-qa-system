@@ -70,7 +70,7 @@ class EvaluationConfig:
 @dataclass
 class RetrievalSystemConfig:
     """
-    检索系统配置。
+    Retrieval system configuration.
 
     Main configuration class that combines all sub-configurations.
     Provides methods for loading, saving, and validating configuration.
@@ -174,7 +174,9 @@ class RetrievalSystemConfig:
             raise ValueError("min_paragraph_size must be positive")
 
         if self.chunking.max_paragraph_size <= self.chunking.min_paragraph_size:
-            raise ValueError("max_paragraph_size must be greater than min_paragraph_size")
+            raise ValueError(
+                "max_paragraph_size must be greater than min_paragraph_size"
+            )
 
         # Validate retrieval config
         if not 0 <= self.retrieval.alpha <= 1:
@@ -198,7 +200,7 @@ class RetrievalSystemConfig:
 
 class ConfigManager:
     """
-    配置管理器。
+    Configuration manager.
 
     Manages retrieval system configuration with support for:
     - Default values
@@ -211,7 +213,7 @@ class ConfigManager:
 
     def __init__(self, config_path: Optional[str] = None):
         """
-        初始化配置管理器。
+        Initialize configuration manager.
 
         Args:
             config_path: Path to configuration file (optional)

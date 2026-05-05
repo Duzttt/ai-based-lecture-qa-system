@@ -1,49 +1,47 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { Line, Bar, Doughnut } from 'vue-chartjs'
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
   ArcElement,
-  Title,
-  Tooltip,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
   Legend,
-  Filler
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip
 } from 'chart.js'
+import { computed, onMounted, ref } from 'vue'
 import {
-  getAdminStats,
-  getAdminQueryStats,
-  debugRetrieval,
-  getAdminDocuments,
-  getAdminDocumentChunks,
-  deleteAdminDocument,
-  reindexAdminDocument,
-  getAdminIndexingStatus,
-  getAdminDocumentAnalytics,
-  getAdminQueryClusters,
-  getAdminFailureAnalysis,
-  getAdminEmbeddingVisualization,
-  getAdminChunkQuality,
-  traceRetrieval,
-  getABTests,
+  acknowledgeAlert,
   createABTest,
+  debugRetrieval,
+  deleteAdminDocument,
+  generateReport,
+  getABTestResults,
+  getABTests,
+  getAdminChunkQuality,
+  getAdminDocumentAnalytics,
+  getAdminDocumentChunks,
+  getAdminDocuments,
+  getAdminEmbeddingVisualization,
+  getAdminFailureAnalysis,
+  getAdminIndexingStatus,
+  getAdminQueryClusters,
+  getAdminQueryStats,
+  getAdminStats,
+  getCapacityForecast,
+  getCostAnalysis,
+  getCurrentAlerts,
+  getHealthScore,
+  getReportsHistory,
+  getSelfHealingEvents,
+  getUserBehavior,
+  reindexAdminDocument,
   startABTest,
   stopABTest,
-  getABTestResults,
-  getCurrentAlerts,
-  acknowledgeAlert,
-  getCapacityForecast,
-  getSelfHealingEvents,
-  updateSelfHealingConfig,
-  getCostAnalysis,
-  getUserBehavior,
-  generateReport,
-  getReportsHistory,
-  getHealthScore
+  traceRetrieval
 } from '../../services/api'
 
 ChartJS.register(
@@ -844,13 +842,14 @@ onMounted(async () => {
               </div>
             </div>
             
-            <div class="top-queries">
+            <div v-if="docAnalytics" class="top-queries">
               <h4>Top Queries</h4>
               <div v-for="q in docAnalytics.top_queries" :key="q.query" class="query-item">
                 <span class="query-text">{{ q.query }}</span>
                 <span class="query-count">{{ q.count }} times</span>
               </div>
             </div>
+            <div v-else class="empty-state">Failed to load document analytics</div>
           </div>
           
           <div v-else class="select-doc">

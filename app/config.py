@@ -1,14 +1,17 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Set
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+ENV_FILE_PATH = Path(__file__).resolve().parent.parent / ".env"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE_PATH),
         case_sensitive=True,
         extra="ignore",
     )
@@ -30,9 +33,18 @@ class Settings(BaseSettings):
     DOCUMENTS_PATH: str = "media/data_source"
 
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024
-    ALLOWED_EXTENSIONS: set = {".pdf"}
+    ALLOWED_EXTENSIONS: str = ".pdf"
     UPLOAD_INDEXING_STRATEGY: str = "full_rebuild"
     UPLOAD_INDEXING_ASYNC: bool = True
+    PDF_PARSER: str = "pypdf"  # "pypdf" or "opendataloader"
+
+    @field_validator("PDF_PARSER", mode="before")
+    @classmethod
+    def validate_pdf_parser(cls, value):
+        parser = str(value).strip().lower()
+        if parser not in {"pypdf", "opendataloader"}:
+            return "pypdf"
+        return parser
 
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
@@ -40,12 +52,15 @@ class Settings(BaseSettings):
 
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "nvidia/nemotron-3-super-120b-a12b:free"
     LLM_PROVIDER: str = "gemini"
+    LLM_MAX_OUTPUT_TOKENS: int = 2048
+    CITATION_MAX_OUTPUT_TOKENS: int = 3072
 
-    LOCAL_QWEN_MODEL: str = "qwen2.5:3b"
-    LOCAL_QWEN_BASE_URL: str = "http://localhost:11434"
-    LOCAL_QWEN_TIMEOUT_SECONDS: int = 300
-    LOCAL_QWEN_KEEP_ALIVE: str = "30m"
+    LOCAL_LLM_MODEL: str = "qwen2.5:3b"
+    LOCAL_LLM_BASE_URL: str = "http://localhost:11434"
+    LOCAL_LLM_TIMEOUT_SECONDS: int = 300
+    LOCAL_LLM_KEEP_ALIVE: str = "30m"
 
     @field_validator("DEBUG", mode="before")
     @classmethod
@@ -67,6 +82,25 @@ class Settings(BaseSettings):
         if strategy not in allowed:
             return "full_rebuild"
         return strategy
+
+    @property
+    def allowed_extensions(self) -> Set[str]:
+        raw_value = str(self.ALLOWED_EXTENSIONS or "")
+        parts = [part.strip().lower() for part in raw_value.split(",") if part.strip()]
+        normalized = set()
+        for ext in parts:
+            normalized.add(ext if ext.startswith(".") else f".{ext}")
+        return normalized or {".pdf"}
+
+    @field_validator("GEMINI_API_KEY", "OPENROUTER_API_KEY", mode="before")
+    @classmethod
+    def normalize_optional_api_keys(cls, value):
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        if not normalized or normalized.lower() in {"none", "null"}:
+            return None
+        return normalized
 
 
 def get_settings() -> Settings:

@@ -25,18 +25,49 @@ venv/
 data/documents/
 data/faiss_index/
 data/settings.json
+data/db.sqlite3
+data/alerts.json
+data/reports.json
 *.pdf
 .pytest_cache/
 .coverage
 htmlcov/
-AGENTS.md
-QWEN.md
-CLAUDE.md
+
+# AI tool configs
+.claude/
+.qwen/
+.postman/
+.gemini/
+.opencode/
+
+# IDE / editor caches
+.mypy_cache/
+.ruff_cache/
+
+# Design files
+*.pen
+
+# Generated / output directories
+outputs/
+report/
+source/
+
+# Empty placeholder directories
+data_source/
+
+# Old modules (now in app/)
+chunking/
+retrieval/
+config/
+evaluation/
 
 # Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+node_modules/
 
-# Local skills (installed via uipro)
-.opencode/
+# Root-level doc files (project-specific, not for git)
+AGENTS.md
+QWEN.md
+CLAUDE.md

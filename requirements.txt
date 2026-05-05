@@ -20,7 +20,13 @@ ruff==0.1.14
 black==24.1.1
 mypy==1.8.0
 
+# Desktop GUI
+PyQt6>=6.6.0,<7.0.0
+
 # Retrieval optimization dependencies
 jieba==0.42.1
 rank-bm25==0.2.2
 scikit-learn==1.3.2
+
+# Optional: OpenDataLoader PDF (requires Java 11+)
+# opendataloader-pdf>=2.0.0

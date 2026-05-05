@@ -23,97 +23,97 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-# Test data - Chinese lecture notes about machine learning
+# Test data - English lecture notes about machine learning
 TEST_DOCUMENTS = [
     {
         "id": "doc1",
-        "text": "机器学习（Machine Learning）是人工智能的核心领域，它研究如何使计算机系统能够从数据中学习并改进性能。机器学习算法通过分析训练数据来构建模型，然后使用这些模型进行预测或决策。",
+        "text": "Machine Learning is a core field of artificial intelligence that studies how to enable computer systems to learn from data and improve performance. Machine learning algorithms build models by analyzing training data, then use these models to make predictions or decisions.",
     },
     {
         "id": "doc2",
-        "text": "监督学习（Supervised Learning）是机器学习的一种主要类型。在监督学习中，我们使用带有标签的训练数据来训练模型。常见的监督学习任务包括分类（如垃圾邮件检测）和回归（如房价预测）。",
+        "text": "Supervised Learning is a major type of machine learning. In supervised learning, we use labeled training data to train models. Common supervised learning tasks include classification (such as spam detection) and regression (such as house price prediction).",
     },
     {
         "id": "doc3",
-        "text": "无监督学习（Unsupervised Learning）处理没有标签的数据。算法需要自己发现数据中的模式和结构。聚类分析是无监督学习的典型应用，例如客户分群或异常检测。",
+        "text": "Unsupervised Learning deals with unlabeled data. Algorithms need to discover patterns and structures in the data on their own. Cluster analysis is a typical application of unsupervised learning, such as customer segmentation or anomaly detection.",
     },
     {
         "id": "doc4",
-        "text": "深度学习（Deep Learning）是机器学习的一个子领域，它使用多层神经网络来学习数据的层次化表示。深度学习在图像识别、语音识别和自然语言处理等领域取得了突破性进展。",
+        "text": "Deep Learning is a subfield of machine learning that uses multi-layer neural networks to learn hierarchical representations of data. Deep learning has achieved breakthrough progress in fields such as image recognition, speech recognition, and natural language processing.",
     },
     {
         "id": "doc5",
-        "text": "卷积神经网络（CNN）是一种专门用于处理网格状数据（如图像）的深度学习模型。CNN 通过卷积层、池化层和全连接层的组合来自动学习图像的层次化特征。",
+        "text": "Convolutional Neural Networks (CNN) are deep learning models specifically designed for processing grid-like data such as images. CNNs automatically learn hierarchical features of images through a combination of convolutional layers, pooling layers, and fully connected layers.",
     },
     {
         "id": "doc6",
-        "text": "循环神经网络（RNN）是另一种深度学习模型，特别适合处理序列数据。RNN 通过记忆单元来捕捉序列中的时间依赖关系，广泛应用于机器翻译、语音识别等任务。",
+        "text": "Recurrent Neural Networks (RNN) are another type of deep learning model, particularly suitable for processing sequential data. RNNs capture temporal dependencies in sequences through memory cells and are widely used in tasks such as machine translation and speech recognition.",
     },
     {
         "id": "doc7",
-        "text": "强化学习（Reinforcement Learning）是一种通过试错来学习的学习范式。智能体（Agent）通过与环境交互，根据奖励信号来优化其行为策略，以最大化累积奖励。",
+        "text": "Reinforcement Learning is a learning paradigm that learns through trial and error. An Agent interacts with the environment and optimizes its behavior policy based on reward signals to maximize cumulative rewards.",
     },
     {
         "id": "doc8",
-        "text": "自然语言处理（NLP）是人工智能和语言学交叉的领域，研究如何让计算机理解、解释和生成人类语言。NLP 应用包括机器翻译、情感分析、问答系统等。",
+        "text": "Natural Language Processing (NLP) is a field at the intersection of artificial intelligence and linguistics, studying how to enable computers to understand, interpret, and generate human language. NLP applications include machine translation, sentiment analysis, question answering systems, and more.",
     },
     {
         "id": "doc9",
-        "text": "计算机视觉（Computer Vision）研究如何让计算机从图像或视频中提取信息和理解内容。应用包括人脸识别、自动驾驶、医学影像分析等。",
+        "text": "Computer Vision studies how to enable computers to extract information and understand content from images or videos. Applications include face recognition, autonomous driving, medical image analysis, and more.",
     },
     {
         "id": "doc10",
-        "text": "迁移学习（Transfer Learning）是一种将在一个任务上学到的知识应用到相关任务上的技术。迁移学习可以显著减少新任务所需的训练数据和计算资源。",
+        "text": "Transfer Learning is a technique that applies knowledge learned from one task to related tasks. Transfer learning can significantly reduce the training data and computational resources required for new tasks.",
     },
     {
         "id": "doc11",
-        "text": "注意力机制（Attention Mechanism）是一种让模型学习关注输入中重要部分的技术。Transformer 模型基于自注意力机制，在 NLP 领域取得了巨大成功。",
+        "text": "Attention Mechanism is a technique that enables models to learn to focus on important parts of the input. The Transformer model is based on the self-attention mechanism and has achieved tremendous success in the NLP field.",
     },
     {
         "id": "doc12",
-        "text": "生成对抗网络（GAN）由生成器和判别器两个网络组成，通过对抗训练来学习数据的分布。GAN 可以生成逼真的图像、音频和文本内容。",
+        "text": "Generative Adversarial Networks (GAN) consist of two networks, a generator and a discriminator, that learn the data distribution through adversarial training. GANs can generate realistic images, audio, and text content.",
     },
 ]
 
 TEST_QUERIES = [
     {
         "id": "q1",
-        "query": "什么是机器学习",
+        "query": "What is machine learning",
         "relevant_docs": ["doc1"],
     },
     {
         "id": "q2",
-        "query": "监督学习和无监督学习的区别",
+        "query": "Difference between supervised and unsupervised learning",
         "relevant_docs": ["doc2", "doc3"],
     },
     {
         "id": "q3",
-        "query": "深度学习神经网络",
+        "query": "Deep learning neural networks",
         "relevant_docs": ["doc4", "doc5", "doc6"],
     },
     {
         "id": "q4",
-        "query": "自然语言处理应用",
+        "query": "Natural language processing applications",
         "relevant_docs": ["doc8"],
     },
     {
         "id": "q5",
-        "query": "强化学习智能体",
+        "query": "Reinforcement learning agent",
         "relevant_docs": ["doc7"],
     },
     {
         "id": "q6",
-        "query": "卷积神经网络图像处理",
+        "query": "Convolutional neural network image processing",
         "relevant_docs": ["doc5"],
     },
     {
         "id": "q7",
-        "query": "注意力机制 Transformer",
+        "query": "Attention mechanism Transformer",
         "relevant_docs": ["doc11"],
     },
     {
         "id": "q8",
-        "query": "生成对抗网络 GAN",
+        "query": "Generative adversarial network GAN",
         "relevant_docs": ["doc12"],
     },
 ]
@@ -309,7 +309,7 @@ def run_benchmark() -> Dict[str, BenchmarkResult]:
     bm25_retriever = BM25Index(TEST_DOCUMENTS)
 
     # Warm-up
-    bm25_retriever.search("测试", top_k=5)
+    bm25_retriever.search("test", top_k=5)
 
     metrics, latencies = evaluate_retrieval(bm25_retriever, TEST_QUERIES)
     latency_stats = compute_latency_stats(latencies)
@@ -347,7 +347,7 @@ def run_benchmark() -> Dict[str, BenchmarkResult]:
     dense_retriever = DenseRetriever(TEST_DOCUMENTS)
 
     # Warm-up
-    dense_retriever.search("测试", top_k=5)
+    dense_retriever.search("test", top_k=5)
 
     metrics, latencies = evaluate_retrieval(dense_retriever, TEST_QUERIES)
     latency_stats = compute_latency_stats(latencies)
@@ -387,7 +387,7 @@ def run_benchmark() -> Dict[str, BenchmarkResult]:
     )
 
     # Warm-up
-    hybrid_rrf_retriever.retrieve("测试", top_k=5)
+    hybrid_rrf_retriever.retrieve("test", top_k=5)
 
     metrics, latencies = evaluate_retrieval(hybrid_rrf_retriever, TEST_QUERIES)
     latency_stats = compute_latency_stats(latencies)
@@ -425,7 +425,7 @@ def run_benchmark() -> Dict[str, BenchmarkResult]:
     )
 
     # Warm-up
-    hybrid_weighted_retriever.retrieve("测试", top_k=5)
+    hybrid_weighted_retriever.retrieve("test", top_k=5)
 
     metrics, latencies = evaluate_retrieval(hybrid_weighted_retriever, TEST_QUERIES)
     latency_stats = compute_latency_stats(latencies)
@@ -521,7 +521,9 @@ def generate_report(results: Dict[str, BenchmarkResult]) -> str:
     fastest = min(results.items(), key=lambda x: x[1].avg_latency_ms)
     best_mrr = max(results.items(), key=lambda x: x[1].mrr)
 
-    lines.append(f"Best Recall@5: {best_recall_5[0]} ({best_recall_5[1].recall_at_5:.4f})")
+    lines.append(
+        f"Best Recall@5: {best_recall_5[0]} ({best_recall_5[1].recall_at_5:.4f})"
+    )
     lines.append(f"Fastest: {fastest[0]} ({fastest[1].avg_latency_ms:.2f}ms)")
     lines.append(f"Best MRR: {best_mrr[0]} ({best_mrr[1].mrr:.4f})")
     lines.append("")

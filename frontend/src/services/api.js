@@ -45,6 +45,11 @@ export const saveSettings = async (settings) => {
   return response.data
 }
 
+export const getProviders = async () => {
+  const response = await api.get('/settings/providers')
+  return response.data
+}
+
 export const getRagConfig = async () => {
   const response = await api.get('/rag-config')
   return response.data
@@ -172,11 +177,23 @@ export const regenerateSummary = async (historyId, config = {}) => {
 }
 
 // Question Suggestions API
-export const getQuestionSuggestions = async (documentIds, numSuggestions = 3) => {
+export const getQuestionSuggestions = async (
+  documentIds,
+  numSuggestions = 3,
+  provider = '',
+  refreshNonce = ''
+) => {
   const docIdsParam = documentIds.join(',')
-  const response = await api.get(
-    `/suggestions?doc_ids=${encodeURIComponent(docIdsParam)}&num_suggestions=${numSuggestions}`
-  )
+  const params = new URLSearchParams()
+  params.set('doc_ids', docIdsParam)
+  params.set('num_suggestions', String(numSuggestions))
+  if (provider) {
+    params.set('provider', provider)
+  }
+  if (refreshNonce) {
+    params.set('refresh_nonce', String(refreshNonce))
+  }
+  const response = await api.get(`/suggestions?${params.toString()}`)
   return response.data
 }
 

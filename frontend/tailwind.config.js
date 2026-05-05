@@ -7,16 +7,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        'bg-main': '#111827',
-        'bg-panel': '#111827',
-        'bg-panel-soft': '#020617',
-        'bg-chip': '#1f2937',
-        'border-subtle': '#1f2937',
-        'border-strong': '#374151',
-        'text-main': '#e5e7eb',
-        'text-muted': '#9ca3af',
-        'accent': '#6366f1',
-        'accent-soft': '#312e81',
+        surface: {
+          DEFAULT: '#0b1326',
+          dim: '#0b1326',
+          lowest: '#060e20',
+          low: '#131b2e',
+          container: '#171f33',
+          high: '#222a3d',
+          highest: '#2d3449',
+          bright: '#31394d',
+        },
+        primary: {
+          DEFAULT: '#bdc2ff',
+          container: '#818cf8',
+          on: '#131e8c',
+        },
+        secondary: {
+          DEFAULT: '#bcc7de',
+          container: '#3e495d',
+          on: '#aeb9d0',
+        },
+        tertiary: {
+          DEFAULT: '#f7bd3e',
+          container: '#c08d00',
+        },
+        on: {
+          surface: '#dae2fd',
+          'surface-variant': '#c6c5d5',
+        },
+        outline: {
+          DEFAULT: '#908f9e',
+          variant: '#454653',
+        },
+      },
+      fontFamily: {
+        headline: ['Manrope', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
+      },
+      borderRadius: {
+        lg: '12px',
+        md: '8px',
       },
     },
   },

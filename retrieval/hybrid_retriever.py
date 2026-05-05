@@ -39,7 +39,7 @@ class HybridRetrieverError(Exception):
 
 class HybridRetriever:
     """
-    混合检索器，结合 BM25 和向量检索。
+    Hybrid retriever combining BM25 and vector retrieval.
 
     Combines the strengths of:
     - BM25: Excellent for exact keyword matching, term frequency importance
@@ -61,14 +61,14 @@ class HybridRetriever:
         fusion_method: FusionMethod = FusionMethod.RRF,
     ):
         """
-        初始化两个检索器。
+        Initialize both retrievers.
 
         Args:
-            documents: List[Dict] - 每个文档包含 id, text, metadata
-                Example: [{"id": "doc1", "text": "文档内容", "metadata": {...}}, ...]
-            embedder: SentenceTransformer 模型实例 (可选)
-            model_name: 模型名称 (仅在 embedder 为 None 时使用)
-            fusion_method: 融合方法 ('rrf' 或 'weighted')
+            documents: List[Dict] - Each document contains id, text, metadata
+                Example: [{"id": "doc1", "text": "Document content", "metadata": {...}}, ...]
+            embedder: SentenceTransformer model instance (optional)
+            model_name: Model name (only used when embedder is None)
+            fusion_method: Fusion method ('rrf' or 'weighted')
         """
         if not documents:
             raise HybridRetrieverError("Documents list cannot be empty")
@@ -96,7 +96,9 @@ class HybridRetriever:
                 model_name=model_name,
             )
         except Exception as e:
-            raise HybridRetrieverError(f"Failed to initialize Dense Retriever: {str(e)}") from e
+            raise HybridRetrieverError(
+                f"Failed to initialize Dense Retriever: {str(e)}"
+            ) from e
 
     def retrieve(
         self,
@@ -109,19 +111,19 @@ class HybridRetriever:
         alpha: float = 0.3,
     ) -> List[Dict[str, Any]]:
         """
-        混合检索主方法。
+        Main hybrid retrieval method.
 
         Args:
-            query: 用户查询字符串
-            top_k: 返回结果数量
-            fusion_method: 覆盖默认融合方法 ('rrf' 或 'weighted')
-            bm25_top_k: BM25 检索的候选数量
-            dense_top_k: 向量检索的候选数量
-            rrf_k: RRF 常数 (默认 60)
-            alpha: 向量检索权重 (仅用于 weighted 融合，0.3 表示向量占 30%，BM25 占 70%)
+            query: User query string
+            top_k: Number of results to return
+            fusion_method: Override default fusion method ('rrf' or 'weighted')
+            bm25_top_k: Number of BM25 candidates
+            dense_top_k: Number of dense retrieval candidates
+            rrf_k: RRF constant (default 60)
+            alpha: Dense retrieval weight (only for weighted fusion, 0.3 means dense 30%, BM25 70%)
 
         Returns:
-            List[Dict] - 每个结果包含 id, text, score, source, metadata
+            List[Dict] - Each result contains id, text, score, source, metadata
         """
         if not query or not query.strip():
             return []
@@ -139,7 +141,9 @@ class HybridRetriever:
         if method == FusionMethod.RRF:
             fused_scores = self.fusion_rrf(bm25_results, dense_results, k=rrf_k)
         else:  # WEIGHTED
-            fused_scores = self.fusion_weighted(bm25_results, dense_results, alpha=alpha)
+            fused_scores = self.fusion_weighted(
+                bm25_results, dense_results, alpha=alpha
+            )
 
         # 4. Sort and return top_k
         sorted_results = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
@@ -168,7 +172,7 @@ class HybridRetriever:
         k: int = 60,
     ) -> Dict[str, float]:
         """
-        倒数秩融合 (Reciprocal Rank Fusion).
+        Reciprocal Rank Fusion.
 
         RRF formula: score(d) = Σ 1/(k + rank(d))
 
@@ -180,7 +184,7 @@ class HybridRetriever:
         Args:
             bm25_results: List[(doc_id, score)] from BM25
             dense_results: List[(doc_id, score)] from Dense Retriever
-            k: RRF 常数 (默认 60)
+            k: RRF constant (default 60)
 
         Returns:
             Dict[doc_id, fused_score]
@@ -206,7 +210,7 @@ class HybridRetriever:
         alpha: float = 0.3,
     ) -> Dict[str, float]:
         """
-        加权融合。
+        Weighted fusion.
 
         Formula: score = alpha * norm(dense_score) + (1-alpha) * norm(bm25_score)
 
@@ -217,7 +221,7 @@ class HybridRetriever:
         Args:
             bm25_results: List[(doc_id, score)] from BM25
             dense_results: List[(doc_id, score)] from Dense Retriever
-            alpha: 向量检索权重 (0.3 表示向量占 30%，BM25 占 70%)
+            alpha: Dense retrieval weight (0.3 means dense 30%, BM25 70%)
 
         Returns:
             Dict[doc_id, fused_score]
@@ -248,11 +252,9 @@ class HybridRetriever:
 
         return fused_scores
 
-    def _normalize_scores(
-        self, results: List[Tuple[str, float]]
-    ) -> Dict[str, float]:
+    def _normalize_scores(self, results: List[Tuple[str, float]]) -> Dict[str, float]:
         """
-        归一化分数到 [0, 1] 范围。
+        Normalize scores to [0, 1] range.
 
         Uses min-max normalization: norm(score) = (score - min) / (max - min)
 
@@ -276,10 +278,7 @@ class HybridRetriever:
             return {doc_id: 1.0 for doc_id, _ in results}
 
         range_score = max_score - min_score
-        return {
-            doc_id: (score - min_score) / range_score
-            for doc_id, score in results
-        }
+        return {doc_id: (score - min_score) / range_score for doc_id, score in results}
 
     def retrieve_with_scores(
         self,
@@ -287,11 +286,11 @@ class HybridRetriever:
         top_k: int = 10,
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
-        检索并返回详细的分数信息。
+        Retrieve and return detailed score information.
 
         Args:
-            query: 查询字符串
-            top_k: 返回结果数量
+            query: Query string
+            top_k: Number of results to return
 
         Returns:
             Dict with keys:
@@ -351,19 +350,19 @@ class HybridRetriever:
 
     def get_document_count(self) -> int:
         """
-        获取索引中的文档数量。
+        Get the number of documents in the index.
 
         Returns:
-            int: 文档数量
+            int: Number of documents
         """
         return len(self.documents)
 
     def refresh(self, documents: List[Dict[str, Any]]) -> None:
         """
-        重新构建索引。
+        Rebuild the index.
 
         Args:
-            documents: 新的文档列表
+            documents: New document list
         """
         self.documents = documents
         self.doc_store = {}

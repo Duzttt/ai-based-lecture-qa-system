@@ -1,15 +1,24 @@
 <script setup>
-import Topbar from './components/Topbar.vue'
-import SourcesPanel from './components/SourcesPanel.vue'
-import ChatPanel from './components/ChatPanel.vue'
-import StudioPanel from './components/StudioPanel.vue'
-import ComparisonView from './components/ComparisonView.vue'
-import SettingsModal from './components/SettingsModal.vue'
+import Topbar from './components/layout/Topbar.vue'
+import SourcesPanel from './components/layout/SourcesPanel.vue'
+import ChatPanel from './components/chat/ChatPanel.vue'
+import StudioPanel from './components/layout/StudioPanel.vue'
+import ComparisonView from './components/documents/ComparisonView.vue'
+import LLMConfigPanel from './components/settings/LLMConfigPanel.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
-import { ref, computed } from 'vue'
+import ChunkViz from './components/shared/ChunkViz.vue'
+import { ref, computed, onMounted } from 'vue'
+import { useLlmSettingsStore } from './stores/llmSettingsStore'
 
-const showSettings = ref(false)
+const llmStore = useLlmSettingsStore()
+
+onMounted(() => {
+  llmStore.loadProviders()
+})
+
 const showAdmin = ref(false)
+const showChunkViz = ref(false)
+const showLLMConfig = ref(false)
 const compareMode = ref(false)
 const selectedDocs = ref([])
 
@@ -36,52 +45,85 @@ const handleCloseComparison = () => {
 
 <template>
   <div class="app-shell">
-    <Topbar @open-settings="showSettings = true" @open-admin="showAdmin = true" />
-    <main class="main">
-      <SourcesPanel 
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <Topbar
+      @open-admin="showAdmin = true"
+      @open-chunkviz="showChunkViz = true"
+      @open-llm-config="showLLMConfig = true"
+    />
+    <LLMConfigPanel
+      v-if="showLLMConfig"
+      @close="showLLMConfig = false"
+    />
+    <main v-else id="main-content" class="main" tabindex="-1">
+      <SourcesPanel
         @selection-change="handleSelectionChange"
         @toggle-compare="handleToggleCompare"
       />
-      <ChatPanel 
-        v-if="!showComparison" 
-        :selected-sources="selectedDocs" 
+      <ChatPanel
+        v-if="!showComparison"
+        :selected-sources="selectedDocs"
       />
-      <ComparisonView 
-        v-else 
+      <ComparisonView
+        v-else
         :selected-docs="selectedDocs"
         @close="handleCloseComparison"
       />
       <StudioPanel />
     </main>
-    <SettingsModal v-model:show="showSettings" />
     <AdminDashboard v-if="showAdmin" @close="showAdmin = false" />
+    <ChunkViz :show="showChunkViz" @close="showChunkViz = false" />
   </div>
 </template>
 
 <style scoped>
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 12px;
+  z-index: 10000;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 16px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skip-link:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.skip-link:focus-visible {
+  left: 16px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .app-shell {
-  width: min(1280px, 100vw);
-  height: min(720px, 100vh - 40px);
-  background: rgba(15, 23, 42, 0.95);
-  border-radius: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  backdrop-filter: blur(16px);
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.8);
 }
 
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1.4fr) 270px;
+  grid-template-columns: 280px minmax(0, 1fr) 280px;
   grid-template-rows: minmax(0, 1fr);
-  gap: var(--spacing-unit);
-  padding: calc(var(--spacing-unit) + 2px) var(--spacing-unit)
-    calc(var(--spacing-unit) * 1.75);
-  background: radial-gradient(circle at top, #020617 0, #020617 45%, #000 90%);
-  min-width: 0;
+  gap: 1px;
+  background: rgba(69, 70, 83, 0.08);
   min-height: 0;
 }
 
@@ -89,7 +131,6 @@ const handleCloseComparison = () => {
   .app-shell {
     width: 100vw;
     height: 100vh;
-    border-radius: 0;
   }
 }
 
