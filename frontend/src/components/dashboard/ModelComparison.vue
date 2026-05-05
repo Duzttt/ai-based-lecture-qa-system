@@ -95,7 +95,7 @@ const getSpeedColor = (speed) => {
       <div class="modal-container">
         <div class="modal-header">
           <h3>Compare Embedding Models</h3>
-          <button class="modal-close" @click="handleClose">✕</button>
+          <button class="modal-close" @click="handleClose" aria-label="Close modal">✕</button>
         </div>
         <div class="modal-body">
           <!-- Model Selection -->

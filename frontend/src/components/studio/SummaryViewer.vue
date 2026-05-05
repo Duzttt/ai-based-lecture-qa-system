@@ -199,7 +199,7 @@ const handleFeedback = (rating) => {
 
       <!-- Footer -->
       <div class="summary-footer">
-        <button class="regenerate-btn" @click="$emit('regenerate')">
+        <button class="regenerate-btn" @click="$emit('regenerate')" aria-label="Regenerate summary">
           🔄 Regenerate
         </button>
         <div class="feedback-section">
