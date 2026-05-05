@@ -508,7 +508,7 @@ onMounted(async () => {
         <span class="status-badge" :class="indexingStatus.status">
           {{ indexingStatus.status === 'running' ? '⏳ Indexing...' : '✓ Ready' }}
         </span>
-        <button class="close-btn" @click="emit('close')">✕</button>
+        <button class="close-btn" @click="emit('close')" aria-label="Close">✕</button>
       </div>
     </div>
 
@@ -743,7 +743,7 @@ onMounted(async () => {
                 class="search-input"
                 @input="loadDocuments"
               />
-              <button class="refresh-btn" @click="loadDocuments">↻</button>
+              <button class="refresh-btn" aria-label="Refresh documents" title="Refresh documents" @click="loadDocuments">↻</button>
             </div>
           </div>
 
@@ -865,7 +865,7 @@ onMounted(async () => {
         <div class="clusters-section">
           <div class="section-header">
             <h3>Query Semantic Clusters</h3>
-            <button class="refresh-btn" @click="loadQueryClusters">↻</button>
+            <button class="refresh-btn" aria-label="Refresh query clusters" title="Refresh query clusters" @click="loadQueryClusters">↻</button>
           </div>
           
           <div v-if="queryClusters.clusters?.length" class="clusters-list">
@@ -892,7 +892,7 @@ onMounted(async () => {
         <div class="failures-section">
           <div class="section-header">
             <h3>Retrieval Failure Analysis</h3>
-            <button class="refresh-btn" @click="loadFailureAnalysis">↻</button>
+            <button class="refresh-btn" aria-label="Refresh failure analysis" title="Refresh failure analysis" @click="loadFailureAnalysis">↻</button>
           </div>
           
           <div class="failure-rate">
@@ -927,7 +927,7 @@ onMounted(async () => {
                 <option value="pca">PCA</option>
                 <option value="tsne">t-SNE</option>
               </select>
-              <button class="refresh-btn" @click="loadEmbeddingViz">↻</button>
+              <button class="refresh-btn" aria-label="Refresh embedding visualization" title="Refresh embedding visualization" @click="loadEmbeddingViz">↻</button>
             </div>
           </div>
           
@@ -963,7 +963,7 @@ onMounted(async () => {
         <div class="quality-section">
           <div class="section-header">
             <h3>Chunk Quality Assessment</h3>
-            <button class="refresh-btn" @click="loadChunkQuality">↻</button>
+            <button class="refresh-btn" aria-label="Refresh chunk quality metrics" title="Refresh chunk quality metrics" @click="loadChunkQuality">↻</button>
           </div>
           
           <div class="overall-score">
@@ -1091,7 +1091,7 @@ onMounted(async () => {
         <div class="alerts-section">
           <div class="section-header">
             <h3>🔔 Smart Alerts</h3>
-            <button class="refresh-btn" @click="loadAlerts">↻</button>
+            <button class="refresh-btn" aria-label="Refresh alerts" title="Refresh alerts" @click="loadAlerts">↻</button>
           </div>
           
           <div class="active-alerts">
@@ -1121,7 +1121,7 @@ onMounted(async () => {
         <div class="capacity-section">
           <div class="section-header">
             <h3>📈 Capacity Forecast</h3>
-            <button class="refresh-btn" @click="loadCapacityForecast">↻</button>
+            <button class="refresh-btn" aria-label="Refresh capacity forecast" title="Refresh capacity forecast" @click="loadCapacityForecast">↻</button>
           </div>
           
           <div class="forecast-stats">
@@ -1153,7 +1153,7 @@ onMounted(async () => {
         <div class="selfheal-section">
           <div class="section-header">
             <h3>🔧 Self-Healing Events</h3>
-            <button class="refresh-btn" @click="loadSelfHealing">↻</button>
+            <button class="refresh-btn" aria-label="Refresh self-healing events" title="Refresh self-healing events" @click="loadSelfHealing">↻</button>
           </div>
           
           <div class="events-list">
@@ -1173,7 +1173,7 @@ onMounted(async () => {
         <div class="cost-section">
           <div class="section-header">
             <h3>💰 Cost Analysis</h3>
-            <button class="refresh-btn" @click="loadCostAnalysis">↻</button>
+            <button class="refresh-btn" aria-label="Refresh cost analysis" title="Refresh cost analysis" @click="loadCostAnalysis">↻</button>
           </div>
           
           <div class="cost-summary">
@@ -1206,7 +1206,7 @@ onMounted(async () => {
         <div class="users-section">
           <div class="section-header">
             <h3>👥 User Behavior</h3>
-            <button class="refresh-btn" @click="loadUserBehavior">↻</button>
+            <button class="refresh-btn" aria-label="Refresh user behavior metrics" title="Refresh user behavior metrics" @click="loadUserBehavior">↻</button>
           </div>
           
           <div class="user-stats">
@@ -1265,7 +1265,7 @@ onMounted(async () => {
         <div class="health-section">
           <div class="section-header">
             <h3>❤️ Knowledge Base Health</h3>
-            <button class="refresh-btn" @click="loadHealthScore">↻</button>
+            <button class="refresh-btn" aria-label="Refresh health score" title="Refresh health score" @click="loadHealthScore">↻</button>
           </div>
           
           <div class="health-score">

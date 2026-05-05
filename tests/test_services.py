@@ -35,6 +35,37 @@ class TestTextChunker:
         chunks = chunker.chunk_text("")
         assert chunks == []
 
+    def test_chunk_text_by_sentences_fallback_empty_returns_empty_list(self):
+        from app.services.chunker import TextChunker
+        chunker = TextChunker()
+        chunks = chunker._chunk_text_by_sentences_fallback("")
+        assert chunks == []
+
+    def test_chunk_text_by_sentences_fallback_basic(self):
+        from app.services.chunker import TextChunker
+        chunker = TextChunker(chunk_size=50, chunk_overlap=10)
+        text = "This is a sentence. This is another sentence. And a third one!"
+        chunks = chunker._chunk_text_by_sentences_fallback(text)
+        assert len(chunks) > 1
+
+    def test_chunk_text_by_sentences_fallback_large_sentence(self):
+        from app.services.chunker import TextChunker
+        chunker = TextChunker(chunk_size=20, chunk_overlap=5)
+        text = "This is a very long sentence that exceeds the chunk size without any punctuation"
+        chunks = chunker._chunk_text_by_sentences_fallback(text)
+        assert len(chunks) == 1
+        assert chunks[0] == text
+
+    def test_chunk_text_by_sentences_fallback_overlap(self):
+        from app.services.chunker import TextChunker
+        chunker = TextChunker(chunk_size=30, chunk_overlap=10)
+        text = "First sentence. Second sentence. Third sentence."
+        chunks = chunker._chunk_text_by_sentences_fallback(text)
+        assert len(chunks) == 3
+        assert chunks[0] == "First sentence."
+        assert chunks[1] == "sentence. Second sentence."
+        assert chunks[2] == "sentence. Third sentence."
+
 
 class TestEmbeddingService:
     def test_embedding_service_can_be_instantiated(self):
