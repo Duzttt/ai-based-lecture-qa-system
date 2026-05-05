@@ -66,6 +66,29 @@ def _get_document_text(filename: str) -> Optional[str]:
         return None
 
 
+def _get_document_chunks(filename: str) -> List[Dict[str, Any]]:
+    from app.services.runtime_embedding import load_runtime_embedding_settings
+    from app.services.vector_store import VectorStore
+
+    try:
+        rt = load_runtime_embedding_settings()
+        vector_store = VectorStore.get_cached(
+            index_path=settings.FAISS_INDEX_PATH,
+            embedding_dim=rt["embedding_dim"],
+        )
+
+        doc_chunks = []
+        for chunk in vector_store.chunks:
+            chunk_source = str(chunk.get("source", ""))
+            if filename in chunk_source or chunk_source.endswith(filename):
+                doc_chunks.append(chunk)
+
+        doc_chunks.sort(key=lambda c: c.get("page", 0) or 0)
+        return doc_chunks
+    except Exception:
+        return []
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def generate_summary(request: HttpRequest) -> JsonResponse:
@@ -98,10 +121,12 @@ def generate_summary(request: HttpRequest) -> JsonResponse:
     for doc_id in document_ids:
         text = _get_document_text(doc_id)
         if text:
+            chunks = _get_document_chunks(doc_id)
             documents.append(
                 {
                     "name": doc_id,
                     "text": text,
+                    "chunks": chunks,
                 }
             )
 
@@ -222,10 +247,12 @@ def regenerate_summary(request: HttpRequest) -> JsonResponse:
     for doc_name in original.get("documents", []):
         text = _get_document_text(doc_name)
         if text:
+            chunks = _get_document_chunks(doc_name)
             documents.append(
                 {
                     "name": doc_name,
                     "text": text,
+                    "chunks": chunks,
                 }
             )
 

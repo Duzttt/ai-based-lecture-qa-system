@@ -60,9 +60,12 @@ class DocumentSummarizer:
             llm_provider: LLM provider (gemini, openrouter, local_llm)
             model: Model name to use
         """
-        self.llm_provider = llm_provider or "local_llm"
-        self.model = model or settings.LOCAL_LLM_MODEL
-        self.base_url = settings.LOCAL_LLM_BASE_URL
+        from app.services.runtime_llm import load_runtime_llm_settings
+
+        rt = load_runtime_llm_settings()
+        self.llm_provider = llm_provider or rt["provider"] or settings.LLM_PROVIDER
+        self.model = model or rt["model"] or settings.LOCAL_LLM_MODEL
+        self.base_url = rt["base_url"] or settings.LOCAL_LLM_BASE_URL
         self.timeout = settings.LOCAL_LLM_TIMEOUT_SECONDS
 
     def _build_prompt(
@@ -141,7 +144,13 @@ Output the synthesized summary directly:"""
         return prompt
 
     def _call_llm(self, prompt: str, response_format: str = None) -> str:
-        raise SummarizerError("LLM summarization is temporarily disabled")
+        if self.llm_provider == "local_llm":
+            return self._call_local_llm(prompt, response_format)
+        elif self.llm_provider == "gemini":
+            return self._call_gemini(prompt, response_format)
+        elif self.llm_provider == "openrouter":
+            return self._call_openrouter(prompt, response_format)
+        raise SummarizerError(f"Unknown LLM provider: {self.llm_provider}")
 
     def _extractive_summary(self, text: str, length: str) -> str:
         clean_text = re.sub(r"\s+", " ", text).strip()
@@ -243,14 +252,27 @@ Output the synthesized summary directly:"""
             for s in re.split(r"(?<=[.!?。！？])\s+", summary.strip())
             if s.strip()
         ]
+        chunks = document.get("chunks", [])
         citations: List[Dict[str, Any]] = []
         for sentence in summary_sentences[:3]:
+            best_page = None
+            if chunks:
+                best_score = 0
+                sentence_lower = sentence.lower()
+                sentence_words = set(sentence_lower.split())
+                for chunk in chunks:
+                    chunk_text = str(chunk.get("text", "")).lower()
+                    chunk_words = set(chunk_text.split())
+                    overlap = len(sentence_words & chunk_words)
+                    if overlap > best_score:
+                        best_score = overlap
+                        best_page = chunk.get("page")
             citations.append(
                 {
                     "point": sentence[:120],
                     "citation": sentence[:220],
                     "source": document.get("name", "unknown"),
-                    "page": None,
+                    "page": best_page,
                 }
             )
         return citations
@@ -270,10 +292,25 @@ Output the synthesized summary directly:"""
         Returns:
             Summary result dict with text, citations, document info
         """
-        summary_text = self._extractive_summary(
-            str(document.get("text", "")),
-            str(config.get("length", "medium")),
-        )
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        summary_text = None
+        try:
+            prompt = self._build_prompt([document], config)
+            summary_text = self._call_llm(prompt)
+        except (SummarizerError, Exception) as e:
+            logger.warning(
+                "LLM summarization failed, falling back to extractive: %s", e
+            )
+
+        if not summary_text:
+            summary_text = self._extractive_summary(
+                str(document.get("text", "")),
+                str(config.get("length", "medium")),
+            )
+
         if not summary_text:
             raise SummarizerError("Document content is empty")
 
@@ -304,18 +341,34 @@ Output the synthesized summary directly:"""
         Returns:
             Summary result dict with text, comparison, document count
         """
-        doc_summaries: List[str] = []
-        for doc in documents:
-            summary_piece = self._extractive_summary(
-                str(doc.get("text", "")),
-                "short",
-            )
-            if summary_piece:
-                doc_summaries.append(f"[{doc.get('name', 'unknown')}] {summary_piece}")
+        import logging
 
-        if not doc_summaries:
-            raise SummarizerError("Document content is empty")
-        summary_text = "\n\n".join(doc_summaries)
+        logger = logging.getLogger(__name__)
+
+        summary_text = None
+        try:
+            prompt = self._build_prompt(documents, config)
+            summary_text = self._call_llm(prompt)
+        except (SummarizerError, Exception) as e:
+            logger.warning(
+                "LLM summarization failed, falling back to extractive: %s", e
+            )
+
+        if not summary_text:
+            doc_summaries: List[str] = []
+            for doc in documents:
+                summary_piece = self._extractive_summary(
+                    str(doc.get("text", "")),
+                    "short",
+                )
+                if summary_piece:
+                    doc_summaries.append(
+                        f"[{doc.get('name', 'unknown')}] {summary_piece}"
+                    )
+
+            if not doc_summaries:
+                raise SummarizerError("Document content is empty")
+            summary_text = "\n\n".join(doc_summaries)
 
         # Generate comparison table if requested
         comparison = []
