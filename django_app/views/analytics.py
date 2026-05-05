@@ -21,7 +21,9 @@ def admin_document_analytics(request: HttpRequest, doc_id: str) -> JsonResponse:
 
     decoded_doc_id = urllib.parse.unquote(doc_id)
 
-    all_logs = QueryLog.objects.all()
+    # To avoid N+1 queries and high memory usage, we fetch only the necessary fields.
+    # We use values_list and an iterator to drastically reduce memory usage and avoid model instantiation overhead.
+    logs = QueryLog.objects.values_list("retrieved_documents", "user_feedback", "query")
 
     appearance_count = 0
     click_count = 0
@@ -29,8 +31,8 @@ def admin_document_analytics(request: HttpRequest, doc_id: str) -> JsonResponse:
     score_count = 0
     query_counts: Dict[str, int] = {}
 
-    for log in all_logs:
-        retrieved = log.retrieved_documents or []
+    for retrieved, user_feedback, query in logs.iterator(chunk_size=1000):
+        retrieved = retrieved or []
         for item in retrieved:
             source = item.get("source", "")
             if decoded_doc_id in source or source.endswith(decoded_doc_id):
@@ -39,10 +41,10 @@ def admin_document_analytics(request: HttpRequest, doc_id: str) -> JsonResponse:
                 if score > 0:
                     total_score += score
                     score_count += 1
-                if log.user_feedback is True:
+                if user_feedback is True:
                     click_count += 1
 
-        query_text = log.query.lower()
+        query_text = query.lower()
         for item in retrieved:
             source = item.get("source", "")
             if decoded_doc_id in source or source.endswith(decoded_doc_id):

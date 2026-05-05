@@ -20,20 +20,37 @@ def _clear_document_cache():
 
 
 def _get_document_text(filename: str) -> Optional[str]:
-    """
-    Get document text from vector store with caching.
+    """Extract text from a document if it exists."""
+    import os
+    from django.conf import settings as django_settings
 
-    Args:
-        filename: Name of the document file
-
-    Returns:
-        Combined text from all chunks of the document, or None if not found
-    """
     global _document_text_cache, _cache_valid
 
     # Return from cache if available
     if _cache_valid and filename in _document_text_cache:
         return _document_text_cache[filename]
+
+    try:
+        # Check if file exists in media directory
+        media_path = os.path.join(django_settings.MEDIA_ROOT, "data_source", filename)
+        if os.path.exists(media_path):
+            if filename.lower().endswith(".pdf"):
+                import fitz
+                text = ""
+                with fitz.open(media_path) as doc:
+                    for page in doc:
+                        text += page.get_text() + " "
+                if text.strip():
+                    _document_text_cache[filename] = text.strip()
+                    return text.strip()
+            else:
+                with open(media_path, "r", encoding="utf-8") as f:
+                    text = f.read()
+                if text.strip():
+                    _document_text_cache[filename] = text.strip()
+                    return text.strip()
+    except Exception:
+        pass
 
     from app.config import settings
     from app.services.runtime_embedding import load_runtime_embedding_settings
