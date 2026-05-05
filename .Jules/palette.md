@@ -1,3 +1,7 @@
+
+## 2024-05-01 - Chat Input Loading Feedback
+**Learning:** Adding a subtle, animated spinner to primary action buttons (like a chat send button) during async operations provides crucial immediate feedback, preventing user confusion about whether their action was registered, especially when inputs are disabled.
+**Action:** Always consider replacing the icon in a primary action button with an animated spinner when an async process is triggered and the button enters a disabled state.
 ## 2024-05-15 - Missing ARIA labels on refresh buttons
 **Learning:** Found multiple instances in `AdminDashboard.vue` and `DocumentsTab.vue` where the refresh button (`<button class="refresh-btn">↻</button>`) was an icon-only button without an accessible label, making it unreadable by screen readers.
 **Action:** Added context-specific `aria-label` and `title` attributes (e.g. `aria-label="Refresh documents"`) to all `.refresh-btn` components. Next time, always check icon-only buttons for missing ARIA labels and ensure tooltips are used where context is ambiguous.

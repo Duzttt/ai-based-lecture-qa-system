@@ -45,7 +45,10 @@ const sendMessage = () => {
       @click="sendMessage"
       :disabled="isLoading || !question.trim()"
     >
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      <svg v-if="isLoading" class="send-spinner" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+      </svg>
+      <svg v-else viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
 </template>
@@ -172,5 +175,15 @@ const sendMessage = () => {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
+}
+
+.send-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
