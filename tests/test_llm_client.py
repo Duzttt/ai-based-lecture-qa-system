@@ -195,6 +195,44 @@ def test_call_llm_local_llm_falls_back_to_fast_model_on_timeout():
 
 
 @pytest.mark.django_db
+def test_call_llm_timeout_fallback_preserves_thinking_for_reasoning_models():
+    from app.services.llm_client import call_llm
+    import requests
+
+    timeout_error = requests.Timeout("Read timed out")
+    fallback_response = MagicMock()
+    fallback_response.raise_for_status.return_value = None
+    fallback_response.json.return_value = {
+        "message": {"content": "Fallback answer", "thinking": "some thoughts"}
+    }
+
+    with patch(
+        "app.services.llm_client.requests.post",
+        side_effect=[timeout_error, fallback_response],
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="qwen3:8b",
+            call_type="qa",
+            messages=[{"role": "user", "content": "Explain this"}],
+            base_url="http://localhost:11434",
+            return_thinking=True,
+            fallback_model="qwen3:4b",
+        )
+
+    content, thinking = result
+    assert content == "Fallback answer"
+    assert thinking == "some thoughts"
+    assert mocked_post.call_count == 2
+    first_payload = mocked_post.call_args_list[0].kwargs["json"]
+    second_payload = mocked_post.call_args_list[1].kwargs["json"]
+    assert first_payload["model"] == "qwen3:8b"
+    assert first_payload["think"] is True
+    assert second_payload["model"] == "qwen3:4b"
+    assert second_payload["think"] is True
+
+
+@pytest.mark.django_db
 def test_call_llm_local_llm_falls_back_to_generate_when_chat_content_empty():
     from app.services.llm_client import call_llm
 
