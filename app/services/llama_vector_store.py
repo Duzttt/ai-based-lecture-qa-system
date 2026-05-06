@@ -1,5 +1,6 @@
 import os
-from typing import Any, Dict, List, Optional
+import threading
+from typing import Any, Dict, List, Optional, Tuple
 
 import faiss
 import numpy as np
@@ -12,6 +13,9 @@ from llama_index.core.vector_stores.types import (
 )
 from llama_index.vector_stores.faiss import FaissVectorStore
 from pydantic import PrivateAttr
+
+_GLOBAL_LLAMA_CACHE: Dict[Tuple[str, int], "LlamaVectorStore"] = {}
+_GLOBAL_LLAMA_CACHE_LOCK = threading.Lock()
 
 
 class _NoOpEmbedding(BaseEmbedding):
@@ -57,8 +61,52 @@ class LlamaVectorStore:
         self.vector_store: Optional[FaissVectorStore] = None
         self.storage_context: Optional[StorageContext] = None
         self.index: Optional[VectorStoreIndex] = None
+        self._node_id_to_chunk_index: Dict[str, int] = {}
         self._load_or_create_index()
         self._init_llama_objects()
+
+    @classmethod
+    def get_cached(
+        cls,
+        index_path: str,
+        embedding_dim: int = 384,
+    ) -> "LlamaVectorStore":
+        """Return a cached instance, creating one on first use (thread-safe)."""
+        key = (index_path, embedding_dim)
+        cached = _GLOBAL_LLAMA_CACHE.get(key)
+        if cached is not None:
+            return cached
+
+        with _GLOBAL_LLAMA_CACHE_LOCK:
+            cached = _GLOBAL_LLAMA_CACHE.get(key)
+            if cached is not None:
+                return cached
+            store = cls(index_path=index_path, embedding_dim=embedding_dim)
+            _GLOBAL_LLAMA_CACHE[key] = store
+            return store
+
+    @classmethod
+    def set_cached(cls, store: "LlamaVectorStore") -> None:
+        """Update the cache with the provided store instance."""
+        _GLOBAL_LLAMA_CACHE[(store.index_path, store.embedding_dim)] = store
+
+    @classmethod
+    def invalidate_cached(
+        cls,
+        index_path: Optional[str] = None,
+        embedding_dim: Optional[int] = None,
+    ) -> None:
+        """Invalidate cached stores matching the provided scope."""
+        keys_to_delete: List[Tuple[str, int]] = []
+        for key in _GLOBAL_LLAMA_CACHE:
+            key_index_path, key_embedding_dim = key
+            if index_path is not None and key_index_path != index_path:
+                continue
+            if embedding_dim is not None and key_embedding_dim != embedding_dim:
+                continue
+            keys_to_delete.append(key)
+        for key in keys_to_delete:
+            _GLOBAL_LLAMA_CACHE.pop(key, None)
 
     def _init_llama_objects(self) -> None:
         """Initialize LlamaIndex FaissVectorStore, StorageContext and VectorStoreIndex."""
@@ -128,8 +176,9 @@ class LlamaVectorStore:
             )
 
         normalized = [self._normalize_chunk(chunk) for chunk in chunks]
+        base_index = len(self.chunks)
         nodes: List[TextNode] = []
-        for emb, chunk in zip(embeddings, normalized):
+        for i, (emb, chunk) in enumerate(zip(embeddings, normalized)):
             node = TextNode(
                 text=chunk["text"],
                 embedding=emb.tolist(),
@@ -138,6 +187,8 @@ class LlamaVectorStore:
             nodes.append(node)
 
         self.vector_store.add(nodes)
+        for i, node in enumerate(nodes):
+            self._node_id_to_chunk_index[node.node_id] = base_index + i
         self.chunks.extend(normalized)
 
     def search_with_metadata(
@@ -164,7 +215,12 @@ class LlamaVectorStore:
         for rank, (node_id, similarity) in enumerate(
             zip(result.ids or [], result.similarities or []), start=1
         ):
-            idx = int(node_id)
+            idx = self._node_id_to_chunk_index.get(str(node_id))
+            if idx is None:
+                try:
+                    idx = int(node_id)
+                except (ValueError, TypeError):
+                    continue
             if idx < 0 or idx >= len(self.chunks):
                 continue
 
@@ -202,6 +258,7 @@ class LlamaVectorStore:
             else:
                 self.faiss_index.reset()
         self.chunks = []
+        self._node_id_to_chunk_index = {}
         self._init_llama_objects()
 
     def get_total_chunks(self) -> int:
