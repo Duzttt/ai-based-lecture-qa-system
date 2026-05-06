@@ -8,7 +8,6 @@ from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_a
 from app.services.vector_store import VectorStore, VectorStoreError
 
 try:
-    from app.services.llama_rag_pipeline import LlamaRAGPipeline
     from app.services.llama_vector_store import LlamaVectorStore
 
     LLAMA_AVAILABLE = True
