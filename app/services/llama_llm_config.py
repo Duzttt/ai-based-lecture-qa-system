@@ -2,6 +2,8 @@ from typing import Optional
 
 from llama_index.core import Settings
 
+__all__ = ["configure_llm", "LLMConfigError"]
+
 try:
     from llama_index.llms.gemini import Gemini
 except ImportError:

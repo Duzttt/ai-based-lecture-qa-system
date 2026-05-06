@@ -11,35 +11,54 @@ def test_configure_llm_unsupported_provider():
 
 def test_configure_llm_local_sets_settings():
     """配置local provider应设置Settings.llm为OpenAILike实例"""
-    configure_llm(
-        provider="local",
-        model="qwen2.5:3b",
-        base_url="http://localhost:8080/v1",
-    )
+    mock_local_instance = MagicMock()
+    mock_local_class = MagicMock(return_value=mock_local_instance)
 
-    from llama_index.core import Settings
+    with (
+        patch("app.services.llama_llm_config.OpenAILike", mock_local_class),
+        patch("app.services.llama_llm_config.Settings") as mock_settings,
+    ):
+        configure_llm(
+            provider="local",
+            model="qwen2.5:3b",
+            base_url="http://localhost:8080/v1",
+        )
+        assert mock_settings.llm == mock_local_instance
 
-    assert Settings.llm is not None
-    assert Settings.llm.model == "qwen2.5:3b"
+    mock_local_class.assert_called_once()
+    call_kwargs = mock_local_class.call_args.kwargs
+    assert call_kwargs.get("model") == "qwen2.5:3b"
+    assert call_kwargs.get("api_base") == "http://localhost:8080/v1"
 
 
 def test_configure_llm_local_default_model():
     """local provider未指定model时应使用默认值"""
-    configure_llm(provider="local")
+    mock_local_instance = MagicMock()
+    mock_local_class = MagicMock(return_value=mock_local_instance)
 
-    from llama_index.core import Settings
+    with (
+        patch("app.services.llama_llm_config.OpenAILike", mock_local_class),
+        patch("app.services.llama_llm_config.Settings"),
+    ):
+        configure_llm(provider="local")
 
-    assert Settings.llm is not None
-    assert Settings.llm.model == "qwen2.5:3b"
+    call_kwargs = mock_local_class.call_args.kwargs
+    assert call_kwargs.get("model") == "qwen2.5:3b"
 
 
 def test_configure_llm_local_default_base_url():
     """local provider未指定base_url时应使用默认值"""
-    configure_llm(provider="local")
+    mock_local_instance = MagicMock()
+    mock_local_class = MagicMock(return_value=mock_local_instance)
 
-    from llama_index.core import Settings
+    with (
+        patch("app.services.llama_llm_config.OpenAILike", mock_local_class),
+        patch("app.services.llama_llm_config.Settings"),
+    ):
+        configure_llm(provider="local")
 
-    assert Settings.llm is not None
+    call_kwargs = mock_local_class.call_args.kwargs
+    assert call_kwargs.get("api_base") == "http://localhost:8080/v1"
 
 
 def test_configure_llm_gemini_with_mock():
