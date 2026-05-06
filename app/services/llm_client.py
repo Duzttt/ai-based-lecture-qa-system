@@ -232,7 +232,13 @@ def _call_local_llm(
             LOCAL_LLM_FAST_FALLBACK_MODEL,
         )
         if fallback_model and str(fallback_model).strip() != str(model).strip():
-            return _call_model_once(str(fallback_model).strip())
+            fallback_model_str = str(fallback_model).strip()
+            fallback_use_thinking = return_thinking and _model_supports_thinking(
+                fallback_model_str
+            )
+            return _call_model_once(
+                fallback_model_str, with_thinking=fallback_use_thinking
+            )
         raise
 
 

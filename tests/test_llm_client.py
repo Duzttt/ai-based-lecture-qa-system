@@ -259,3 +259,68 @@ def test_call_llm_unsupported_provider():
             call_type="qa",
             messages=[{"role": "user", "content": "hi"}],
         )
+
+
+@pytest.mark.django_db
+def test_call_llm_local_llm_retries_without_thinking_on_http_400():
+    from app.services.llm_client import call_llm
+    import requests
+
+    error_response = MagicMock()
+    error_response.status_code = 400
+    http_error = requests.HTTPError(response=error_response)
+    error_response.raise_for_status = MagicMock(side_effect=http_error)
+
+    retry_response = MagicMock()
+    retry_response.raise_for_status.return_value = None
+    retry_response.json.return_value = {"message": {"content": "Retry success"}}
+
+    with patch(
+        "app.services.llm_client.requests.post",
+        side_effect=[error_response, retry_response],
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="qwen3:8b",
+            call_type="qa",
+            messages=[{"role": "user", "content": "test"}],
+            base_url="http://localhost:11434",
+            return_thinking=True,
+        )
+
+    assert isinstance(result, tuple)
+    assert result[0] == "Retry success"
+    assert mocked_post.call_count == 2
+    first_payload = mocked_post.call_args_list[0].kwargs["json"]
+    second_payload = mocked_post.call_args_list[1].kwargs["json"]
+    assert first_payload.get("think") is True
+    assert "think" not in second_payload
+
+
+@pytest.mark.django_db
+def test_call_llm_local_llm_non_reasoning_model_skips_thinking():
+    from app.services.llm_client import call_llm
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "message": {"content": "Non-thinking response"}
+    }
+
+    with patch(
+        "app.services.llm_client.requests.post", return_value=mock_response
+    ) as mocked_post:
+        result = call_llm(
+            provider="local_llm",
+            model="qwen2.5:3b",
+            call_type="qa",
+            messages=[{"role": "user", "content": "test"}],
+            base_url="http://localhost:11434",
+            return_thinking=True,
+        )
+
+    assert isinstance(result, tuple)
+    assert result[0] == "Non-thinking response"
+    assert result[1] is None
+    payload = mocked_post.call_args.kwargs["json"]
+    assert "think" not in payload
