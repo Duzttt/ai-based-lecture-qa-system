@@ -8,6 +8,7 @@ from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_a
 from app.services.vector_store import VectorStore, VectorStoreError
 
 try:
+    from app.services.llama_rag_pipeline import LlamaRAGPipeline
     from app.services.llama_vector_store import LlamaVectorStore
 
     LLAMA_AVAILABLE = True
@@ -154,6 +155,7 @@ def generate_with_local_llm(
             timeout=resolved_timeout,
             query_text=query,
             base_url=resolved_base_url,
+            keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             num_predict=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
             return_thinking=return_thinking,
