@@ -130,12 +130,12 @@ def test_call_llm_returns_log_id_with_thinking_when_both_flags_enabled():
 
 
 @pytest.mark.django_db
-def test_call_llm_local_llm_falls_back_to_generate_on_chat_http_500():
+def test_call_llm_local_llm_falls_back_to_generate_on_chat_value_error():
     from app.services.llm_client import call_llm
-    import requests
 
     chat_response = MagicMock()
-    chat_response.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+    chat_response.raise_for_status.return_value = None
+    chat_response.json.return_value = {"message": {"role": "assistant", "content": ""}}
 
     generate_response = MagicMock()
     generate_response.raise_for_status.return_value = None
