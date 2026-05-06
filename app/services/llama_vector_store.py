@@ -148,6 +148,7 @@ class LlamaVectorStore:
 
         index_file = os.path.join(self.index_path, "index.faiss")
         chunks_file = os.path.join(self.index_path, "chunks.npy")
+        mapping_file = os.path.join(self.index_path, "node_mapping.npy")
 
         if os.path.exists(index_file) and os.path.exists(chunks_file):
             try:
@@ -156,6 +157,11 @@ class LlamaVectorStore:
                 if not isinstance(loaded_chunks, list):
                     loaded_chunks = [loaded_chunks]
                 self.chunks = [self._normalize_chunk(chunk) for chunk in loaded_chunks]
+                if os.path.exists(mapping_file):
+                    items = np.load(mapping_file, allow_pickle=True).tolist()
+                    self._node_id_to_chunk_index = {
+                        str(k): int(v) for k, v in items
+                    }
             except Exception as e:
                 raise LlamaVectorStoreError(f"Failed to load index: {str(e)}")
         else:
@@ -246,9 +252,14 @@ class LlamaVectorStore:
         os.makedirs(self.index_path, exist_ok=True)
         index_file = os.path.join(self.index_path, "index.faiss")
         chunks_file = os.path.join(self.index_path, "chunks.npy")
+        mapping_file = os.path.join(self.index_path, "node_mapping.npy")
 
         faiss.write_index(self.faiss_index, index_file)
         np.save(chunks_file, np.array(self.chunks, dtype=object))
+        np.save(
+            mapping_file,
+            np.array(list(self._node_id_to_chunk_index.items()), dtype=object),
+        )
 
     def clear(self) -> None:
         """清空索引"""

@@ -156,3 +156,28 @@ def test_llama_vector_store_string_chunks():
         store.add_embeddings(embeddings, ["纯文本块1", "纯文本块2"])
         assert store.get_total_chunks() == 2
         assert store.chunks[0]["source"] == "unknown"
+
+
+def test_llama_vector_store_save_load_search_roundtrip():
+    """save后reload应能正常搜索返回结果（验证node_mapping持久化）"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        store = LlamaVectorStore(temp_dir, embedding_dim=4)
+        embeddings = np.array(
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]], dtype=np.float32
+        )
+        chunks = [
+            {"text": "alpha内容", "source": "a.pdf", "page": 1},
+            {"text": "beta内容", "source": "b.pdf", "page": 2},
+        ]
+        store.add_embeddings(embeddings, chunks)
+        store.save()
+
+        loaded = LlamaVectorStore(temp_dir, embedding_dim=4)
+        assert loaded.get_total_chunks() == 2
+
+        query_embedding = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        results = loaded.search_with_metadata(query_embedding, top_k=2)
+        assert len(results) > 0
+        assert results[0]["text"] == "alpha内容"
+        assert results[0]["source"] == "a.pdf"
+        assert results[0]["page"] == 1
