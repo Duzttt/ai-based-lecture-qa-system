@@ -28,9 +28,8 @@ class LlamaDocumentAdapter:
             metadata = {"source": source, "page": page}
 
             # 创建LlamaIndex Document
-            doc = Document(
-                text=text, metadata=metadata, doc_id=f"{source}_page_{page}"
-            )
+            doc_id = f"{source}_page_{page}" if page is not None else source
+            doc = Document(text=text, metadata=metadata, doc_id=doc_id)
             documents.append(doc)
 
         return documents
