@@ -32,7 +32,7 @@ This project addresses the critical need for an intelligent, domain-specific que
 
 1. **Develop an End-to-End RAG Pipeline**: Design and implement a complete retrieval-augmented generation system capable of processing PDF lecture notes and answering questions with grounded, citation-backed responses.
 
-2. **Enable Multi-Provider LLM Integration**: Support flexible integration with multiple large language model providers (Gemini, OpenRouter, and local Qwen models via Ollama) to accommodate varying computational resources and privacy requirements.
+2. **Enable Multi-Provider LLM Integration**: Support flexible integration with multiple large language model providers (Gemini, OpenRouter, and local Qwen models via llama.cpp) to accommodate varying computational resources and privacy requirements.
 
 3. **Implement Efficient Vector Search**: Utilize FAISS (Facebook AI Similarity Search) for high-speed similarity search over embedded document chunks, enabling real-time question answering.
 
@@ -213,9 +213,9 @@ The system supports three LLM providers:
 - Model: `anthropic/claude-3-haiku` (configurable)
 - Advantages: Provider flexibility, competitive pricing
 
-**3. Local Qwen (Ollama)**
-- Models: ` ` to `qwen2.5:14b`
-- API: Ollama local server (`http://localhost:11434`)
+**3. Local Qwen (llama.cpp)**
+- Models: `qwen2.5:0.5b` to `qwen2.5:14b`
+- API: llama.cpp local server (`http://localhost:8080`)
 - Advantages: Privacy, offline operation, no API costs
 
 **System Prompt:**
@@ -275,7 +275,7 @@ To handle large uploads without blocking, the system implements background index
 | **Vector Search** | FAISS | High-performance similarity search |
 | **Frontend** | Vue 3 + Vite | Reactive UI, fast development, TypeScript support |
 | **Styling** | TailwindCSS | Utility-first, responsive design |
-| **LLM Clients** | Requests, Ollama | Lightweight HTTP clients for API integration |
+| **LLM Clients** | Requests, llama-cpp-python | Lightweight HTTP clients for API integration |
 | **Testing** | Pytest + pytest-asyncio | Comprehensive test framework with async support |
 | **Code Quality** | Ruff, Black, MyPy | Fast linting, formatting, type checking |
 
@@ -400,9 +400,9 @@ To handle large uploads without blocking, the system implements background index
    - You, E. (2024). "Vue.js." *Official Documentation*.
    - Progressive JavaScript framework for frontend UI.
 
-7. **Ollama**
-   - Ollama Team. (2024). "Ollama - Run Large Language Models Locally."
-   - Tool for running LLMs (e.g., Qwen) on local hardware.
+7. **llama.cpp**
+   - Gerganov, G. (2023). "llama.cpp - Port of Meta's LLaMA model in C/C++."
+   - Tool for running LLMs (e.g., Qwen) efficiently on local hardware.
 
 ### 6.3 Related Work
 

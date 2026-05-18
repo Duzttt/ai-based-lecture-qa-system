@@ -107,7 +107,7 @@ User → POST /api/chat {query: "...", sources?: [...]}
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ app/services/local_rag.py: generate_with_local_qwen()                       │
 │  1. Build prompt with context + question                                    │
-│  2. Call Ollama API (http://localhost:11434/api/chat)                       │
+│  2. Call llama.cpp API (http://localhost:8080/v1/chat/completions)           │
 │  3. Parse response                                                          │
 │  4. Return answer string                                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -178,7 +178,7 @@ User → POST /api/chat {query: "...", sources?: [...]}
 |-------------|-------|-----------|
 | **PDF Upload** | `views.upload_pdf()` → `pdf_indexing.index_pdf_file()` → `pdf_chunking.chunk_pdf_with_metadata()` → `embedding.EmbeddingService` → `vector_store.VectorStore` | File → Text → Chunks → Embeddings → FAISS |
 | **Query Processing** | `views.ask_qwen()` → `local_rag.retrieve_with_faiss()` → `embedding.EmbeddingService` + `vector_store.VectorStore` | Query → Embedding → FAISS Search → Chunks |
-| **Answer Generation** | `views.ask_qwen()` → `local_rag.generate_with_local_qwen()` → Ollama API | Context + Query → Prompt → LLM → Answer |
+| **Answer Generation** | `views.ask_qwen()` → `local_rag.generate_with_local_qwen()` → llama.cpp API | Context + Query → Prompt → LLM → Answer |
 | **Embedding Model Switch** | `views.switch_embedding_model()` → `embedding_manager.EmbeddingModelManager` → Reindex | Model ID → Load → Validate → Reindex |
 | **Question Suggestions** | `views.get_question_suggestions()` → `question_suggestions.QuestionSuggestionService` → LLM | Docs → Keywords → Candidates → LLM → Questions |
 | **WebSocket Updates** | `consumers.DashboardConsumer` ↔ `views._get_upload_indexing_state()` | State → JSON → WS → Frontend |

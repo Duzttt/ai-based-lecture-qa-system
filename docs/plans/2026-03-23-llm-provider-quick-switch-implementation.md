@@ -151,7 +151,7 @@ LLM_PROVIDERS_CATALOG = [
     },
     {
         "id": "local_qwen",
-        "name": "Local Qwen (Ollama)",
+        "name": "Local Qwen (llama.cpp)",
         "models": [" ", " ", "qwen2.5:3b", "qwen3.5:4b"],
         "requires_api_key": False,
     },

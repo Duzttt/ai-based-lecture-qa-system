@@ -16,11 +16,9 @@ from app.services.runtime_llm import (
 
 RAG_CONFIG_FILE = Path(__file__).resolve().parents[2] / "data" / "rag_config.json"
 LOCAL_LLM_MODELS = [
-    " ",
-    " ",
-    "qwen2.5:3b",
-    "qwen3.5:4b",
-    "qwen2.5:14b",
+    "qwen2.5-3b",
+    "qwen3.5-4b",
+    "qwen2.5-14b",
 ]
 INDEXING_STRATEGY_FULL_REBUILD = "full_rebuild"
 INDEXING_STRATEGY_APPEND = "append"

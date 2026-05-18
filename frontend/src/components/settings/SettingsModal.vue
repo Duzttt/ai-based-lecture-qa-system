@@ -75,7 +75,7 @@ watch(() => props.show, async (newVal) => {
             <select v-model="llmProvider">
               <option value="gemini">Google Gemini</option>
               <option value="openrouter">OpenRouter</option>
-              <option value="local_llm">Local LLM (Ollama)</option>
+              <option value="local_llm">Local LLM (llama.cpp)</option>
             </select>
           </div>
           <div class="form-row">

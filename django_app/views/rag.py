@@ -312,22 +312,22 @@ LLM_PROVIDERS_CATALOG = [
     },
     {
         "id": "local_llm",
-        "name": "Local LLM (Ollama)",
+        "name": "Local LLM (llama.cpp)",
         "models": [],
         "requires_api_key": False,
     },
 ]
 
 
-def _fetch_ollama_models(base_url: str, current_model: str) -> List[str]:
+def _fetch_local_models(base_url: str, current_model: str) -> List[str]:
     models: List[str] = []
     try:
-        response = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=5)
+        response = requests.get(f"{base_url.rstrip('/')}/v1/models", timeout=5)
         response.raise_for_status()
         payload = response.json()
-        for item in payload.get("models", []):
+        for item in payload.get("data", []):
             if isinstance(item, dict):
-                name = str(item.get("name") or "").strip()
+                name = str(item.get("id") or "").strip()
                 if name and name not in models:
                     models.append(name)
     except (requests.RequestException, ValueError, TypeError):
@@ -360,7 +360,7 @@ def providers_handler(request: HttpRequest) -> JsonResponse:
             entry["has_api_key"] = has_openrouter_key
         else:
             entry["has_api_key"] = False
-            entry["models"] = _fetch_ollama_models(
+            entry["models"] = _fetch_local_models(
                 settings.LOCAL_LLM_BASE_URL,
                 current_model if current_provider == "local_llm" else "",
             )
@@ -389,14 +389,14 @@ def llm_health_handler(request: HttpRequest) -> JsonResponse:
     started_at = time.perf_counter()
 
     try:
-        version_resp = requests.get(f"{base_url}/api/version", timeout=5)
-        version_resp.raise_for_status()
-        checks["version_ms"] = int((time.perf_counter() - started_at) * 1000)
+        health_resp = requests.get(f"{base_url}/health", timeout=5)
+        health_resp.raise_for_status()
+        checks["health_ms"] = int((time.perf_counter() - started_at) * 1000)
     except requests.RequestException as exc:
         return JsonResponse(
             {
                 "status": "disconnected",
-                "detail": "Cannot reach Ollama service.",
+                "detail": "Cannot reach llama.cpp server.",
                 "provider": provider,
                 "model": model_for_probe,
                 "base_url": base_url,
@@ -406,15 +406,15 @@ def llm_health_handler(request: HttpRequest) -> JsonResponse:
         )
 
     try:
-        tags_started = time.perf_counter()
-        tags_resp = requests.get(f"{base_url}/api/tags", timeout=5)
-        tags_resp.raise_for_status()
-        checks["tags_ms"] = int((time.perf_counter() - tags_started) * 1000)
+        models_started = time.perf_counter()
+        models_resp = requests.get(f"{base_url}/v1/models", timeout=5)
+        models_resp.raise_for_status()
+        checks["models_ms"] = int((time.perf_counter() - models_started) * 1000)
     except requests.RequestException as exc:
         return JsonResponse(
             {
                 "status": "disconnected",
-                "detail": "Ollama metadata endpoint is unreachable.",
+                "detail": "llama.cpp models endpoint is unreachable.",
                 "provider": provider,
                 "model": model_for_probe,
                 "base_url": base_url,
@@ -427,26 +427,29 @@ def llm_health_handler(request: HttpRequest) -> JsonResponse:
         generate_started = time.perf_counter()
         generate_payload = {
             "model": model_for_probe,
-            "prompt": "Reply with exactly OK",
+            "messages": [{"role": "user", "content": "Reply with exactly OK"}],
             "stream": False,
-            "options": {"num_predict": 6, "temperature": 0},
+            "max_tokens": 6,
+            "temperature": 0,
         }
         generate_resp = requests.post(
-            f"{base_url}/api/generate",
+            f"{base_url}/v1/chat/completions",
             json=generate_payload,
             timeout=20,
         )
         checks["generate_ms"] = int((time.perf_counter() - generate_started) * 1000)
         generate_resp.raise_for_status()
         generated = generate_resp.json()
-        response_text = str(generated.get("response") or "").strip()
+        response_text = str(
+            generated.get("choices", [{}])[0].get("message", {}).get("content", "")
+        ).strip()
         if not response_text:
-            raise ValueError("Empty response from /api/generate")
+            raise ValueError("Empty response from /v1/chat/completions")
     except requests.Timeout:
         return JsonResponse(
             {
                 "status": "stalled",
-                "detail": "Ollama is reachable but generation timed out.",
+                "detail": "llama.cpp is reachable but generation timed out.",
                 "provider": provider,
                 "model": model_for_probe,
                 "base_url": base_url,
@@ -457,7 +460,7 @@ def llm_health_handler(request: HttpRequest) -> JsonResponse:
         return JsonResponse(
             {
                 "status": "stalled",
-                "detail": "Ollama is reachable but generation failed.",
+                "detail": "llama.cpp is reachable but generation failed.",
                 "provider": provider,
                 "model": model_for_probe,
                 "base_url": base_url,
@@ -469,7 +472,7 @@ def llm_health_handler(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
         {
             "status": "healthy",
-            "detail": "Ollama connectivity and generation checks passed.",
+            "detail": "llama.cpp connectivity and generation checks passed.",
             "provider": provider,
             "model": model_for_probe,
             "base_url": base_url,

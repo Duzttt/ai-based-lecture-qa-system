@@ -3,7 +3,7 @@
 ## Project Overview
 AI-based Lecture Note Q&A System using RAG. Django backend with sentence-transformers
 for embeddings, FAISS for vector storage, BM25 for keyword retrieval, and LLM
-integration via Gemini/OpenRouter/Ollama.
+integration via Gemini/OpenRouter/llama.cpp.
 
 ## Build / Lint / Test Commands
 

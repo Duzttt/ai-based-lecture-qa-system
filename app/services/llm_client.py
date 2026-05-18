@@ -191,7 +191,7 @@ def _call_local_llm(
                 return _call_model_once(target_model, with_thinking=False)
             raise
         except ValueError:
-            # Some Ollama models fail on /api/chat but work on /api/generate.
+            # Some llama.cpp models fail on /api/chat but work on /api/generate.
             prompt_parts = [
                 f"{msg.get('role', 'user')}: {msg.get('content', '')}"
                 for msg in messages

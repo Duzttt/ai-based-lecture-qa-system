@@ -113,7 +113,7 @@ def test_citation_extracts_page_from_chunks(monkeypatch):
     summarizer = DocumentSummarizer.__new__(DocumentSummarizer)
     summarizer.llm_provider = "local_llm"
     summarizer.model = "test"
-    summarizer.base_url = "http://localhost:11434"
+    summarizer.base_url = "http://localhost:8080"
     summarizer.timeout = 30
 
     citations = summarizer._extract_citations(
@@ -134,7 +134,7 @@ def test_citation_degrades_without_chunks(monkeypatch):
     summarizer = DocumentSummarizer.__new__(DocumentSummarizer)
     summarizer.llm_provider = "local_llm"
     summarizer.model = "test"
-    summarizer.base_url = "http://localhost:11434"
+    summarizer.base_url = "http://localhost:8080"
     summarizer.timeout = 30
 
     citations = summarizer._extract_citations(

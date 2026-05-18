@@ -167,16 +167,16 @@ def get_health_status() -> Dict[str, Any]:
         llm_healthy = bool(settings.OPENROUTER_API_KEY)
         llm_message = "OK" if llm_healthy else "API key missing"
     elif settings.LLM_PROVIDER == "local_llm":
-        # Check if Ollama is reachable
+        # Check if llama.cpp server is reachable
         import httpx
 
         try:
-            response = httpx.get(settings.LOCAL_LLM_BASE_URL, timeout=5)
+            response = httpx.get(f"{settings.LOCAL_LLM_BASE_URL}/health", timeout=5)
             llm_healthy = response.status_code == 200
-            llm_message = "OK" if llm_healthy else "Ollama not responding"
+            llm_message = "OK" if llm_healthy else "llama.cpp not responding"
         except Exception:
             llm_healthy = False
-            llm_message = "Cannot connect to Ollama"
+            llm_message = "Cannot connect to llama.cpp"
 
     health_checks["llm_service"] = {
         "healthy": llm_healthy,
