@@ -1,6 +1,12 @@
 from typing import List
 
 try:
+    from llama_index.core.node_parser import SentenceSplitter
+except ImportError:
+    SentenceSplitter = None
+
+# 保留现有的LangChain导入作为后备
+try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except ImportError:
     RecursiveCharacterTextSplitter = None
@@ -13,9 +19,16 @@ class TextChunker:
 
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self._use_langchain = RecursiveCharacterTextSplitter is not None
 
-        if self._use_langchain:
+        # 优先使用LlamaIndex分割器
+        if SentenceSplitter is not None:
+            self._use_llama = True
+            self._splitter = SentenceSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
+        elif RecursiveCharacterTextSplitter is not None:
+            self._use_llama = False
             self._character_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
@@ -26,6 +39,7 @@ class TextChunker:
                 separators=[". ", "! ", "? ", "\n", " ", ""],
             )
         else:
+            self._use_llama = False
             self._character_splitter = None
             self._sentence_splitter = None
 
@@ -76,11 +90,20 @@ class TextChunker:
             return []
 
         cleaned_text = text.strip()
-        if self._use_langchain:
+
+        # 优先使用LlamaIndex分割器
+        if self._use_llama:
+            return self._clean_chunks(
+                self._splitter.split_text(cleaned_text)
+            )
+
+        # 回退到LangChain分割器
+        if self._character_splitter is not None:
             return self._clean_chunks(
                 self._character_splitter.split_text(cleaned_text)
             )
 
+        # 最终回退到自定义实现
         return self._chunk_text_fallback(cleaned_text)
 
     def chunk_text_by_sentences(self, text: str) -> List[str]:
@@ -88,9 +111,18 @@ class TextChunker:
             return []
 
         cleaned_text = text.strip()
-        if self._use_langchain:
+
+        # 优先使用LlamaIndex分割器（它本身就按句子分割）
+        if self._use_llama:
+            return self._clean_chunks(
+                self._splitter.split_text(cleaned_text)
+            )
+
+        # 回退到LangChain分割器
+        if self._sentence_splitter is not None:
             return self._clean_chunks(
                 self._sentence_splitter.split_text(cleaned_text)
             )
 
+        # 最终回退到自定义实现
         return self._chunk_text_by_sentences_fallback(cleaned_text)

@@ -43,7 +43,7 @@ const providers = computed(() => {
     { id: 'openai', name: 'OpenAI', icon: 'openai', status: 'connected', models: ['GPT-4o', 'GPT-4 Turbo', 'GPT-3.5 Turbo'] },
     { id: 'anthropic', name: 'Anthropic', icon: 'anthropic', status: 'not-configured', models: ['Claude 3.5 Sonnet', 'Claude 3 Opus'] },
     { id: 'gemini', name: 'Google Gemini', icon: 'gemini', status: 'not-configured', models: ['gemini-2.0-flash', 'gemini-pro'] },
-    { id: 'ollama', name: 'Local Llama', icon: 'ollama', status: 'disconnected', models: ['llama3', 'mistral'] },
+    { id: 'local_llm', name: 'Local LLM', icon: 'local_llm', status: 'disconnected', models: ['qwen2.5-3b', 'qwen3.5-4b'] },
   ]
 })
 
@@ -52,7 +52,7 @@ function getProviderIcon(id) {
     openai: 'M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z',
     anthropic: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
     gemini: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z',
-    ollama: 'M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',
+    local_llm: 'M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',
   }
   return icons[id] || icons.openai
 }

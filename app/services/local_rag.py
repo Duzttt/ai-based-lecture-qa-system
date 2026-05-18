@@ -7,6 +7,13 @@ from app.services.runtime_embedding import load_runtime_embedding_settings
 from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_api_model
 from app.services.vector_store import VectorStore, VectorStoreError
 
+try:
+    from app.services.llama_vector_store import LlamaVectorStore
+
+    LLAMA_AVAILABLE = True
+except ImportError:
+    LLAMA_AVAILABLE = False
+
 SYSTEM_PROMPT = """You are an academic teaching assistant for lecture notes Q&A.
 
 ## Answer Rules
@@ -37,6 +44,33 @@ def retrieve_with_faiss(
 
     rt = load_runtime_embedding_settings()
     embedding_service = EmbeddingService(model_name=rt["model_id"])
+
+    if LLAMA_AVAILABLE:
+        try:
+            vector_store = LlamaVectorStore(
+                index_path=settings.FAISS_INDEX_PATH,
+                embedding_dim=rt["embedding_dim"],
+            )
+
+            query_embedding = embedding_service.embed_query(query)
+            search_k = top_k * 10 if source_filter else top_k
+            results = vector_store.search_with_metadata(query_embedding, top_k=search_k)
+
+            if source_filter:
+                normalized_filters = [str(s).lower().strip() for s in source_filter]
+                filtered = []
+                for r in results:
+                    source = str(r.get("source", "")).lower().strip()
+                    for f in normalized_filters:
+                        if source == f or source.startswith(f) or f in source:
+                            filtered.append(r)
+                            break
+                return filtered[:top_k]
+
+            return results
+        except Exception:
+            pass
+
     vector_store = VectorStore.get_cached(
         index_path=settings.FAISS_INDEX_PATH,
         embedding_dim=rt["embedding_dim"],

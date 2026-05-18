@@ -2,14 +2,14 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Implement three features: (1) success measurement that works with local Ollama, (2) enable LLM-based document summarization in Studio panel, and (3) show thinking process in chat panel only for reasoning models.
+**Goal:** Implement three features: (1) success measurement that works with local llama.cpp, (2) enable LLM-based document summarization in Studio panel, and (3) show thinking process in chat panel only for reasoning models.
 
 **Architecture:**
 - Success measurement: Add query feedback mechanism tracking user satisfaction via upvote/downvote on answers
 - LLM Summarizer: Enable the disabled `_call_llm()` method in summarizer.py to use local LLM for summarization
 - Reasoning display: Check if model supports thinking via existing `_model_supports_thinking()`, show thinking in chat when available
 
-**Tech Stack:** Django, Vue.js, Ollama, sentence-transformers, FAISS
+**Tech Stack:** Django, Vue.js, llama.cpp, sentence-transformers, FAISS
 
 ---
 

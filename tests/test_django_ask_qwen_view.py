@@ -2,8 +2,8 @@ import json
 import os
 
 import django
-import httpx
 import pytest
+from unittest.mock import Mock
 from django.test import Client
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
@@ -17,26 +17,17 @@ def client() -> Client:
 
 def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {"text": "trend one", "source": "Intelligent_Agent.pdf", "page": 7},
             {"text": "trend two", "source": "Intelligent_Agent.pdf", "page": 8},
         ],
     )
 
-    class FakeOllamaClient:
-        def __init__(self, host: str, timeout: int):
-            self.host = host
-            self.timeout = timeout
+    def fake_call_llm(*args, **kwargs):
+        return "According to the materials, these five trends are ..."
 
-        def chat(self, model, messages, stream, keep_alive, options=None):
-            return {
-                "message": {
-                    "content": "According to the materials, these five trends are ..."
-                }
-            }
-
-    monkeypatch.setattr("django_app.views.OllamaClient", FakeOllamaClient)
+    monkeypatch.setattr("app.services.local_rag.call_llm", fake_call_llm)
 
     response = client.post(
         "/api/ask_qwen",
@@ -53,21 +44,18 @@ def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
 
 def test_ask_qwen_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {"text": "trend one", "source": "Intelligent_Agent.pdf", "page": 7}
         ],
     )
 
-    class FakeOllamaClient:
-        def __init__(self, host: str, timeout: int):
-            self.host = host
-            self.timeout = timeout
+    import requests
 
-        def chat(self, model, messages, stream, keep_alive, options=None):
-            raise httpx.TimeoutException("timeout")
+    def fake_call_llm(*args, **kwargs):
+        raise requests.Timeout("timeout")
 
-    monkeypatch.setattr("django_app.views.OllamaClient", FakeOllamaClient)
+    monkeypatch.setattr("app.services.local_rag.call_llm", fake_call_llm)
 
     response = client.post(
         "/api/ask_qwen",

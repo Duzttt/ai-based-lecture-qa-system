@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 
 import faiss
 import numpy as np
+import requests
 from sentence_transformers import SentenceTransformer
 
 QUERY = "what is the summary of the lecture 2 pdf"
@@ -14,7 +15,7 @@ def parse_args():
     parser = ArgumentParser(
         description=(
             "Load FAISS + chunks, retrieve Top-3 for a fixed query, "
-            "then call local Ollama model with streaming output."
+            "then call local llama.cpp model with streaming output."
         )
     )
     parser.add_argument(
@@ -33,9 +34,14 @@ def parse_args():
         default="sentence-transformers/all-MiniLM-L6-v2",
     )
     parser.add_argument(
-        "--ollama-model",
+        "--local-model",
         type=str,
-        default="qwen2.5:3b",
+        default="qwen2.5-3b",
+    )
+    parser.add_argument(
+        "--base-url",
+        type=str,
+        default="http://localhost:8080",
     )
     parser.add_argument(
         "--top-k",
@@ -73,13 +79,6 @@ def build_context(grounded_results: List[Dict[str, Any]]) -> str:
 
 def main():
     args = parse_args()
-
-    try:
-        import ollama
-    except ImportError as exc:
-        raise SystemExit(
-            "Missing dependency: ollama. Install with: pip install ollama"
-        ) from exc
 
     if not args.index_path.exists():
         raise FileNotFoundError(f"index.faiss not found: {args.index_path}")
@@ -141,19 +140,39 @@ def main():
     print("\n=== Streaming Answer ===")
 
     user_prompt = f"Reference materials:\n{context}\n\nUser question: {QUERY}"
-    stream = ollama.chat(
-        model=args.ollama_model,
-        messages=[
-            {"role": "system", "content": SYSTEM_INSTRUCTION},
-            {"role": "user", "content": user_prompt},
-        ],
+    response = requests.post(
+        f"{args.base_url.rstrip('/')}/v1/chat/completions",
+        json={
+            "model": args.local_model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_INSTRUCTION},
+                {"role": "user", "content": user_prompt},
+            ],
+            "stream": True,
+        },
         stream=True,
+        timeout=120,
     )
+    response.raise_for_status()
 
-    for chunk in stream:
-        token = chunk.get("message", {}).get("content", "")
-        if token:
-            print(token, end="", flush=True)
+    for line in response.iter_lines():
+        if not line:
+            continue
+        decoded = line.decode("utf-8")
+        if decoded.startswith("data: "):
+            decoded = decoded[6:]
+        if decoded.strip() == "[DONE]":
+            break
+        try:
+            import json
+
+            chunk = json.loads(decoded)
+            delta = chunk.get("choices", [{}])[0].get("delta", {})
+            token = delta.get("content", "")
+            if token:
+                print(token, end="", flush=True)
+        except (ValueError, KeyError, IndexError):
+            continue
 
     print()
 

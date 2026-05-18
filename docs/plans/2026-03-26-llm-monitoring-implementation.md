@@ -317,7 +317,7 @@ def _call_local_qwen(
     timeout: int,
     **kwargs: Any,
 ) -> str:
-    """Call local Ollama API and return response text."""
+    """Call local llama.cpp API and return response text."""
     payload = {
         "model": model,
         "messages": messages,

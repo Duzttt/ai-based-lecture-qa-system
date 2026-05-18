@@ -1,11 +1,14 @@
 """Centralized LLM call wrapper with logging."""
 
+import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import requests
 
 from django_app.models import QueryLog
+
+logger = logging.getLogger("llm")
 
 LOCAL_LLM_FAST_FALLBACK_MODEL = "qwen3.5:0.8b"
 
@@ -188,7 +191,7 @@ def _call_local_llm(
                 return _call_model_once(target_model, with_thinking=False)
             raise
         except ValueError:
-            # Some Ollama models fail on /api/chat but work on /api/generate.
+            # Some llama.cpp models fail on /api/chat but work on /api/generate.
             prompt_parts = [
                 f"{msg.get('role', 'user')}: {msg.get('content', '')}"
                 for msg in messages
@@ -229,7 +232,13 @@ def _call_local_llm(
             LOCAL_LLM_FAST_FALLBACK_MODEL,
         )
         if fallback_model and str(fallback_model).strip() != str(model).strip():
-            return _call_model_once(str(fallback_model).strip())
+            fallback_model_str = str(fallback_model).strip()
+            fallback_use_thinking = return_thinking and _model_supports_thinking(
+                fallback_model_str
+            )
+            return _call_model_once(
+                fallback_model_str, with_thinking=fallback_use_thinking
+            )
         raise
 
 
@@ -261,6 +270,11 @@ def call_llm(
 
     dispatch_fn = _PROVIDER_DISPATCH[provider]
     start_time = time.monotonic()
+    effective_query = query_text or (messages[-1].get("content", "") if messages else "")
+    logger.info(
+        "LLM call | provider=%s model=%s type=%s query=%s",
+        provider, model, call_type, effective_query[:120],
+    )
 
     try:
         result = dispatch_fn(
@@ -274,6 +288,10 @@ def call_llm(
 
         # Extract content for logging
         content_for_log = result[0] if isinstance(result, tuple) else result
+        logger.info(
+            "LLM success | provider=%s model=%s latency=%dms answer_len=%d",
+            provider, model, elapsed_ms, len(content_for_log),
+        )
 
         log_entry = QueryLog.objects.create(
             query=query_text or (messages[-1].get("content", "") if messages else ""),
@@ -303,6 +321,10 @@ def call_llm(
 
     except Exception as exc:
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
+        logger.error(
+            "LLM error | provider=%s model=%s latency=%dms error=%s",
+            provider, model, elapsed_ms, exc,
+        )
 
         QueryLog.objects.create(
             query=query_text or (messages[-1].get("content", "") if messages else ""),

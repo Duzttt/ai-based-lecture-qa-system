@@ -38,7 +38,7 @@ The system lets you:
 | **Backend** | Django 5.2, Pydantic, Requests |
 | **RAG** | LangChain, Sentence Transformers, FAISS |
 | **Frontend** | Vue 3, Vite, TailwindCSS |
-| **LLM** | Gemini, OpenRouter, Local Qwen (Ollama) |
+| **LLM** | Gemini, OpenRouter, Local Qwen (llama.cpp) |
 | **Testing** | Pytest, Ruff, Black, MyPy |
 
 ## Repository Structure
@@ -387,9 +387,9 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 OPENROUTER_API_KEY=your_openrouter_key
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 
-# Local Qwen (Ollama)
+# Local Qwen (llama.cpp)
 LOCAL_QWEN_MODEL=qwen2.5:3b
-LOCAL_QWEN_BASE_URL=http://localhost:11434
+LOCAL_QWEN_BASE_URL=http://localhost:8080
 LOCAL_QWEN_TIMEOUT_SECONDS=300
 LOCAL_QWEN_KEEP_ALIVE=30m
 ```

@@ -65,30 +65,29 @@ PROVIDER_META = {
         ],
     },
     "local_llm": {
-        "label": "Local (Ollama)",
+        "label": "Local (llama.cpp)",
         "icon": "\U0001f3e0",
-        "default_model": "qwen2.5:3b",
+        "default_model": "qwen2.5-3b",
         "requires_key": False,
         "models": [
-            "gemma4:latest",
-            "gemma4:e4b",
-            "qwen3.5:4b",
-            "qwen2.5:3b",
+            "qwen2.5-3b",
+            "qwen3.5-4b",
+            "qwen2.5-14b",
         ],
     },
 }
 
 
-def _fetch_ollama_models() -> list[str]:
-    """Fetch installed local models from Ollama; fall back silently on error."""
+def _fetch_local_models() -> list[str]:
+    """Fetch available models from llama.cpp server; fall back silently on error."""
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get("http://localhost:8080/v1/models", timeout=5)
         response.raise_for_status()
         payload = response.json()
         models: list[str] = []
-        for item in payload.get("models", []):
+        for item in payload.get("data", []):
             if isinstance(item, dict):
-                name = str(item.get("name") or "").strip()
+                name = str(item.get("id") or "").strip()
                 if name and name not in models:
                     models.append(name)
         return models
@@ -422,9 +421,9 @@ class ServerGUI(QMainWindow):
         btn_logs.clicked.connect(self._open_llm_logs)
         header.addWidget(btn_logs)
 
-        btn_ollama = QPushButton("Ollama Serve")
-        btn_ollama.clicked.connect(self._start_ollama_serve)
-        header.addWidget(btn_ollama)
+        btn_llamacpp = QPushButton("llama.cpp Server")
+        btn_llamacpp.clicked.connect(self._start_llamacpp_server)
+        header.addWidget(btn_llamacpp)
 
         parent_layout.addLayout(header)
 
@@ -731,19 +730,19 @@ class ServerGUI(QMainWindow):
     def _open_llm_logs(self) -> None:
         QDesktopServices.openUrl(QUrl("http://localhost:8000/llm-logs"))
 
-    def _is_ollama_ready(self) -> bool:
+    def _is_llamacpp_ready(self) -> bool:
         try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            response = requests.get("http://localhost:8080/health", timeout=2)
             return response.status_code == 200
         except requests.RequestException:
             return False
 
-    def _start_ollama_serve(self) -> None:
-        if self._is_ollama_ready():
-            self._log("OLLAMA", "Already running on http://localhost:11434", C_YELLOW)
+    def _start_llamacpp_server(self) -> None:
+        if self._is_llamacpp_ready():
+            self._log("LLAMA.CPP", "Already running on http://localhost:8080", C_YELLOW)
             return
 
-        self._log("OLLAMA", "Starting ollama serve...", C_TEAL)
+        self._log("LLAMA.CPP", "Starting llama-server...", C_TEAL)
         kwargs: dict = dict(
             cwd=str(BASE_DIR),
             stdout=subprocess.PIPE,
@@ -753,16 +752,19 @@ class ServerGUI(QMainWindow):
         )
         if sys.platform == "win32":
             kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
-        proc = subprocess.Popen(["ollama", "serve"], **kwargs)
-        self._attach_reader(proc, "OLLAMA", C_TEAL)
+        proc = subprocess.Popen(
+            ["llama-server", "-m", settings.LOCAL_LLM_MODEL, "--port", "8080"],
+            **kwargs,
+        )
+        self._attach_reader(proc, "LLAMA.CPP", C_TEAL)
 
         def _probe() -> None:
             for _ in range(6):
-                if self._is_ollama_ready():
-                    self._log("OLLAMA", "Service is ready.", C_GREEN)
+                if self._is_llamacpp_ready():
+                    self._log("LLAMA.CPP", "Service is ready.", C_GREEN)
                     return
                 threading.Event().wait(1.0)
-            self._log("OLLAMA", "Service may still be starting...", C_YELLOW)
+            self._log("LLAMA.CPP", "Service may still be starting...", C_YELLOW)
 
         threading.Thread(target=_probe, daemon=True).start()
 
@@ -815,7 +817,7 @@ class ServerGUI(QMainWindow):
         meta = PROVIDER_META.get(provider, {})
         models = list(meta.get("models", []))
         if provider == "local_llm":
-            dynamic_models = _fetch_ollama_models()
+            dynamic_models = _fetch_local_models()
             if dynamic_models:
                 models = dynamic_models
         for m in models:
@@ -899,7 +901,7 @@ class ServerGUI(QMainWindow):
                 self,
                 "Missing API Key",
                 f"The {meta['label']} provider requires an API key.\n\n"
-                "Please enter your key or switch to Local (Ollama).",
+                "Please enter your key or switch to Local (llama.cpp).",
             )
             return
 
