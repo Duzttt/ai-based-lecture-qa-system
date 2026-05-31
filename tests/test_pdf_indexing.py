@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -50,6 +51,10 @@ class _DummyVectorStore:
 
     def get_total_chunks(self):
         return len(self.chunks)
+
+    @classmethod
+    def set_cached(cls, store):
+        pass
 
 
 def test_index_pdf_file_success(monkeypatch: pytest.MonkeyPatch):
@@ -207,3 +212,71 @@ def test_index_pdf_directory_full_rebuild(
 def test_index_pdf_directory_raises_on_empty_dir(tmp_path: Path):
     with pytest.raises(PDFIndexingError, match="No PDF files found"):
         index_pdf_directory(str(tmp_path))
+
+
+def test_index_calls_hybrid_refresh(monkeypatch):
+    import app.services.hybrid_retriever_service as hrs
+    from app.services.pdf_indexing import index_pdf_file
+    import tempfile
+    import os
+
+    refresh_called = False
+
+    def _mock_refresh():
+        nonlocal refresh_called
+        refresh_called = True
+
+    monkeypatch.setattr(hrs.HybridRetrieverService, "refresh", staticmethod(_mock_refresh))
+
+    # Mock get_pdf_parser to return a mock parser
+    mock_parser = {
+        "name": "mock",
+        "read_text": lambda path: "mock extracted text",
+        "read_pages": lambda path: [],
+        "chunk_with_metadata": lambda pdf_path, chunk_size=500, source_name=None: [
+            {"text": "test chunk", "source": source_name or "test.pdf", "page": 1},
+        ],
+    }
+    monkeypatch.setattr(
+        "app.services.pdf_indexing.get_pdf_parser",
+        lambda: mock_parser,
+    )
+    monkeypatch.setattr(
+        "app.services.pdf_indexing.EmbeddingService",
+        lambda **kw: Mock(embed_texts=lambda texts: np.array([[0.1] * 384])),
+    )
+    # VectorStore needs to be a class that can be instantiated and have methods called
+    mock_store_instance = Mock(
+        add_embeddings=lambda e, c: None,
+        save=lambda: None,
+        get_total_chunks=lambda: 1,
+        index=Mock(ntotal=0, d=384),
+    )
+    mock_store_class = Mock(
+        return_value=mock_store_instance,
+    )
+    mock_store_class.get_cached = lambda **kw: mock_store_instance
+    mock_store_class.set_cached = lambda store: None
+
+    monkeypatch.setattr(
+        "app.services.pdf_indexing.VectorStore",
+        mock_store_class,
+    )
+    monkeypatch.setattr(
+        "app.services.pdf_indexing.load_runtime_embedding_settings",
+        lambda: {"model_id": "test-model", "embedding_dim": 384},
+    )
+    monkeypatch.setattr(
+        "app.services.pdf_indexing.settings",
+        Mock(FAISS_INDEX_PATH="/tmp/test_index", PDF_PARSER="pypdf"),
+    )
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        f.write(b"%PDF-1.4 test content")
+        pdf_path = f.name
+
+    try:
+        index_pdf_file(pdf_path, clear_existing=True)
+        assert refresh_called, "HybridRetrieverService.refresh() should be called"
+    finally:
+        os.unlink(pdf_path)

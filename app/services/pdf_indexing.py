@@ -136,6 +136,14 @@ def index_pdf_file(
     except Exception as exc:  # noqa: BLE001
         raise PDFIndexingError(f"Failed to store embeddings: {str(exc)}") from exc
 
+    # Rebuild hybrid retrieval index
+    try:
+        from app.services.hybrid_retriever_service import HybridRetrieverService
+
+        HybridRetrieverService.refresh()
+    except ImportError:
+        pass
+
     return {
         "total_chars": len(text),
         "chunks_created": len(chunk_records),
