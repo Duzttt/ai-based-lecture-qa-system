@@ -1,18 +1,15 @@
+import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
+from app.services.hybrid_retriever_service import HybridRetrieverService
 from app.services.llm_client import call_llm
 from app.services.runtime_embedding import load_runtime_embedding_settings
 from app.services.runtime_llm import load_runtime_llm_settings, resolve_gemini_api_model
 from app.services.vector_store import VectorStore, VectorStoreError
 
-try:
-    from app.services.llama_vector_store import LlamaVectorStore
-
-    LLAMA_AVAILABLE = True
-except ImportError:
-    LLAMA_AVAILABLE = False
+logger = logging.getLogger("local_rag")
 
 SYSTEM_PROMPT = """You are an academic teaching assistant for lecture notes Q&A.
 
@@ -37,24 +34,16 @@ class LocalRAGError(Exception):
 
 
 def retrieve_with_faiss(
-    query: str, top_k: int = 3, source_filter: Optional[List[str]] = None
+    query: str, top_k: int = 5, source_filter: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
     if not query.strip():
         raise LocalRAGError("Query cannot be empty")
 
-    rt = load_runtime_embedding_settings()
-    embedding_service = EmbeddingService(model_name=rt["model_id"])
-
-    if LLAMA_AVAILABLE:
+    hybrid_service = HybridRetrieverService.get_instance()
+    if hybrid_service is not None:
         try:
-            vector_store = LlamaVectorStore(
-                index_path=settings.FAISS_INDEX_PATH,
-                embedding_dim=rt["embedding_dim"],
-            )
-
-            query_embedding = embedding_service.embed_query(query)
             search_k = top_k * 10 if source_filter else top_k
-            results = vector_store.search_with_metadata(query_embedding, top_k=search_k)
+            results = hybrid_service.search(query=query, top_k=search_k)
 
             if source_filter:
                 normalized_filters = [str(s).lower().strip() for s in source_filter]
@@ -67,9 +56,12 @@ def retrieve_with_faiss(
                             break
                 return filtered[:top_k]
 
-            return results
-        except Exception:
-            pass
+            return results[:top_k]
+        except Exception as exc:
+            logger.warning("Hybrid retrieval failed, falling back to dense: %s", exc)
+
+    rt = load_runtime_embedding_settings()
+    embedding_service = EmbeddingService(model_name=rt["model_id"])
 
     vector_store = VectorStore.get_cached(
         index_path=settings.FAISS_INDEX_PATH,
@@ -154,7 +146,6 @@ def generate_with_local_llm(
             timeout=resolved_timeout,
             query_text=query,
             base_url=resolved_base_url,
-            keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             num_predict=settings.LLM_MAX_OUTPUT_TOKENS,
             return_log=return_log,
             return_thinking=return_thinking,
