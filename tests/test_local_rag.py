@@ -6,7 +6,7 @@ from unittest.mock import Mock
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
 django.setup()
 
-from app.services.local_rag import retrieve_with_faiss
+from app.services.local_rag import retrieve_with_faiss  # noqa: E402
 
 
 class TestLocalRagHybrid:
@@ -41,10 +41,6 @@ class TestLocalRagHybrid:
             "app.services.local_rag.HybridRetrieverService",
             type("HS", (), {"get_instance": staticmethod(lambda: None)}),
         )
-
-        fake_results = [
-            {"text": "dense result", "source": "b.pdf", "page": 1},
-        ]
 
         monkeypatch.setattr(
             "app.services.local_rag.load_runtime_embedding_settings",
