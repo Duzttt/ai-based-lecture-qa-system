@@ -12,12 +12,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-try:
-    import jieba
-    import jieba.analyse
-except ImportError:
-    raise ImportError("Please install jieba: pip install jieba")
-
 
 class SmartChunkerError(Exception):
     """Custom exception for SmartChunker errors."""
@@ -337,19 +331,17 @@ class SmartChunker:
                         overlap_text = overlap_candidate[idx + 1 :].strip()
                         break
 
-                # If no good sentence boundary, use word boundary
+                # If no good sentence boundary, use word/character boundary
                 if not overlap_text:
-                    # For Chinese, try to break at word boundary using jieba
-                    words = list(jieba.cut(overlap_candidate))
+                    # Try to break at a space or punctuation boundary
                     overlap_text = overlap_candidate
-                    for i, word in enumerate(reversed(words)):
-                        if (
-                            len(overlap_candidate)
-                            - sum(len(w) for w in words[len(words) - i :])
-                            >= self.overlap // 2
-                        ):
-                            overlap_text = "".join(words[len(words) - i :])
-                            break
+                    # Look for a space or punctuation near the desired overlap point
+                    for j in range(len(overlap_candidate)):
+                        if overlap_candidate[j] in " \t、，,;；":
+                            candidate = overlap_candidate[j + 1 :].strip()
+                            if len(candidate) >= self.overlap // 2:
+                                overlap_text = candidate
+                                break
 
             if overlap_text:
                 # Prepend overlap to current chunk
@@ -427,7 +419,7 @@ class SmartChunker:
         """
         Extract keywords (for retrieval filtering).
 
-        Uses jieba word segmentation + TF-IDF
+        Uses simple word frequency analysis.
 
         Args:
             text: Input text
@@ -439,22 +431,15 @@ class SmartChunker:
         if not text or len(text) < 10:
             return []
 
-        try:
-            # Use jieba's TF-IDF keyword extraction
-            keywords = jieba.analyse.extract_tags(text, topK=top_k)
-            return keywords
-        except Exception:
-            # Fallback to simple word frequency
-            words = jieba.lcut(text)
-            word_freq: Dict[str, int] = {}
-            for word in words:
-                word = word.strip().lower()
-                if len(word) > 1:  # Filter out single characters
-                    word_freq[word] = word_freq.get(word, 0) + 1
+        # Split on whitespace and punctuation, keep words longer than 1 char
+        words = re.findall(r"\b\w{2,}\b", text.lower())
+        word_freq: Dict[str, int] = {}
+        for word in words:
+            word_freq[word] = word_freq.get(word, 0) + 1
 
-            # Sort by frequency
-            sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
-            return [word for word, _ in sorted_words[:top_k]]
+        # Sort by frequency
+        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+        return [word for word, _ in sorted_words[:top_k]]
 
 
 class ChunkMetadata:
@@ -487,7 +472,7 @@ class ChunkMetadata:
         """
         Extract keywords (for retrieval filtering).
 
-        Uses jieba word segmentation + TF-IDF
+        Uses simple word frequency analysis.
 
         Args:
             text: Input text
@@ -510,8 +495,8 @@ class ChunkMetadata:
         Returns:
             int: Word count
         """
-        words = jieba.lcut(text)
-        return len([w for w in words if w.strip()])
+        words = re.findall(r"\S+", text)
+        return len(words)
 
     @staticmethod
     def count_characters(text: str) -> int:

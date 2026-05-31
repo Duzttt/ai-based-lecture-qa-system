@@ -135,54 +135,57 @@ def _call_local_llm(
     timeout: int,
     **kwargs: Any,
 ) -> Union[str, Tuple[str, Optional[str]]]:
-    options: Dict[str, Any] = {}
+    payload: Dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+    }
     if "temperature" in kwargs:
-        options["temperature"] = kwargs["temperature"]
+        payload["temperature"] = kwargs["temperature"]
     if "num_predict" in kwargs:
-        options["num_predict"] = kwargs["num_predict"]
+        payload["max_tokens"] = kwargs["num_predict"]
 
     return_thinking = kwargs.get("return_thinking", False)
-    # Only use thinking if requested AND model supports it
     use_thinking = return_thinking and _model_supports_thinking(model)
 
     def _call_model_once(
         target_model: str, with_thinking: bool = True
     ) -> Union[str, Tuple[str, Optional[str]]]:
-        payload = {
-            "model": target_model,
-            "messages": messages,
-            "stream": False,
-            "keep_alive": kwargs.get("keep_alive", "30m"),
-        }
+        call_payload = dict(payload)
+        call_payload["model"] = target_model
         if with_thinking:
-            payload["think"] = True
-        if options:
-            payload["options"] = options
+            call_payload["think"] = True
 
         try:
             response = requests.post(
-                f"{base_url.rstrip('/')}/api/chat",
-                json=payload,
+                f"{base_url.rstrip('/')}/v1/chat/completions",
+                json=call_payload,
                 timeout=timeout,
             )
             response.raise_for_status()
 
             data = response.json()
-            message_obj = data.get("message", {})
-            content = message_obj.get("content")
-            thinking = message_obj.get("thinking") if with_thinking else None
+            choices = data.get("choices", [])
+            if not choices:
+                raise ValueError("Empty response from /v1/chat/completions")
 
+            content = choices[0].get("message", {}).get("content")
             if not content:
-                raise ValueError("Empty content from /api/chat")
+                raise ValueError("Empty content from /v1/chat/completions")
+
+            thinking_text: Optional[str] = None
+            if with_thinking:
+                raw = str(content).strip()
+                if "<think>" in raw and "</think>" in raw:
+                    start = raw.index("<think>") + len("<think>")
+                    end = raw.index("</think>")
+                    thinking_text = raw[start:end].strip()
+                    content = (raw[:raw.index("<think>")] + raw[end + len("</think>"):]).strip()
 
             if return_thinking:
-                return (
-                    str(content).strip(),
-                    str(thinking).strip() if thinking else None,
-                )
+                return str(content).strip(), thinking_text
             return str(content).strip()
         except requests.HTTPError as exc:
-            # If thinking failed with 400, retry without think parameter
             if (
                 exc.response is not None
                 and exc.response.status_code == 400
@@ -190,39 +193,6 @@ def _call_local_llm(
             ):
                 return _call_model_once(target_model, with_thinking=False)
             raise
-        except ValueError:
-            # Some llama.cpp models fail on /api/chat but work on /api/generate.
-            prompt_parts = [
-                f"{msg.get('role', 'user')}: {msg.get('content', '')}"
-                for msg in messages
-            ]
-            generate_payload: Dict[str, Any] = {
-                "model": target_model,
-                "prompt": "\n".join(prompt_parts).strip(),
-                "stream": False,
-                "keep_alive": kwargs.get("keep_alive", "30m"),
-            }
-            if with_thinking:
-                generate_payload["think"] = True
-            if options:
-                generate_payload["options"] = options
-
-            generate_response = requests.post(
-                f"{base_url.rstrip('/')}/api/generate",
-                json=generate_payload,
-                timeout=timeout,
-            )
-            generate_response.raise_for_status()
-            generate_data = generate_response.json()
-            text = generate_data.get("response")
-            thinking = generate_data.get("thinking") if with_thinking else None
-
-            if not text:
-                raise ValueError("Invalid response from local LLM")
-
-            if return_thinking:
-                return str(text).strip(), str(thinking).strip() if thinking else None
-            return str(text).strip()
 
     try:
         return _call_model_once(model, with_thinking=use_thinking)

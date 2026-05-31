@@ -64,7 +64,7 @@ def load_runtime_llm_settings() -> Dict[str, Optional[str]]:
 
     default_model = get_default_model_for_provider(provider)
     model = str(persisted.get("model") or default_model).strip() or default_model
-    # Ollama-style names (e.g. qwen2.5:3b) in persisted settings after switching
+    # Local LLM names (e.g. qwen2.5-3b) in persisted settings after switching
     # from local_llm would otherwise be sent to the Generative Language API (404).
     if provider == "gemini" and "gemini" not in model.lower():
         model = default_model

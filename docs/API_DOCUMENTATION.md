@@ -39,7 +39,6 @@ pip install -r requirements.txt
 ```
 
 New dependencies added:
-- `jieba==0.42.1` - Chinese tokenization
 - `rank-bm25==0.2.2` - BM25 implementation
 - `scikit-learn==1.3.2` - ML utilities
 
@@ -753,16 +752,14 @@ if monitor.check_latency_threshold(threshold_ms=200.0, percentile=0.95):
 
 ### Common Issues
 
-#### Issue 1: Chinese Tokenization Not Working
+#### Issue 1: BM25 Search Returns Poor Results
 
-**Symptom**: BM25 search returns poor results for Chinese queries
+**Symptom**: BM25 search returns poor results for queries
 
 **Solution**:
 ```bash
-# Verify jieba installation
-python -c "import jieba; print(jieba.lcut('机器学习'))"
-
-# Should output: ['机器', '学习']
+# Verify rank-bm25 installation
+python -c "from rank_bm25 import BM25Okapi; print('OK')"
 ```
 
 #### Issue 2: FAISS Index Build Fails

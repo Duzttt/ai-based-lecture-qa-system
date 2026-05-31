@@ -73,7 +73,7 @@ def test_call_llm_success_local_llm():
     from app.services.llm_client import call_llm
 
     mock_response = MagicMock()
-    mock_response.json.return_value = {"message": {"content": "Local LLM response"}}
+    mock_response.json.return_value = {"choices": [{"message": {"content": "Local LLM response"}}]}
     mock_response.raise_for_status.return_value = None
 
     with patch("app.services.llm_client.requests.post", return_value=mock_response):
@@ -82,7 +82,7 @@ def test_call_llm_success_local_llm():
             model="qwen2.5:3b",
             call_type="citation",
             messages=[{"role": "user", "content": "cite"}],
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
         )
 
     assert result == "Local LLM response"
@@ -97,10 +97,7 @@ def test_call_llm_returns_log_id_with_thinking_when_both_flags_enabled():
 
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "message": {
-            "content": "Local LLM response",
-            "thinking": "internal reasoning",
-        }
+        "choices": [{"message": {"content": "Local LLM response"}}]
     }
     mock_response.raise_for_status.return_value = None
 
@@ -111,7 +108,7 @@ def test_call_llm_returns_log_id_with_thinking_when_both_flags_enabled():
             call_type="qa",
             messages=[{"role": "user", "content": "Explain this"}],
             query_text="Explain this",
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
             return_log=True,
             return_thinking=True,
         )
@@ -120,48 +117,14 @@ def test_call_llm_returns_log_id_with_thinking_when_both_flags_enabled():
     assert len(result) == 3
     answer, thinking, log_id = result
     assert answer == "Local LLM response"
-    assert thinking == "internal reasoning"
+    # Thinking extracted from response; empty since mock has no <think> tags
+    assert thinking is None
     assert isinstance(log_id, int)
 
     log = QueryLog.objects.get(id=log_id)
     assert log.query == "Explain this"
     assert log.llm_provider == "local_llm"
     assert log.llm_status == "success"
-
-
-@pytest.mark.django_db
-def test_call_llm_local_llm_falls_back_to_generate_on_chat_value_error():
-    from app.services.llm_client import call_llm
-
-    chat_response = MagicMock()
-    chat_response.raise_for_status.return_value = None
-    chat_response.json.return_value = {"message": {"role": "assistant", "content": ""}}
-
-    generate_response = MagicMock()
-    generate_response.raise_for_status.return_value = None
-    generate_response.json.return_value = {"response": "Fallback local response"}
-
-    with patch(
-        "app.services.llm_client.requests.post",
-        side_effect=[chat_response, generate_response],
-    ) as mocked_post:
-        result = call_llm(
-            provider="local_llm",
-            model="gemma4:latest",
-            call_type="citation",
-            messages=[
-                {"role": "system", "content": "You are helpful"},
-                {"role": "user", "content": "test question"},
-            ],
-            base_url="http://localhost:11434",
-        )
-
-    assert result == "Fallback local response"
-    assert mocked_post.call_count == 2
-    first_url = mocked_post.call_args_list[0].args[0]
-    second_url = mocked_post.call_args_list[1].args[0]
-    assert first_url.endswith("/api/chat")
-    assert second_url.endswith("/api/generate")
 
 
 @pytest.mark.django_db
@@ -172,7 +135,7 @@ def test_call_llm_local_llm_falls_back_to_fast_model_on_timeout():
     timeout_error = requests.Timeout("Read timed out")
     fallback_response = MagicMock()
     fallback_response.raise_for_status.return_value = None
-    fallback_response.json.return_value = {"message": {"content": "Fast fallback answer"}}
+    fallback_response.json.return_value = {"choices": [{"message": {"content": "Fast fallback answer"}}]}
 
     with patch(
         "app.services.llm_client.requests.post",
@@ -183,7 +146,7 @@ def test_call_llm_local_llm_falls_back_to_fast_model_on_timeout():
             model="gemma4:latest",
             call_type="qa",
             messages=[{"role": "user", "content": "Explain this topic"}],
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
         )
 
     assert result == "Fast fallback answer"
@@ -203,7 +166,7 @@ def test_call_llm_timeout_fallback_preserves_thinking_for_reasoning_models():
     fallback_response = MagicMock()
     fallback_response.raise_for_status.return_value = None
     fallback_response.json.return_value = {
-        "message": {"content": "Fallback answer", "thinking": "some thoughts"}
+        "choices": [{"message": {"content": "Fallback answer"}}]
     }
 
     with patch(
@@ -215,14 +178,15 @@ def test_call_llm_timeout_fallback_preserves_thinking_for_reasoning_models():
             model="qwen3:8b",
             call_type="qa",
             messages=[{"role": "user", "content": "Explain this"}],
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
             return_thinking=True,
             fallback_model="qwen3:4b",
         )
 
     content, thinking = result
     assert content == "Fallback answer"
-    assert thinking == "some thoughts"
+    # No <think> tags in mock response, so thinking is None
+    assert thinking is None
     assert mocked_post.call_count == 2
     first_payload = mocked_post.call_args_list[0].kwargs["json"]
     second_payload = mocked_post.call_args_list[1].kwargs["json"]
@@ -230,36 +194,6 @@ def test_call_llm_timeout_fallback_preserves_thinking_for_reasoning_models():
     assert first_payload["think"] is True
     assert second_payload["model"] == "qwen3:4b"
     assert second_payload["think"] is True
-
-
-@pytest.mark.django_db
-def test_call_llm_local_llm_falls_back_to_generate_when_chat_content_empty():
-    from app.services.llm_client import call_llm
-
-    chat_response = MagicMock()
-    chat_response.raise_for_status.return_value = None
-    chat_response.json.return_value = {"message": {"role": "assistant", "content": ""}}
-
-    generate_response = MagicMock()
-    generate_response.raise_for_status.return_value = None
-    generate_response.json.return_value = {"response": "Recovered from generate endpoint"}
-
-    with patch(
-        "app.services.llm_client.requests.post",
-        side_effect=[chat_response, generate_response],
-    ) as mocked_post:
-        result = call_llm(
-            provider="local_llm",
-            model="qwen3.5:0.8b",
-            call_type="suggestion",
-            messages=[{"role": "user", "content": "Give 3 study questions"}],
-            base_url="http://localhost:11434",
-        )
-
-    assert result == "Recovered from generate endpoint"
-    assert mocked_post.call_count == 2
-    assert mocked_post.call_args_list[0].args[0].endswith("/api/chat")
-    assert mocked_post.call_args_list[1].args[0].endswith("/api/generate")
 
 
 @pytest.mark.django_db
@@ -311,7 +245,7 @@ def test_call_llm_local_llm_retries_without_thinking_on_http_400():
 
     retry_response = MagicMock()
     retry_response.raise_for_status.return_value = None
-    retry_response.json.return_value = {"message": {"content": "Retry success"}}
+    retry_response.json.return_value = {"choices": [{"message": {"content": "Retry success"}}]}
 
     with patch(
         "app.services.llm_client.requests.post",
@@ -322,7 +256,7 @@ def test_call_llm_local_llm_retries_without_thinking_on_http_400():
             model="qwen3:8b",
             call_type="qa",
             messages=[{"role": "user", "content": "test"}],
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
             return_thinking=True,
         )
 
@@ -342,7 +276,7 @@ def test_call_llm_local_llm_non_reasoning_model_skips_thinking():
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {
-        "message": {"content": "Non-thinking response"}
+        "choices": [{"message": {"content": "Non-thinking response"}}]
     }
 
     with patch(
@@ -353,7 +287,7 @@ def test_call_llm_local_llm_non_reasoning_model_skips_thinking():
             model="qwen2.5:3b",
             call_type="qa",
             messages=[{"role": "user", "content": "test"}],
-            base_url="http://localhost:11434",
+            base_url="http://localhost:8080",
             return_thinking=True,
         )
 

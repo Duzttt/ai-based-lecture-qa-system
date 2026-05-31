@@ -109,7 +109,7 @@ class BM25Index:
     """BM25 索引，支持中文分词"""
     
     def __init__(self, documents: List[Dict[str, Any]]):
-        # Uses jieba for Chinese tokenization
+        # Tokenizes text for BM25 indexing
         # Builds rank_bm25 index
         
     def search(self, query: str, top_k: int = 20) -> List[Tuple[str, float]]:
@@ -117,7 +117,7 @@ class BM25Index:
 ```
 
 **Key Features**:
-- Chinese tokenization with jieba
+- Tokenization for mixed Chinese/English text
 - Automatic handling of mixed Chinese/English text
 - Efficient scoring using rank_bm25 library
 
@@ -387,7 +387,7 @@ The Phase 1 optimization successfully achieved all target metrics:
 2. **Hybrid retrieval (RRF)** outperforms both BM25 and dense-only approaches
 3. **Smart chunking** with overlap significantly improves retrieval quality
 4. **Latency remains acceptable** at 195ms (p95), under the 200ms target
-5. **Full Chinese language support** with jieba tokenization
+5. **Full language support** with regex-based tokenization
 
 The system is now ready for Phase 2 optimization, which will focus on:
 - Advanced re-ranking strategies

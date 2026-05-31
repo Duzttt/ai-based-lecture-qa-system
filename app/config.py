@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = True
 
-    CHUNK_SIZE: int = 400
-    CHUNK_OVERLAP: int = 50
+    CHUNK_SIZE: int = 500
+    CHUNK_OVERLAP: int = 100
 
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     EMBEDDING_DIM: int = 384
@@ -58,9 +58,8 @@ class Settings(BaseSettings):
     CITATION_MAX_OUTPUT_TOKENS: int = 3072
 
     LOCAL_LLM_MODEL: str = "qwen2.5:3b"
-    LOCAL_LLM_BASE_URL: str = "http://localhost:11434"
+    LOCAL_LLM_BASE_URL: str = "http://localhost:8080"
     LOCAL_LLM_TIMEOUT_SECONDS: int = 300
-    LOCAL_LLM_KEEP_ALIVE: str = "30m"
 
     @field_validator("DEBUG", mode="before")
     @classmethod

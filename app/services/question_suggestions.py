@@ -502,7 +502,7 @@ Respond with EXACTLY {num_final} questions, one per line, numbered like:
 Do NOT add any other text, explanation, or commentary."""
 
     def _call_local_llm(self, prompt: str) -> str:
-        """Call local LLM via Ollama."""
+        """Call local LLM via llama.cpp."""
         try:
             from app.services.llm_client import call_llm
 
@@ -514,7 +514,6 @@ Do NOT add any other text, explanation, or commentary."""
                 query_text=prompt[:200],
                 base_url=self._runtime_base_url or settings.LOCAL_LLM_BASE_URL,
                 timeout=settings.LOCAL_LLM_TIMEOUT_SECONDS,
-                keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
         except Exception as e:
             raise QuestionSuggestionError(f"Local LLM call failed: {e}")

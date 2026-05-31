@@ -142,6 +142,13 @@ class LlamaVectorStore:
 
         return {"text": str(item), "source": "unknown", "page": None}
 
+    @staticmethod
+    def _normalize(vectors: np.ndarray) -> np.ndarray:
+        """L2-normalize vectors so that inner product equals cosine similarity."""
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        norms = np.where(norms == 0, 1, norms)
+        return vectors / norms
+
     def _load_or_create_index(self):
         """加载或创建FAISS索引"""
         os.makedirs(self.index_path, exist_ok=True)
@@ -165,7 +172,7 @@ class LlamaVectorStore:
             except Exception as e:
                 raise LlamaVectorStoreError(f"Failed to load index: {str(e)}")
         else:
-            self.faiss_index = faiss.IndexFlatL2(self.embedding_dim)
+            self.faiss_index = faiss.IndexFlatIP(self.embedding_dim)
 
     def add_embeddings(self, embeddings: np.ndarray, chunks: List[Any]) -> None:
         """添加嵌入和对应的块
@@ -183,8 +190,9 @@ class LlamaVectorStore:
 
         normalized = [self._normalize_chunk(chunk) for chunk in chunks]
         base_index = len(self.chunks)
+        emb_array = self._normalize(np.array(embeddings, dtype="float32"))
         nodes: List[TextNode] = []
-        for i, (emb, chunk) in enumerate(zip(embeddings, normalized)):
+        for i, (emb, chunk) in enumerate(zip(emb_array, normalized)):
             node = TextNode(
                 text=chunk["text"],
                 embedding=emb.tolist(),
@@ -211,8 +219,11 @@ class LlamaVectorStore:
             return []
 
         actual_k = min(top_k, self.faiss_index.ntotal)
+        norm_query = self._normalize(
+            np.array([query_embedding], dtype="float32")
+        )[0]
         query = VectorStoreQuery(
-            query_embedding=query_embedding.tolist(),
+            query_embedding=norm_query.tolist(),
             similarity_top_k=actual_k,
         )
         result: VectorStoreQueryResult = self.vector_store.query(query)
@@ -265,7 +276,7 @@ class LlamaVectorStore:
         """清空索引"""
         if self.faiss_index is not None:
             if self.faiss_index.d != self.embedding_dim:
-                self.faiss_index = faiss.IndexFlatL2(self.embedding_dim)
+                self.faiss_index = faiss.IndexFlatIP(self.embedding_dim)
             else:
                 self.faiss_index.reset()
         self.chunks = []

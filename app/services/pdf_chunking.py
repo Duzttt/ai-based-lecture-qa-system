@@ -106,9 +106,14 @@ def extract_page_text_with_positions(
     return text_items
 
 
-def split_text_into_chunks(text: str, chunk_size: int = 500) -> List[str]:
+def split_text_into_chunks(
+    text: str, chunk_size: int = 500, overlap: int = 100
+) -> List[str]:
     """
     Split text into <=chunk_size chunks while trying to preserve sentence boundaries.
+
+    The last *overlap* characters of each chunk are repeated at the beginning of the
+    next chunk to preserve context across boundaries.
 
     If a single sentence is longer than chunk_size, it is split on soft punctuation
     first, then by hard character boundary as a fallback.
@@ -118,6 +123,8 @@ def split_text_into_chunks(text: str, chunk_size: int = 500) -> List[str]:
 
     normalized_text = re.sub(r"\s+", " ", text).strip()
     sentences = re.split(r"(?<=[。！？.!?])\s+", normalized_text)
+
+    effective_size = chunk_size - overlap
 
     chunks: List[str] = []
     current_chunk = ""
@@ -166,8 +173,10 @@ def split_text_into_chunks(text: str, chunk_size: int = 500) -> List[str]:
             if len(candidate) <= chunk_size:
                 current_chunk = candidate
             else:
+                # Carry over the tail of the current chunk as overlap
+                tail = current_chunk[-overlap:] if overlap > 0 else ""
                 flush_current()
-                current_chunk = part
+                current_chunk = f"{tail} {part}".strip() if tail else part
 
     flush_current()
     return chunks
@@ -176,6 +185,7 @@ def split_text_into_chunks(text: str, chunk_size: int = 500) -> List[str]:
 def chunk_pdf_with_metadata(
     pdf_path: str,
     chunk_size: int = 500,
+    overlap: int = 100,
     source_name: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Chunk a PDF while preserving source filename and page number metadata."""
@@ -188,7 +198,9 @@ def chunk_pdf_with_metadata(
     for page_record in page_records:
         page_num = int(page_record["page"])
         page_text = str(page_record["text"])
-        page_chunks = split_text_into_chunks(page_text, chunk_size=chunk_size)
+        page_chunks = split_text_into_chunks(
+            page_text, chunk_size=chunk_size, overlap=overlap
+        )
 
         char_position = 0
         for chunk in page_chunks:
@@ -239,11 +251,12 @@ def estimate_bbox_from_position(
 def preview_pdf_chunks(
     pdf_path: str,
     chunk_size: int = 500,
+    overlap: int = 100,
     max_print_chunks: int = 8,
 ) -> List[str]:
     """Print chunk preview for manual inspection and return all chunks."""
     text = read_pdf_text(pdf_path)
-    chunks = split_text_into_chunks(text, chunk_size=chunk_size)
+    chunks = split_text_into_chunks(text, chunk_size=chunk_size, overlap=overlap)
 
     print(f"PDF: {pdf_path}")
     print(f"Total chars: {len(text)}")

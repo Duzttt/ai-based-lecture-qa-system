@@ -85,6 +85,13 @@ class VectorStore:
 
         return {"text": str(item), "source": "unknown", "page": None}
 
+    @staticmethod
+    def _normalize(vectors: np.ndarray) -> np.ndarray:
+        """L2-normalize vectors so that inner product equals cosine similarity."""
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        norms = np.where(norms == 0, 1, norms)
+        return vectors / norms
+
     def _load_or_create_index(self):
         os.makedirs(self.index_path, exist_ok=True)
         index_file = os.path.join(self.index_path, "index.faiss")
@@ -100,7 +107,7 @@ class VectorStore:
             except Exception as e:
                 raise VectorStoreError(f"Failed to load index: {str(e)}")
         else:
-            self.index = faiss.IndexFlatL2(self.embedding_dim)
+            self.index = faiss.IndexFlatIP(self.embedding_dim)
 
     def add_embeddings(self, embeddings: np.ndarray, chunks: List[Any]) -> None:
         if len(embeddings) == 0:
@@ -109,7 +116,7 @@ class VectorStore:
         if len(embeddings) != len(chunks):
             raise VectorStoreError("Number of embeddings must match number of chunks")
 
-        embeddings_array = np.array(embeddings).astype("float32")
+        embeddings_array = self._normalize(np.array(embeddings).astype("float32"))
         self.index.add(embeddings_array)
         self.chunks.extend([self._normalize_chunk(chunk) for chunk in chunks])
 
@@ -121,7 +128,7 @@ class VectorStore:
         if self.index.ntotal == 0:
             return []
 
-        query_vector = np.array([query_embedding]).astype("float32")
+        query_vector = self._normalize(np.array([query_embedding]).astype("float32"))
         distances, indices = self.index.search(
             query_vector, min(top_k, self.index.ntotal)
         )
@@ -173,7 +180,7 @@ class VectorStore:
     def clear(self) -> None:
         if self.index is not None:
             if self.index.d != self.embedding_dim:
-                self.index = faiss.IndexFlatL2(self.embedding_dim)
+                self.index = faiss.IndexFlatIP(self.embedding_dim)
             else:
                 self.index.reset()
         self.chunks = []
