@@ -109,7 +109,7 @@ def _build_or_load_index(index_path: Path, embedding_dim: int):
             )
         return index
 
-    return faiss.IndexFlatL2(embedding_dim)
+    return faiss.IndexFlatIP(embedding_dim)
 
 
 def main():
@@ -135,6 +135,7 @@ def main():
         chunk_records = chunk_pdf_with_metadata(
             pdf_path=str(pdf_path),
             chunk_size=args.chunk_size,
+            overlap=100,
             source_name=pdf_path.name,
         )
         if not chunk_records:
@@ -150,6 +151,10 @@ def main():
     chunk_texts = [item["text"] for item in all_chunk_dicts]
     embeddings = model.encode(chunk_texts, show_progress_bar=False)
     embeddings = np.asarray(embeddings, dtype="float32")
+    # L2-normalize so inner product = cosine similarity
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    norms = np.where(norms == 0, 1, norms)
+    embeddings = embeddings / norms
 
     if embeddings.ndim != 2 or embeddings.shape[0] != len(all_chunk_dicts):
         raise ValueError("Embedding output shape is invalid for the generated chunks.")

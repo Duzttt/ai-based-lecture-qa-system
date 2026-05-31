@@ -182,7 +182,7 @@ Output the synthesized summary directly:"""
         ]
 
     def _call_local_llm(self, prompt: str, response_format: str = None) -> str:
-        """Call local LLM via Ollama."""
+        """Call local LLM via llama.cpp."""
         try:
             messages = self._build_messages(prompt, response_format)
             return call_llm(
@@ -192,7 +192,6 @@ Output the synthesized summary directly:"""
                 messages=messages,
                 base_url=self.base_url,
                 timeout=self.timeout,
-                keep_alive=settings.LOCAL_LLM_KEEP_ALIVE,
             )
         except Exception as e:
             raise SummarizerError(f"Failed to call local LLM: {str(e)}")

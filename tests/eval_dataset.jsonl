@@ -1,0 +1,3 @@
+{"question": "What is machine learning?", "ground_truth": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed."}
+{"question": "What are the main types of machine learning?", "ground_truth": "The main types of machine learning are supervised learning, unsupervised learning, and reinforcement learning."}
+{"question": "What is deep learning?", "ground_truth": "Deep learning is a subset of machine learning that uses neural networks with multiple layers to model complex patterns in data."}

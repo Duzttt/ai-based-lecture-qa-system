@@ -32,7 +32,7 @@ class RAGPipeline:
             self.model = model or "anthropic/claude-3-haiku"
             self.base_url = settings.OPENROUTER_BASE_URL
 
-    def retrieve(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         query_embedding = self.embedding_service.embed_query(query)
         return self.vector_store.search_with_metadata(query_embedding, top_k=top_k)
 
@@ -97,7 +97,7 @@ Answer:"""
             max_tokens=500,
         )
 
-    def query(self, question: str, top_k: int = 3) -> Dict:
+    def query(self, question: str, top_k: int = 5) -> Dict:
         sources = self.retrieve(question, top_k=top_k)
         answer = self.generate_answer(question, sources)
         return {

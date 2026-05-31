@@ -1,19 +1,16 @@
 """
-BM25 Index implementation with Chinese tokenization support.
+BM25 Index implementation with tokenization support.
 
-This module provides BM25 (Best Matching 25) full-text search capabilities
-with proper Chinese language support using jieba for tokenization.
+This module provides BM25 (Best Matching 25) full-text search capabilities.
 """
 
+import re
 from typing import Any, Dict, List, Tuple
 
 try:
-    import jieba
     from rank_bm25 import BM25Okapi
 except ImportError as e:
-    raise ImportError(
-        "Please install jieba and rank-bm25: pip install jieba rank-bm25"
-    ) from e
+    raise ImportError("Please install rank-bm25: pip install rank-bm25") from e
 
 
 class BM25IndexError(Exception):
@@ -24,7 +21,7 @@ class BM25IndexError(Exception):
 
 class BM25Index:
     """
-    BM25 index with Chinese tokenization support.
+    BM25 index with tokenization support.
 
     BM25 (Best Matching 25) is a ranking function used in information retrieval
     that estimates the relevance of documents to a given search query.
@@ -56,10 +53,9 @@ class BM25Index:
 
     def _tokenize_chinese(self, text: str) -> List[str]:
         """
-        Use jieba for Chinese tokenization.
+        Tokenize text by splitting on whitespace and punctuation.
 
-        For Chinese text, uses jieba to segment into words.
-        For English text, splits on whitespace.
+        Handles mixed Chinese/English text by splitting on word boundaries.
 
         Args:
             text: Input text to tokenize
@@ -72,12 +68,13 @@ class BM25Index:
 
         text = text.strip().lower()
 
-        # Use jieba for Chinese tokenization
-        # jieba automatically handles mixed Chinese/English text
-        tokens = list(jieba.lcut(text))
+        # Split on whitespace and punctuation, keeping sequences of word characters
+        # This handles mixed Chinese/English: Chinese characters become individual tokens,
+        # English words stay together
+        tokens = re.findall(r"\w+", text)
 
-        # Filter out empty tokens and whitespace
-        tokens = [t.strip() for t in tokens if t and t.strip()]
+        # Filter out empty tokens
+        tokens = [t for t in tokens if t]
 
         return tokens
 
@@ -85,7 +82,7 @@ class BM25Index:
         """
         Build BM25 index.
 
-        1. Use jieba for Chinese tokenization
+        1. Tokenize documents
         2. Build rank_bm25 index
         """
         try:

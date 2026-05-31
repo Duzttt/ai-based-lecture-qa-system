@@ -42,7 +42,7 @@ class LlamaRAGPipeline:
 
         self.query_engine = index.as_query_engine()
 
-    def retrieve(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         try:
             retriever = self.index.as_retriever(similarity_top_k=top_k)
             nodes = retriever.retrieve(query)
@@ -93,7 +93,7 @@ class LlamaRAGPipeline:
             lines.append(f"[S{idx}] (source: {source}, page: {page_label})\n{text}")
         return "\n\n".join(lines)
 
-    def query(self, question: str, top_k: int = 3) -> Dict[str, Any]:
+    def query(self, question: str, top_k: int = 5) -> Dict[str, Any]:
         sources = self.retrieve(question, top_k=top_k)
         answer = self.generate_answer(question, sources)
 

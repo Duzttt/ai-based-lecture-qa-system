@@ -27,6 +27,7 @@ data/faiss_index/
 data/settings.json
 data/db.sqlite3
 data/alerts.json
+data/logs/
 data/reports.json
 *.pdf
 .pytest_cache/
@@ -74,3 +75,6 @@ CLAUDE.md
 
 #fyp documents
 fyp/
+
+# Postman
+postman/
