@@ -325,6 +325,54 @@ black app/ django_app/ django_backend/ manage.py
 mypy app/ django_app/ django_backend/
 ```
 
+### RAGAS Evaluation
+
+Evaluate the end-to-end RAG pipeline quality (faithfulness, answer relevancy,
+context precision, context recall):
+
+```bash
+# Evaluate all PDFs in media/data_source/
+python tests/test_ragas_eval.py --all
+
+# Evaluate specific PDFs (auto-generate questions)
+python tests/test_ragas_eval.py --pdf media/data_source/lecture1.pdf media/data_source/lecture2.pdf
+
+# Evaluate from pre-defined questions (JSONL)
+python tests/test_ragas_eval.py --jsonl tests/eval_dataset.jsonl
+
+# Create a sample JSONL dataset
+python tests/test_ragas_eval.py --create-sample
+
+# Customize evaluation
+python tests/test_ragas_eval.py --all --num-questions 10 --top-k 5 --language en
+
+# Use a specific judge LLM for RAGAS metrics (default: OpenRouter DeepSeek)
+python tests/test_ragas_eval.py --all --ragas-api-key sk-... --ragas-base-url https://api.openai.com/v1 --ragas-model gpt-4o-mini
+
+# Run the pytest suite
+pytest tests/test_ragas_eval.py -v
+```
+
+Options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--pdf` | — | One or more PDF file paths |
+| `--all` | — | Evaluate all PDFs in `media/data_source/` |
+| `--jsonl` | — | JSONL file with `question`/`ground_truth` entries |
+| `--num-questions` | 5 | Questions auto-generated per PDF |
+| `--top-k` | 5 | Chunks retrieved per question |
+| `--language` | `en` | `en` or `zh` |
+| `--ragas-timeout` | 300 | Per-job timeout in seconds |
+| `--ragas-model` | deepseek/deepseek-v4-flash | Judge LLM model |
+| `--ragas-api-key` | OPENROUTER_API_KEY | Judge LLM API key |
+| `--ragas-base-url` | OPENROUTER_BASE_URL | Judge LLM base URL |
+| `--ragas-max-workers` | 4 | Concurrent metric workers |
+| `--create-sample` | — | Generate `tests/eval_dataset.jsonl` template |
+
+Detailed results are exported to `evaluation/ragas_results_<timestamp>.csv`
+automatically.
+
 ### Frontend
 
 ```bash
