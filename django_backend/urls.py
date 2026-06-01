@@ -26,6 +26,8 @@ urlpatterns = [
     path("api/ask/", views.ask_question),
     path("api/chat", views.ask_qwen),
     path("api/chat/", views.ask_qwen),
+    path("api/rag-demo/trace", views.rag_demo_trace),
+    path("api/rag-demo/trace/", views.rag_demo_trace),
     path("api/ask_qwen", views.ask_qwen),
     path("api/ask_qwen/", views.ask_qwen),
     path("api/chat/citations", views.ask_with_citations),
