@@ -259,3 +259,187 @@ def generate_qa_dataset(
             logger.info("Wrote %d Q-A from %s", len(qa_pairs), pdf_path)
     os.replace(tmp_path, out_path)
     return total
+
+
+class DatasetFormatError(EvalPipelineError):
+    """Raised when the input JSONL is malformed."""
+
+
+class QAJsonParseError(EvalPipelineError):
+    """Raised when QA-generation LLM output is unparseable."""
+
+
+def _run_ragas_metrics(dataset, llm, embeddings, timeout: int, max_workers: int):
+    """Thin wrapper around RAGAS so tests can mock at this boundary."""
+    try:
+        from ragas import evaluate as ragas_evaluate
+        from ragas.metrics import (
+            answer_relevancy,
+            context_precision,
+            context_recall,
+            faithfulness,
+        )
+        from ragas.run_config import RunConfig
+    except ImportError as exc:
+        raise EvalPipelineError(
+            "RAGAS not installed. Run: pip install ragas datasets"
+        ) from exc
+
+    metrics = [faithfulness, answer_relevancy, context_precision, context_recall]
+    for metric in metrics:
+        if hasattr(metric, "llm"):
+            metric.llm = llm
+
+    return ragas_evaluate(
+        dataset=dataset,
+        metrics=metrics,
+        embeddings=embeddings,
+        run_config=RunConfig(timeout=timeout, max_workers=max_workers),
+    )
+
+
+def evaluate_dataset(
+    *,
+    dataset_path: str,
+    out_path: str,
+    base_url: str,
+    model: str,
+    top_k: int = 5,
+    timeout: int = 300,
+    max_workers: int = 4,
+) -> Dict[str, Any]:
+    """Read JSONL, run RAG + RAGAS, write CSV. Returns summary dict."""
+    if not os.path.exists(dataset_path):
+        raise DatasetFormatError(f"Dataset not found: {dataset_path}")
+
+    questions: List[str] = []
+    ground_truths: List[str] = []
+    with open(dataset_path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise DatasetFormatError(f"Bad JSONL line: {exc}") from exc
+            if "question" not in record or "ground_truth" not in record:
+                raise DatasetFormatError(
+                    f"Missing required field in record: {record}"
+                )
+            questions.append(str(record["question"]))
+            ground_truths.append(str(record["ground_truth"]))
+
+    if len(questions) != len(ground_truths):
+        raise DatasetFormatError("questions and ground_truths length mismatch")
+
+    from app.services.local_rag import (  # noqa: PLC0415 - lazy: Django-touching
+        build_context_from_sources,
+        retrieve_with_faiss,
+    )
+
+    rows: List[Dict[str, Any]] = []
+    for q in questions:
+        try:
+            sources = retrieve_with_faiss(query=q, top_k=top_k)
+            context = build_context_from_sources(sources)
+            answer = _call_chat(
+                base_url=base_url,
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Context: {context}\n\nQuestion: {q}",
+                    }
+                ],
+                timeout=timeout,
+            )
+            rows.append(
+                {
+                    "question": q,
+                    "answer": answer,
+                    "contexts": [s.get("text", "") for s in sources],
+                    "ground_truth": next(
+                        gt for q_, gt in zip(questions, ground_truths) if q_ == q
+                    ),
+                }
+            )
+        except Exception as exc:
+            logger.warning("Failed question %r: %s", q[:50], exc)
+            rows.append(
+                {"question": q, "answer": "", "contexts": [], "ground_truth": ""}
+            )
+
+    data = {
+        "question": [r["question"] for r in rows if r["answer"]],
+        "answer": [r["answer"] for r in rows if r["answer"]],
+        "contexts": [r["contexts"] for r in rows if r["answer"]],
+        "ground_truth": [
+            next(
+                gt
+                for q_, gt in zip(questions, ground_truths)
+                if q_ == r["question"]
+            )
+            for r in rows
+            if r["answer"]
+        ],
+    }
+    if not data["question"]:
+        raise EvalPipelineError("No valid RAG results to evaluate")
+
+    try:
+        from datasets import Dataset as HFDataset
+    except ImportError as exc:
+        raise EvalPipelineError(
+            "datasets not installed. Run: pip install datasets"
+        ) from exc
+
+    dataset = HFDataset.from_dict(data)
+
+    from app.services.embedding import EmbeddingService
+    from app.services.runtime_embedding import load_runtime_embedding_settings
+    from langchain_core.embeddings import Embeddings
+    from langchain_openai import ChatOpenAI
+    from ragas.llms import LangchainLLMWrapper
+
+    rt = load_runtime_embedding_settings()
+    embedding_service = EmbeddingService(model_name=rt["model_id"])
+
+    class _LocalEmbeddings(Embeddings):
+        def embed_documents(self, texts):
+            emb = embedding_service.embed_texts(texts)
+            if hasattr(emb, "tolist"):
+                emb = emb.tolist()
+            return [[float(v) for v in row] for row in emb]
+
+        def embed_query(self, text):
+            emb = embedding_service.embed_query(text)
+            if hasattr(emb, "tolist"):
+                emb = emb.tolist()
+            return [float(v) for v in emb]
+
+    langchain_llm = ChatOpenAI(
+        model=model,
+        openai_api_key="local",
+        openai_api_base=base_url,
+        temperature=0,
+        max_tokens=4096,
+    )
+    ragas_llm = LangchainLLMWrapper(langchain_llm)
+
+    result = _run_ragas_metrics(
+        dataset=dataset,
+        llm=ragas_llm,
+        embeddings=_LocalEmbeddings(),
+        timeout=timeout,
+        max_workers=max_workers,
+    )
+
+    df = result.to_pandas()
+    df.to_csv(out_path, index=False, encoding="utf-8")
+    score_dict = df.to_dict(orient="records")
+    return {
+        "num_questions": len(data["question"]),
+        "scores": score_dict,
+        "csv_path": out_path,
+    }
