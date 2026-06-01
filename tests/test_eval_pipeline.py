@@ -165,3 +165,121 @@ def test_call_chat_raises_on_empty_choices(monkeypatch):
             messages=[{"role": "user", "content": "hi"}],
             timeout=10,
         )
+
+
+import os
+import requests
+from app.services.eval_pipeline import generate_qa_dataset
+
+
+def test_generate_qa_dataset_writes_jsonl(tmp_path, monkeypatch):
+    pdf_path = tmp_path / "notes.pdf"
+    pdf_path.write_bytes(b"%PDF-stub")
+    out_path = tmp_path / "out.jsonl"
+
+    def fake_extract_text(self, path):
+        return "Some long lecture text " * 50
+
+    monkeypatch.setattr(
+        "app.services.pdf_loader.PDFLoader.extract_text", fake_extract_text
+    )
+
+    def fake_call_chat(*, base_url, model, messages, timeout, num_predict=None):
+        return '[{"question": "Q1", "ground_truth": "A1"}, {"question": "Q2", "ground_truth": "A2"}]'
+
+    monkeypatch.setattr("app.services.eval_pipeline._call_chat", fake_call_chat)
+
+    count = generate_qa_dataset(
+        pdf_paths=[str(pdf_path)],
+        out_path=str(out_path),
+        base_url="http://x:8080",
+        model="m",
+        num_questions_per_pdf=2,
+    )
+    assert count == 2
+    lines = out_path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 2
+    import json as _json
+    record = _json.loads(lines[0])
+    assert set(record.keys()) == {"question", "ground_truth"}
+
+
+def test_generate_qa_dataset_skips_missing_pdf(tmp_path, monkeypatch):
+    out_path = tmp_path / "out.jsonl"
+
+    def fake_call_chat(*, base_url, model, messages, timeout, num_predict=None):
+        raise AssertionError("LLM should not be called when PDF is missing")
+
+    monkeypatch.setattr("app.services.eval_pipeline._call_chat", fake_call_chat)
+
+    count = generate_qa_dataset(
+        pdf_paths=[str(tmp_path / "nope.pdf")],
+        out_path=str(out_path),
+        base_url="http://x:8080",
+        model="m",
+    )
+    assert count == 0
+    assert not out_path.exists() or out_path.read_text(encoding="utf-8") == ""
+
+
+def test_generate_qa_dataset_retries_on_bad_json(tmp_path, monkeypatch):
+    pdf_path = tmp_path / "notes.pdf"
+    pdf_path.write_bytes(b"%PDF-stub")
+    out_path = tmp_path / "out.jsonl"
+
+    monkeypatch.setattr(
+        "app.services.pdf_loader.PDFLoader.extract_text",
+        lambda self, path: "lecture text " * 50,
+    )
+
+    call_count = {"n": 0}
+
+    def fake_call_chat(*, base_url, model, messages, timeout, num_predict=None):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return "not valid json"
+        return '[{"question": "Q", "ground_truth": "A"}]'
+
+    monkeypatch.setattr("app.services.eval_pipeline._call_chat", fake_call_chat)
+
+    count = generate_qa_dataset(
+        pdf_paths=[str(pdf_path)],
+        out_path=str(out_path),
+        base_url="http://x:8080",
+        model="m",
+    )
+    assert count == 1
+    assert call_count["n"] == 2
+
+
+def test_generate_qa_dataset_falls_back_to_truncated_on_timeout(tmp_path, monkeypatch):
+    pdf_path = tmp_path / "notes.pdf"
+    pdf_path.write_bytes(b"%PDF-stub")
+    out_path = tmp_path / "out.jsonl"
+
+    monkeypatch.setattr(
+        "app.services.pdf_loader.PDFLoader.extract_text",
+        lambda self, path: "x" * 10_000,
+    )
+
+    call_count = {"n": 0}
+
+    def fake_call_chat(*, base_url, model, messages, timeout, num_predict=None):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise requests.exceptions.Timeout("slow")
+        return '[{"question": "Q", "ground_truth": "A"}]'
+
+    monkeypatch.setattr("app.services.eval_pipeline._call_chat", fake_call_chat)
+
+    import requests as _requests
+    monkeypatch.setattr("app.services.eval_pipeline.requests", _requests)
+
+    count = generate_qa_dataset(
+        pdf_paths=[str(pdf_path)],
+        out_path=str(out_path),
+        base_url="http://x:8080",
+        model="m",
+    )
+    assert count == 1
+    assert call_count["n"] == 2

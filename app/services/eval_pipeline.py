@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import os
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import requests
 
@@ -137,3 +138,124 @@ def _call_chat(
     if not content:
         raise ValueError("Empty content from /v1/chat/completions")
     return str(content).strip()
+
+
+_QA_PROMPT_TEMPLATE = """Based on the following text, generate {num} question-answer pairs for evaluation.
+
+{lang_instruction}
+
+Return ONLY a JSON array with no additional text:
+[
+    {{"question": "...", "ground_truth": "..."}},
+    ...
+]
+
+Text:
+{text}
+"""
+
+
+def _build_qa_prompt(text: str, num: int, language: str) -> str:
+    lang_instruction = (
+        "Generate questions and answers in Chinese."
+        if language == "zh"
+        else "Generate questions and answers in English."
+    )
+    return _QA_PROMPT_TEMPLATE.format(
+        num=num, lang_instruction=lang_instruction, text=text
+    )
+
+
+def _qa_with_retries(
+    *, base_url: str, model: str, prompt: str, timeout: int
+) -> List[Dict[str, str]]:
+    """Call LLM once; on parse failure, retry once with stricter suffix."""
+    suffixes = ["", "\n\nReturn ONLY a valid JSON array. No prose."]
+    last_err: Optional[Exception] = None
+    for suffix in suffixes:
+        try:
+            content = _call_chat(
+                base_url=base_url,
+                model=model,
+                messages=[{"role": "user", "content": prompt + suffix}],
+                timeout=timeout,
+            )
+        except requests.exceptions.Timeout as exc:
+            raise exc
+        try:
+            return _parse_qa_json(content)
+        except ValueError as exc:
+            last_err = exc
+            continue
+    raise last_err or ValueError("Unknown parse failure")
+
+
+def generate_qa_dataset(
+    *,
+    pdf_paths: Iterable[str],
+    out_path: str,
+    base_url: str,
+    model: str,
+    num_questions_per_pdf: int = 5,
+    language: str = "en",
+    timeout: int = 120,
+) -> int:
+    """Generate Q-A pairs from PDFs, write JSONL. Returns total question count."""
+    from app.services.pdf_loader import PDFLoader
+
+    loader = PDFLoader(documents_path=str(os.path.dirname(out_path) or "."))
+    total = 0
+    tmp_path = out_path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as fh:
+        for pdf_path in pdf_paths:
+            if not os.path.exists(pdf_path):
+                logger.warning("PDF not found, skipping: %s", pdf_path)
+                continue
+            try:
+                text = loader.extract_text(pdf_path)
+            except Exception as exc:
+                logger.warning("Failed to extract %s: %s", pdf_path, exc)
+                continue
+            if not (text or "").strip():
+                logger.warning("No text extracted from %s, skipping", pdf_path)
+                continue
+
+            prompt = _build_qa_prompt(text, num_questions_per_pdf, language)
+            try:
+                qa_pairs = _qa_with_retries(
+                    base_url=base_url,
+                    model=model,
+                    prompt=prompt,
+                    timeout=timeout,
+                )
+            except requests.exceptions.Timeout:
+                logger.warning("Timeout on first try, retrying with truncated text")
+                prompt = _build_qa_prompt(
+                    text[:2000], num_questions_per_pdf, language
+                )
+                try:
+                    qa_pairs = _qa_with_retries(
+                        base_url=base_url,
+                        model=model,
+                        prompt=prompt,
+                        timeout=timeout,
+                    )
+                except Exception as exc:
+                    logger.error("Skipping %s after retry: %s", pdf_path, exc)
+                    continue
+            except Exception as exc:
+                logger.error("Skipping %s: %s", pdf_path, exc)
+                continue
+
+            for qa in qa_pairs:
+                fh.write(
+                    json.dumps(
+                        {"question": qa["question"], "ground_truth": qa["ground_truth"]},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                total += 1
+            logger.info("Wrote %d Q-A from %s", len(qa_pairs), pdf_path)
+    os.replace(tmp_path, out_path)
+    return total
