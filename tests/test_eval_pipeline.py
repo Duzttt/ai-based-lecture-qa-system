@@ -90,3 +90,78 @@ def test_resolve_endpoint_raises_when_unset(monkeypatch):
     )
     with pytest.raises(EvalPipelineError):
         resolve_endpoint(phase="eval", settings=settings)
+
+
+from app.services.eval_pipeline import _parse_qa_json, _call_chat
+
+
+def test_parse_qa_json_strips_markdown_fences():
+    raw = '```json\n[{"question": "q", "ground_truth": "a"}]\n```'
+    assert _parse_qa_json(raw) == [{"question": "q", "ground_truth": "a"}]
+
+
+def test_parse_qa_json_extracts_array_from_extra_text():
+    raw = 'Here you go: [{"question": "q1", "ground_truth": "a1"}] enjoy!'
+    assert _parse_qa_json(raw) == [{"question": "q1", "ground_truth": "a1"}]
+
+
+def test_parse_qa_json_repairs_truncated_array():
+    raw = '[{"question": "q1", "ground_truth": "a1"}, {"question": "q2", "ground_trut'
+    result = _parse_qa_json(raw)
+    assert isinstance(result, list)
+
+
+def test_parse_qa_json_raises_on_garbage():
+    with pytest.raises(ValueError):
+        _parse_qa_json("not json at all")
+
+
+def test_call_chat_posts_to_v1_chat_completions(monkeypatch):
+    captured = {}
+
+    def fake_post(url, json, timeout):
+        captured["url"] = url
+        captured["json"] = json
+        captured["timeout"] = timeout
+
+        class R:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"choices": [{"message": {"content": "ok"}}]}
+
+        return R()
+
+    monkeypatch.setattr("app.services.eval_pipeline.requests.post", fake_post)
+    text = _call_chat(
+        base_url="http://x:8080",
+        model="m",
+        messages=[{"role": "user", "content": "hi"}],
+        timeout=10,
+    )
+    assert text == "ok"
+    assert captured["url"] == "http://x:8080/v1/chat/completions"
+    assert captured["json"]["model"] == "m"
+    assert captured["timeout"] == 10
+
+
+def test_call_chat_raises_on_empty_choices(monkeypatch):
+    def fake_post(url, json, timeout):
+        class R:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"choices": []}
+
+        return R()
+
+    monkeypatch.setattr("app.services.eval_pipeline.requests.post", fake_post)
+    with pytest.raises(ValueError):
+        _call_chat(
+            base_url="http://x:8080",
+            model="m",
+            messages=[{"role": "user", "content": "hi"}],
+            timeout=10,
+        )
