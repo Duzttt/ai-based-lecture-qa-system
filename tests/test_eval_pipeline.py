@@ -26,6 +26,10 @@ def _FakeSettings(docs_dir: Path) -> SimpleNamespace:
     """Lightweight settings stand-in exposing the attributes the CLI touches."""
     return SimpleNamespace(
         QA_GEN_TIMEOUT_SECONDS=120,
+        EVAL_TIMEOUT_SECONDS=300,
+        EVAL_MAX_WORKERS=4,
+        LOCAL_LLM_BASE_URL="http://localhost:8080",
+        LOCAL_LLM_MODEL="local",
         DOCUMENTS_PATH=str(docs_dir),
     )
 
@@ -516,3 +520,47 @@ def test_generate_qa_dataset_cli_pdfs_all_no_pdfs(tmp_path, monkeypatch, capsys)
     assert rc == 1
     captured = capsys.readouterr()
     assert f"no PDFs found under {fake_dir}" in captured.err
+
+
+def test_run_evaluation_cli_configures_django(monkeypatch, tmp_path):
+    """``run_evaluation.py`` initialises Django so the lazy local_rag import works."""
+    import importlib.util
+    import sys
+
+    captured: dict = {}
+
+    def fake_evaluate(*, dataset_path, out_path, base_url, model, **kw):
+        captured["dataset_path"] = dataset_path
+        captured["out_path"] = out_path
+        captured["base_url"] = base_url
+        captured["model"] = model
+        return {"num_questions": 0, "scores": [], "csv_path": out_path}
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "run_evaluation.py"
+    spec = importlib.util.spec_from_file_location(
+        "_run_evaluation_cli_under_test", script
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+        monkeypatch.setattr(module, "settings", _FakeSettings(tmp_path / "docs"))
+        monkeypatch.setattr(module, "evaluate_dataset", fake_evaluate)
+        monkeypatch.setattr(
+            module, "resolve_endpoint", lambda **kw: ("http://x:8080", "m")
+        )
+        monkeypatch.setattr(
+            sys, "argv",
+            ["run_evaluation.py", "--dataset", str(tmp_path / "ds.jsonl"),
+             "--out", str(tmp_path / "out.csv")],
+        )
+        rc = module.main()
+    finally:
+        sys.modules.pop(spec.name, None)
+
+    assert rc == 0
+    assert captured["base_url"] == "http://x:8080"
+    assert captured["model"] == "m"
+    # If django.setup() ran, the lazy local_rag import in evaluate_dataset would work;
+    # since we mocked evaluate_dataset, the assertion is that the script did not
+    # raise ImproperlyConfigured during its own django.setup() call.

@@ -9,10 +9,19 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# ``evaluate_dataset`` reaches into ``app.services.local_rag`` which transitively
+# imports ``django_app.models`` for query logging. Initialise Django so those
+# imports succeed without ``manage.py``.
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
+import django  # noqa: E402
+
+django.setup()
 
 from app.config import settings  # noqa: E402
 from app.services.eval_pipeline import (  # noqa: E402
