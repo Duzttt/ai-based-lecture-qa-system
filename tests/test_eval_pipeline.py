@@ -3,14 +3,22 @@ import os
 from pathlib import Path
 
 import django
+import requests
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
 django.setup()
 
-import pytest
+import pytest  # noqa: E402
 
-from app.config import Settings
-from app.services.eval_pipeline import resolve_endpoint, EvalPipelineError
+from app.config import Settings  # noqa: E402
+from app.services.eval_pipeline import (  # noqa: E402
+    EvalPipelineError,
+    _call_chat,
+    _parse_qa_json,
+    evaluate_dataset,
+    generate_qa_dataset,
+    resolve_endpoint,
+)
 
 
 def _make_settings(monkeypatch, **overrides) -> Settings:
@@ -100,9 +108,6 @@ def test_resolve_endpoint_raises_when_unset(monkeypatch):
         resolve_endpoint(phase="eval", settings=settings)
 
 
-from app.services.eval_pipeline import _parse_qa_json, _call_chat
-
-
 def test_parse_qa_json_strips_markdown_fences():
     raw = '```json\n[{"question": "q", "ground_truth": "a"}]\n```'
     assert _parse_qa_json(raw) == [{"question": "q", "ground_truth": "a"}]
@@ -173,11 +178,6 @@ def test_call_chat_raises_on_empty_choices(monkeypatch):
             messages=[{"role": "user", "content": "hi"}],
             timeout=10,
         )
-
-
-import os
-import requests
-from app.services.eval_pipeline import generate_qa_dataset, evaluate_dataset
 
 
 def test_generate_qa_dataset_writes_jsonl(tmp_path, monkeypatch):
