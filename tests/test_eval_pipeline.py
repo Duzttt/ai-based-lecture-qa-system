@@ -61,7 +61,7 @@ def test_resolve_endpoint_cli_flag_wins(monkeypatch):
         phase="qa_gen", settings=settings,
         cli_base_url="http://cli:9090", cli_model="cli-model",
     )
-    assert base_url == "http://cli:9090/v1"
+    assert base_url == "http://cli:9090"
     assert model == "cli-model"
 
 
@@ -74,7 +74,7 @@ def test_resolve_endpoint_env_var_falls_back(monkeypatch):
         LOCAL_LLM_MODEL="local-model",
     )
     base_url, model = resolve_endpoint(phase="qa_gen", settings=settings)
-    assert base_url == "http://env:8080/v1"
+    assert base_url == "http://env:8080"
     assert model == "env-model"
 
 
@@ -85,21 +85,21 @@ def test_resolve_endpoint_uses_local_llm_fallback(monkeypatch):
         LOCAL_LLM_MODEL="local-model",
     )
     base_url, model = resolve_endpoint(phase="eval", settings=settings)
-    assert base_url == "http://local:8080/v1"
+    assert base_url == "http://local:8080"
     assert model == "local-model"
 
 
-def test_resolve_endpoint_appends_v1(monkeypatch):
+def test_resolve_endpoint_strips_trailing_slash(monkeypatch):
     settings = _make_settings(
         monkeypatch,
-        LOCAL_LLM_BASE_URL="http://local:8080",
+        LOCAL_LLM_BASE_URL="http://local:8080/",
         LOCAL_LLM_MODEL="m",
     )
     base_url, _ = resolve_endpoint(phase="qa_gen", settings=settings)
-    assert base_url.endswith("/v1")
+    assert base_url == "http://local:8080"
 
 
-def test_resolve_endpoint_strips_trailing_v1_then_readds(monkeypatch):
+def test_resolve_endpoint_strips_trailing_v1(monkeypatch):
     settings = _make_settings(
         monkeypatch,
         LOCAL_LLM_BASE_URL="http://local:8080/v1/",

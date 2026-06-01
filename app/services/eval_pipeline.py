@@ -22,11 +22,13 @@ class EvalPipelineError(Exception):
 
 
 def _normalize_url(raw: str) -> str:
-    """Strip trailing slash and ensure ``/v1`` suffix."""
-    normalized = str(raw).rstrip("/")
-    if not normalized.endswith("/v1"):
-        normalized = f"{normalized}/v1"
-    return normalized
+    """Strip trailing slashes so ``_call_chat`` can append ``/v1/chat/completions``.
+
+    The base URL is the llama.cpp server root (e.g. ``http://localhost:8080``);
+    the OpenAI-compatible endpoint path is added by ``_call_chat``. This matches
+    the convention used elsewhere in the codebase (e.g. ``llm_client.py``).
+    """
+    return str(raw).rstrip("/")
 
 
 def resolve_endpoint(
