@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const emit = defineEmits(['open-admin', 'open-chunkviz', 'open-llm-config'])
+const emit = defineEmits(['open-admin', 'open-chunkviz', 'open-llm-config', 'open-rag-demo'])
 
 const activeNav = ref('library')
 
@@ -44,6 +44,17 @@ const navItems = [
     </nav>
 
     <div class="topbar-right">
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="RAG demo"
+        title="RAG demo"
+        @click="emit('open-rag-demo')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M4 5h16v2H4V5zm0 6h10v2H4v-2zm0 6h16v2H4v-2zm13.5-7.5L22 12l-4.5 2.5v-5z"/>
+        </svg>
+      </button>
       <button
         type="button"
         class="icon-btn"
