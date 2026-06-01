@@ -5,11 +5,16 @@ Usage:
         --pdfs notes1.pdf,notes2.pdf \\
         --out eval_dataset.jsonl \\
         --num 5
+
+    # Or to process every PDF in the configured documents directory:
+    python scripts/generate_qa_dataset.py --pdfs all --out eval_dataset.jsonl --num 5
 """
 from __future__ import annotations
 
 import argparse
+import glob
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -75,6 +80,13 @@ def main() -> int:
         return 1
 
     pdf_paths = [p.strip() for p in args.pdfs.split(",") if p.strip()]
+    if pdf_paths == ["all"]:
+        docs_dir = settings.DOCUMENTS_PATH
+        pdf_paths = sorted(glob.glob(os.path.join(docs_dir, "**", "*.pdf"), recursive=True))
+        if not pdf_paths:
+            print(f"ERROR: no PDFs found under {docs_dir}", file=sys.stderr)
+            return 1
+        print(f"Found {len(pdf_paths)} PDF(s) under {docs_dir}", file=sys.stderr)
     if not pdf_paths:
         print("ERROR: --pdfs is empty", file=sys.stderr)
         return 1

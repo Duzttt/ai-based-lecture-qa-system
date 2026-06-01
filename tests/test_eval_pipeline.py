@@ -1,6 +1,7 @@
 """Tests for app.services.eval_pipeline."""
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import django
 import requests
@@ -21,12 +22,22 @@ from app.services.eval_pipeline import (  # noqa: E402
 )
 
 
+def _FakeSettings(docs_dir: Path) -> SimpleNamespace:
+    """Lightweight settings stand-in exposing the attributes the CLI touches."""
+    return SimpleNamespace(
+        QA_GEN_TIMEOUT_SECONDS=120,
+        DOCUMENTS_PATH=str(docs_dir),
+    )
+
+
 def _make_settings(monkeypatch, **overrides) -> Settings:
     """Create a Settings instance with relevant env vars cleared, then apply overrides.
 
-    We mutate the instance directly (via monkeypatch.setattr) because pydantic-settings
-    reads env at construction time and ``LOCAL_LLM_*`` have non-None defaults, so
-    setenv/delenv alone cannot produce a "fully unset" Settings.
+    We bypass ``.env`` (via ``_env_file=None``) because the project ships one
+    that pre-populates ``QA_GEN_*`` / ``EVAL_*``, which would defeat the
+    "fully unset" semantics these tests assert. Instance-level overrides are
+    then applied because pydantic-settings does not re-read env after
+    construction and ``LOCAL_LLM_*`` defaults are non-None.
     """
     for key in (
         "QA_GEN_BASE_URL", "QA_GEN_MODEL", "QA_GEN_TIMEOUT_SECONDS",
@@ -34,7 +45,7 @@ def _make_settings(monkeypatch, **overrides) -> Settings:
         "LOCAL_LLM_BASE_URL", "LOCAL_LLM_MODEL",
     ):
         monkeypatch.delenv(key, raising=False)
-    settings = Settings()
+    settings = Settings(_env_file=None)
     for k, v in overrides.items():
         monkeypatch.setattr(settings, k, v)
     return settings
@@ -438,3 +449,70 @@ def test_evaluate_dataset_raises_on_missing_field(tmp_path, monkeypatch):
             base_url="http://x:8080",
             model="m",
         )
+
+
+def _load_cli(monkeypatch, argv, fake_settings, fake_gen, fake_resolve):
+    """Load ``generate_qa_dataset.py`` as a module and patch its symbols."""
+    import importlib.util
+    import sys
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "generate_qa_dataset.py"
+    spec = importlib.util.spec_from_file_location(
+        "_generate_qa_dataset_cli_under_test", script
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+        monkeypatch.setattr(module, "settings", fake_settings)
+        monkeypatch.setattr(module, "generate_qa_dataset", fake_gen)
+        monkeypatch.setattr(module, "resolve_endpoint", fake_resolve)
+        monkeypatch.setattr(sys, "argv", argv)
+        return module.main()
+    finally:
+        sys.modules.pop(spec.name, None)
+
+
+def test_generate_qa_dataset_cli_pdfs_all(tmp_path, monkeypatch):
+    """``--pdfs all`` globs every PDF under settings.DOCUMENTS_PATH recursively."""
+    fake_dir = tmp_path / "docs"
+    (fake_dir / "sub").mkdir(parents=True)
+    (fake_dir / "a.pdf").write_bytes(b"%PDF-stub")
+    (fake_dir / "sub" / "b.pdf").write_bytes(b"%PDF-stub")
+    (fake_dir / "ignored.txt").write_text("not a pdf")
+
+    captured: dict = {}
+
+    def fake_gen(*, pdf_paths, out_path, base_url, model, num_questions_per_pdf=5,
+                 language="en", timeout=120):
+        captured["pdf_paths"] = list(pdf_paths)
+        return len(pdf_paths)
+
+    rc = _load_cli(
+        monkeypatch,
+        argv=["generate_qa_dataset.py", "--pdfs", "all",
+              "--out", str(tmp_path / "out.jsonl"), "--num", "5"],
+        fake_settings=_FakeSettings(fake_dir),
+        fake_gen=fake_gen,
+        fake_resolve=lambda **kw: ("http://x:8080", "m"),
+    )
+    assert rc == 0
+    assert sorted(Path(p).name for p in captured["pdf_paths"]) == ["a.pdf", "b.pdf"]
+
+
+def test_generate_qa_dataset_cli_pdfs_all_no_pdfs(tmp_path, monkeypatch, capsys):
+    """Empty directory exits 1 with a clear error."""
+    fake_dir = tmp_path / "empty"
+    fake_dir.mkdir()
+
+    rc = _load_cli(
+        monkeypatch,
+        argv=["generate_qa_dataset.py", "--pdfs", "all",
+              "--out", str(tmp_path / "out.jsonl")],
+        fake_settings=_FakeSettings(fake_dir),
+        fake_gen=lambda **kw: 0,
+        fake_resolve=lambda **kw: ("http://x:8080", "m"),
+    )
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert f"no PDFs found under {fake_dir}" in captured.err
