@@ -355,10 +355,15 @@ narrower prompt; if retries time out, the partial array is kept.
 **Phase 2 — RAG + RAGAS scoring**
 
 ```bash
-# (Optional) stop llama.cpp, swap model, restart it
-
 python scripts/run_evaluation.py --dataset eval.jsonl --out report.csv
 ```
+
+If `llama-server` is started in route mode (`--models-dir` or multi-alias
+proxy), Phase 1 and Phase 2 can each name a different model and the
+server will route the request to the right backend. No need to stop /
+swap / restart between phases — just set `QA_GEN_MODEL` and `EVAL_MODEL`
+to the two aliases. List what's loaded with
+`curl http://localhost:8080/v1/models`.
 
 Each row of `report.csv` contains the question, the model's answer, the
 retrieved contexts, the ground truth, and four RAGAS scores
