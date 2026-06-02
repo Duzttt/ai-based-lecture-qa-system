@@ -327,51 +327,93 @@ mypy app/ django_app/ django_backend/
 
 ### RAGAS Evaluation
 
-Evaluate the end-to-end RAG pipeline quality (faithfulness, answer relevancy,
-context precision, context recall):
+The pipeline is split into two independent CLI phases that share a JSONL file
+in the middle. This lets you swap the model on the llama.cpp server between
+phases (a smaller fast model for generating questions, a stronger model for
+answering) without re-indexing or re-running everything.
+
+**Phase 1 — generate a Q-A dataset**
 
 ```bash
-# Evaluate all PDFs in media/data_source/
-python tests/test_ragas_eval.py --all
+# Generate 5 questions from every PDF under media/data_source/
+python scripts/generate_qa_dataset.py --pdfs all --out eval.jsonl --num 5
 
-# Evaluate specific PDFs (auto-generate questions)
-python tests/test_ragas_eval.py --pdf media/data_source/lecture1.pdf media/data_source/lecture2.pdf
+# Or from specific PDFs
+python scripts/generate_qa_dataset.py \
+    --pdfs media/data_source/lecture1.pdf media/data_source/lecture2.pdf \
+    --out eval.jsonl --num 10
 
-# Evaluate from pre-defined questions (JSONL)
-python tests/test_ragas_eval.py --jsonl tests/eval_dataset.jsonl
-
-# Create a sample JSONL dataset
-python tests/test_ragas_eval.py --create-sample
-
-# Customize evaluation
-python tests/test_ragas_eval.py --all --num-questions 10 --top-k 5 --language en
-
-# Use a specific judge LLM for RAGAS metrics (default: OpenRouter DeepSeek)
-python tests/test_ragas_eval.py --all --ragas-api-key sk-... --ragas-base-url https://api.openai.com/v1 --ragas-model gpt-4o-mini
-
-# Run the pytest suite
-pytest tests/test_ragas_eval.py -v
+# Or from a pre-defined JSONL (questions only, ground_truth optional)
+python scripts/generate_qa_dataset.py \
+    --from-jsonl tests/eval_dataset.jsonl --out eval.jsonl
 ```
 
-Options:
+Each output line is `{"id", "question", "ground_truth", "source_pdf"}`.
+Missing PDFs are skipped with a warning; bad LLM JSON is retried with a
+narrower prompt; if retries time out, the partial array is kept.
+
+**Phase 2 — RAG + RAGAS scoring**
+
+```bash
+# (Optional) stop llama.cpp, swap model, restart it
+
+python scripts/run_evaluation.py --dataset eval.jsonl --out report.csv
+```
+
+Each row of `report.csv` contains the question, the model's answer, the
+retrieved contexts, the ground truth, and four RAGAS scores
+(`faithfulness`, `answer_relevancy`, `context_precision`, `context_recall`).
+
+**Options (Phase 1 — `generate_qa_dataset.py`)**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--pdf` | — | One or more PDF file paths |
-| `--all` | — | Evaluate all PDFs in `media/data_source/` |
-| `--jsonl` | — | JSONL file with `question`/`ground_truth` entries |
-| `--num-questions` | 5 | Questions auto-generated per PDF |
-| `--top-k` | 5 | Chunks retrieved per question |
-| `--language` | `en` | `en` or `zh` |
-| `--ragas-timeout` | 300 | Per-job timeout in seconds |
-| `--ragas-model` | deepseek/deepseek-v4-flash | Judge LLM model |
-| `--ragas-api-key` | OPENROUTER_API_KEY | Judge LLM API key |
-| `--ragas-base-url` | OPENROUTER_BASE_URL | Judge LLM base URL |
-| `--ragas-max-workers` | 4 | Concurrent metric workers |
-| `--create-sample` | — | Generate `tests/eval_dataset.jsonl` template |
+| `--pdfs` | — | One or more PDF paths, or `all` to glob `**/*.pdf` under `DOCUMENTS_PATH` |
+| `--out` | required | Output JSONL path |
+| `--num` | 5 | Questions to generate per PDF |
+| `--from-jsonl` | — | Pass-through mode: copy/normalize an existing dataset |
+| `--base-url` | `QA_GEN_BASE_URL` → `LOCAL_LLM_BASE_URL` | LLM server root |
+| `--model` | `QA_GEN_MODEL` → `LOCAL_LLM_MODEL` | Model alias served by llama.cpp |
+| `--timeout` | `QA_GEN_TIMEOUT_SECONDS` (120) | Per-request timeout in seconds |
+| `--log-file` | — | Tee logs to a file in addition to stderr |
 
-Detailed results are exported to `evaluation/ragas_results_<timestamp>.csv`
-automatically.
+**Options (Phase 2 — `run_evaluation.py`)**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dataset` | required | Input JSONL from Phase 1 |
+| `--out` | required | Output CSV path (e.g. `report.csv`) |
+| `--top-k` | 5 | Chunks retrieved per question |
+| `--base-url` | `EVAL_BASE_URL` → `LOCAL_LLM_BASE_URL` | LLM server root |
+| `--model` | `EVAL_MODEL` → `LOCAL_LLM_MODEL` | Model alias served by llama.cpp |
+| `--timeout` | `EVAL_TIMEOUT_SECONDS` (300) | Per-request timeout in seconds |
+| `--max-workers` | `EVAL_MAX_WORKERS` (4) | Concurrent question workers |
+| `--log-file` | — | Tee logs to a file in addition to stderr |
+
+**Resolution order for both phases:** CLI flag → `QA_GEN_*` / `EVAL_*` env var
+→ `LOCAL_LLM_*` fallback. This means the same `LOCAL_LLM_BASE_URL` is reused
+when no phase-specific override is set.
+
+**Model name gotcha:** llama.cpp matches the `model` field in chat-completion
+requests case-sensitively against the names it has loaded. If `EVAL_MODEL` in
+`.env` does not exactly match the `--alias` passed to `llama-server.exe`, you
+will get `400 model '<name>' not found`. Check loaded names with
+`curl http://localhost:8080/v1/models`.
+
+**Prerequisite for Phase 2:** the FAISS index must already contain chunks
+for the PDFs you generated questions from. Either run the Django upload flow
+once, or run the indexing script directly:
+
+```bash
+python pdf_to_faiss_with_metadata.py
+```
+
+**Unit tests:**
+
+```bash
+pytest tests/test_eval_pipeline.py -v          # 22 tests, no LLM required
+pytest tests/test_eval_pipeline_e2e.py -v      # end-to-end smoke test
+```
 
 ### Frontend
 
