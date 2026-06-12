@@ -31,6 +31,11 @@ export const askQuestion = async (question) => {
   return response.data
 }
 
+export const getRagDemoTrace = async (payload) => {
+  const response = await api.post('/rag-demo/trace', payload)
+  return response.data
+}
+
 export const getSettings = async () => {
   const response = await api.get('/settings')
   return response.data

@@ -39,6 +39,7 @@ from django_app.views.rag import (
     retrieve_chunks,
     compare_documents,
 )
+from django_app.views.rag_demo import rag_demo_trace
 
 # Dashboard
 from django_app.views.dashboard import (
@@ -161,6 +162,7 @@ __all__ = [
     "chat_htmx",
     "retrieve_chunks",
     "compare_documents",
+    "rag_demo_trace",
     # Dashboard
     "dashboard_stats",
     "dashboard_metrics",

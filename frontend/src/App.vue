@@ -7,20 +7,33 @@ import ComparisonView from './components/documents/ComparisonView.vue'
 import LLMConfigPanel from './components/settings/LLMConfigPanel.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
 import ChunkViz from './components/shared/ChunkViz.vue'
-import { ref, computed, onMounted } from 'vue'
+import RagDemoView from './components/demo/RagDemoView.vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useLlmSettingsStore } from './stores/llmSettingsStore'
 
 const llmStore = useLlmSettingsStore()
-
-onMounted(() => {
-  llmStore.loadProviders()
-})
 
 const showAdmin = ref(false)
 const showChunkViz = ref(false)
 const showLLMConfig = ref(false)
 const compareMode = ref(false)
 const selectedDocs = ref([])
+const showRagDemo = ref(window.location.pathname === '/rag-demo')
+
+const syncRouteState = () => {
+  showRagDemo.value = window.location.pathname === '/rag-demo'
+}
+
+const handleOpenRagDemo = () => {
+  showRagDemo.value = true
+  showLLMConfig.value = false
+  window.history.pushState({}, '', '/rag-demo')
+}
+
+const handleCloseRagDemo = () => {
+  showRagDemo.value = false
+  window.history.pushState({}, '', '/')
+}
 
 const showComparison = computed(() => {
   return compareMode.value && selectedDocs.value.length >= 2
@@ -41,6 +54,15 @@ const handleCloseComparison = () => {
   compareMode.value = false
   selectedDocs.value = []
 }
+
+onMounted(() => {
+  llmStore.loadProviders()
+  window.addEventListener('popstate', syncRouteState)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('popstate', syncRouteState)
+})
 </script>
 
 <template>
@@ -50,12 +72,17 @@ const handleCloseComparison = () => {
       @open-admin="showAdmin = true"
       @open-chunkviz="showChunkViz = true"
       @open-llm-config="showLLMConfig = true"
+      @open-rag-demo="handleOpenRagDemo"
     />
     <LLMConfigPanel
       v-if="showLLMConfig"
       @close="showLLMConfig = false"
     />
-    <main v-else id="main-content" class="main" tabindex="-1">
+    <RagDemoView
+      v-if="showRagDemo"
+      @close="handleCloseRagDemo"
+    />
+    <main v-else-if="!showLLMConfig" id="main-content" class="main" tabindex="-1">
       <SourcesPanel
         @selection-change="handleSelectionChange"
         @toggle-compare="handleToggleCompare"
