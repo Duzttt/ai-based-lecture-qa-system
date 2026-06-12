@@ -1,8 +1,11 @@
+import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from pypdf import PdfReader
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_path_arg(path: str) -> str:
@@ -87,8 +90,8 @@ def extract_page_text_with_positions(
                             "height": 0,
                         }
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("extract_texts failed, falling back to extract_text: %s", e)
 
     if not text_items:
         page_text = page.extract_text() or ""

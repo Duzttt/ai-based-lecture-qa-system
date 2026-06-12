@@ -1,38 +1,19 @@
 import pytest
 
 
-class TestPDFLoader:
-    def test_pdf_loader_can_be_instantiated(self):
-        from app.services.pdf_loader import PDFLoader
+class TestPDFChunking:
+    def test_read_pdf_text_returns_string(self):
+        from app.services.pdf_chunking import split_text_into_chunks
 
-        loader = PDFLoader(documents_path="data/documents")
-        assert loader is not None
-        assert loader.documents_path == "data/documents"
-
-
-class TestTextChunker:
-    def test_chunker_can_be_instantiated(self):
-        from app.services.chunker import TextChunker
-
-        chunker = TextChunker(chunk_size=400, chunk_overlap=50)
-        assert chunker is not None
-        assert chunker.chunk_size == 400
-        assert chunker.chunk_overlap == 50
-
-    def test_chunk_text_returns_list(self):
-        from app.services.chunker import TextChunker
-
-        chunker = TextChunker(chunk_size=400, chunk_overlap=50)
-        text = "This is a test text. It has multiple sentences. Let's see if chunking works properly."
-        chunks = chunker.chunk_text(text)
+        text = "This is a test sentence. Another sentence here. And one more."
+        chunks = split_text_into_chunks(text, chunk_size=50)
         assert isinstance(chunks, list)
         assert len(chunks) > 0
 
-    def test_chunk_text_empty_returns_empty_list(self):
-        from app.services.chunker import TextChunker
+    def test_split_text_empty_returns_empty_list(self):
+        from app.services.pdf_chunking import split_text_into_chunks
 
-        chunker = TextChunker(chunk_size=400, chunk_overlap=50)
-        chunks = chunker.chunk_text("")
+        chunks = split_text_into_chunks("")
         assert chunks == []
 
 

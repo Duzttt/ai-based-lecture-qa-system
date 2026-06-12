@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-import requests
+import httpx
 
 from app.config import settings
 from app.services.embedding import EmbeddingService
@@ -23,14 +23,14 @@ class RAGPipeline:
         self.embedding_service = embedding_service
         self.vector_store = vector_store
         self.provider = provider
-        
+
         if provider == "gemini":
             self.api_key = api_key or settings.GEMINI_API_KEY
             self.model = model or settings.GEMINI_MODEL
             self.base_url = settings.GEMINI_BASE_URL
         else:
             self.api_key = api_key or settings.OPENROUTER_API_KEY
-            self.model = model or "anthropic/claude-3-haiku"
+            self.model = model or settings.OPENROUTER_MODEL
             self.base_url = settings.OPENROUTER_BASE_URL
 
     def retrieve(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
@@ -73,44 +73,39 @@ Answer:"""
             return self._generate_openrouter(prompt)
 
     def _generate_gemini(self, prompt: str) -> str:
-        headers = {
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json"}
 
         payload = {
-            "contents": [
-                {
-                    "parts": [{"text": prompt}]
-                }
-            ],
+            "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
                 "maxOutputTokens": 500,
                 "temperature": 0.7,
-            }
+            },
         }
 
         try:
-            url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
-            response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-            
+            url = f"{self.base_url}/models/{self.model}:generateContent"
+            with httpx.Client(timeout=30) as client:
+                response = client.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    params={"key": self.api_key},
+                )
+                response.raise_for_status()
+                data = response.json()
+
             if "candidates" in data and len(data["candidates"]) > 0:
                 candidate = data["candidates"][0]
                 if "content" in candidate and "parts" in candidate["content"]:
                     return candidate["content"]["parts"][0]["text"]
-            
+
             raise LLMError("Invalid response format from Gemini API")
-            
-        except requests.exceptions.RequestException as e:
-            raise LLMError(f"Failed to generate answer: {str(e)}")
+
+        except httpx.HTTPStatusError as e:
+            raise LLMError(f"Failed to generate answer: {e}") from e
         except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid response from Gemini API: {str(e)}")
+            raise LLMError(f"Invalid response from Gemini API: {e}") from e
 
     def _generate_openrouter(self, prompt: str) -> str:
         headers = {
@@ -120,31 +115,26 @@ Answer:"""
 
         payload = {
             "model": self.model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 500,
         }
 
         try:
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
+            with httpx.Client(timeout=30) as client:
+                response = client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+                response.raise_for_status()
+                data = response.json()
             return data["choices"][0]["message"]["content"]
-        except requests.exceptions.RequestException as e:
-            raise LLMError(f"Failed to generate answer: {str(e)}")
+        except httpx.HTTPStatusError as e:
+            raise LLMError(f"Failed to generate answer: {e}") from e
         except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid response from LLM API: {str(e)}")
+            raise LLMError(f"Invalid response from LLM API: {e}") from e
 
-    def query(self, question: str, top_k: int = 3) -> Dict:
+    def query(self, question: str, top_k: int = 3) -> Dict[str, Any]:
         sources = self.retrieve(question, top_k=top_k)
         answer = self.generate_answer(question, sources)
-        return {
-            "answer": answer,
-            "sources": sources,
-        }
+        return {"answer": answer, "sources": sources}

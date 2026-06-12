@@ -1,13 +1,7 @@
 import json
-import os
 
-import django
 import pytest
-import requests
 from django.test import Client
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_backend.settings")
-django.setup()
 
 
 @pytest.fixture
@@ -17,7 +11,7 @@ def client() -> Client:
 
 def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.chat.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {
                 "text": "趋势包括 ubiquity...",
@@ -32,11 +26,11 @@ def test_ask_view_success(client: Client, monkeypatch: pytest.MonkeyPatch):
         ],
     )
     monkeypatch.setattr(
-        "django_app.views.build_context_from_sources",
+        "django_app.views.chat.build_context_from_sources",
         lambda sources: "mock context",
     )
     monkeypatch.setattr(
-        "django_app.views.generate_with_local_qwen",
+        "django_app.views.chat.generate_with_local_qwen",
         lambda query, context: "根据《Intelligent_Agent.pdf》第7页，五个趋势是……",
     )
 
@@ -65,20 +59,21 @@ def test_ask_view_missing_query(client: Client):
 
 def test_ask_view_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "django_app.views.retrieve_with_faiss",
+        "django_app.views.chat.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
             {"text": "chunk", "source": "a.pdf", "page": 1}
         ],
     )
     monkeypatch.setattr(
-        "django_app.views.build_context_from_sources",
+        "django_app.views.chat.build_context_from_sources",
         lambda sources: "mock context",
     )
 
-    def _raise_timeout(query, context):
-        raise requests.exceptions.Timeout("timeout")
+    def _raise_timeout(query, context, **kwargs):
+        raise httpx.TimeoutException("timeout")
 
-    monkeypatch.setattr("django_app.views.generate_with_local_qwen", _raise_timeout)
+    import httpx
+    monkeypatch.setattr("django_app.views.chat.generate_with_local_qwen", _raise_timeout)
 
     response = client.post(
         "/api/ask",

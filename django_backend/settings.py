@@ -73,5 +73,4 @@ MEDIA_ROOT = str(Path(rag_settings.DOCUMENTS_PATH).resolve().parent)
 MEDIA_URL = "/media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Frontend hits endpoints without trailing slash, e.g. /api/upload
-APPEND_SLASH = False
+APPEND_SLASH = True

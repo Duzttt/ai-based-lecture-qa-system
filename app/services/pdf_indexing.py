@@ -5,19 +5,12 @@ import numpy as np
 
 from app.config import settings
 from app.services.embedding import EmbeddingError, EmbeddingService
-from app.services.pdf_chunking import chunk_pdf_with_metadata, read_pdf_text
+from app.services.pdf_chunking import _normalize_path_arg, chunk_pdf_with_metadata, read_pdf_text
 from app.services.vector_store import VectorStore, VectorStoreError
 
 
 class PDFIndexingError(Exception):
     pass
-
-
-def _normalize_path_arg(path: str) -> str:
-    cleaned = str(path).strip()
-    if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {"'", '"'}:
-        cleaned = cleaned[1:-1].strip()
-    return cleaned
 
 
 def _validate_embeddings(embeddings: np.ndarray, chunks: List[Dict[str, Any]]) -> int:

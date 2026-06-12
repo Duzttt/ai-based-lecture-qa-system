@@ -35,10 +35,9 @@ class SuggestedQuestion(models.Model):
         help_text="Type of question (concept, method, comparison, etc.)"
     )
     
-    # Associated notebook (if using notebooks feature)
     notebook = models.ForeignKey(
-        "Notebook",
-        on_delete=models.CASCADE,
+        "self",
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="suggested_questions",

@@ -1,4 +1,5 @@
 import os
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 import faiss
@@ -10,6 +11,7 @@ class VectorStoreError(Exception):
 
 
 _GLOBAL_INDEX_CACHE: Dict[Tuple[str, int], "VectorStore"] = {}
+_GLOBAL_INDEX_CACHE_LOCK = threading.Lock()
 
 
 class VectorStore:
@@ -31,13 +33,13 @@ class VectorStore:
         embedding dimension, creating and caching it on first use.
         """
         key = (index_path, embedding_dim)
-        cached = _GLOBAL_INDEX_CACHE.get(key)
-        if cached is not None:
-            return cached
-
-        store = cls(index_path=index_path, embedding_dim=embedding_dim)
-        _GLOBAL_INDEX_CACHE[key] = store
-        return store
+        with _GLOBAL_INDEX_CACHE_LOCK:
+            cached = _GLOBAL_INDEX_CACHE.get(key)
+            if cached is not None:
+                return cached
+            store = cls(index_path=index_path, embedding_dim=embedding_dim)
+            _GLOBAL_INDEX_CACHE[key] = store
+            return store
 
     @staticmethod
     def _normalize_chunk(item: Any) -> Dict[str, Any]:

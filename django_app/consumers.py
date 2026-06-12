@@ -1,64 +1,66 @@
 import json
 import asyncio
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardConsumer(AsyncWebsocketConsumer):
     """
     WebSocket consumer for real-time dashboard updates.
-    
+
     Sends periodic updates about:
     - Indexing progress
     - Document count changes
     - Vector store statistics
     """
-    
+
     async def connect(self):
         """Accept WebSocket connection and add to dashboard group."""
         self.room_group_name = "dashboard"
-        
-        # Join room group
+        self._periodic_task = None
+
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-        
+
         await self.accept()
-        
-        # Send initial connection acknowledgment
+
         await self.send(text_data=json.dumps({
             "type": "connected",
             "message": "Connected to dashboard updates"
         }))
-        
-        # Start periodic updates
-        asyncio.create_task(self.send_periodic_updates())
-    
+
+        self._periodic_task = asyncio.create_task(self.send_periodic_updates())
+
     async def disconnect(self, close_code):
         """Leave room group on disconnect."""
+        if self._periodic_task is not None:
+            self._periodic_task.cancel()
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
-    
+
     async def send_periodic_updates(self):
         """Send periodic status updates every 5 seconds."""
         try:
             while True:
                 await asyncio.sleep(5)
-                
-                # Get current indexing state
+
                 from django_app.views import _get_upload_indexing_state
                 indexing_state = _get_upload_indexing_state()
-                
-                # Send update to this client
+
                 await self.send(text_data=json.dumps({
                     "type": "indexing_status",
                     "data": indexing_state
                 }))
-        except Exception:
-            # Client disconnected, stop the task
+        except asyncio.CancelledError:
             pass
+        except Exception:
+            logger.exception("Error in periodic dashboard update")
     
     async def dashboard_update(self, event):
         """

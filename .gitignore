@@ -28,6 +28,7 @@ data/settings.json
 data/db.sqlite3
 data/alerts.json
 data/reports.json
+data/logs/
 *.pdf
 .pytest_cache/
 .coverage
@@ -40,6 +41,11 @@ CLAUDE.md
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+node_modules/
 
 # Local skills (installed via uipro)
 .opencode/
+
+# Local worktrees and browser QA artifacts
+.worktrees/
+report/_qa_chrome_profile/
