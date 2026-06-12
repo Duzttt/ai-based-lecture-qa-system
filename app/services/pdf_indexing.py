@@ -98,9 +98,7 @@ def index_pdf_file(
         raise PDFIndexingError("No chunks created from text")
 
     rt = load_runtime_embedding_settings()
-    embedding_service = EmbeddingService(
-        model_name=model_name or rt["model_id"]
-    )
+    embedding_service = EmbeddingService(model_name=model_name or rt["model_id"])
 
     try:
         chunk_texts = [chunk["text"] for chunk in chunk_records]

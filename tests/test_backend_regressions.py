@@ -131,7 +131,7 @@ def test_invalidate_index_dependent_caches_clears_vector_and_document_caches(
     assert cleared["documents"] is True
 
 
-def test_ask_qwen_updates_existing_query_log(
+def test_ask_updates_existing_query_log(
     client: Client, monkeypatch: pytest.MonkeyPatch
 ):
     starting_count = QueryLog.objects.count()
@@ -171,7 +171,7 @@ def test_ask_qwen_updates_existing_query_log(
     )
 
     response = client.post(
-        "/api/ask_qwen",
+        "/api/chat",
         data='{"query": "[TEST_ONLY] What is covered?"}',
         content_type="application/json",
     )
@@ -186,7 +186,7 @@ def test_ask_qwen_updates_existing_query_log(
     assert existing_log.answer_length == len("Final answer")
 
 
-def test_ask_qwen_updates_existing_query_log_with_reasoning_and_log_id(
+def test_ask_updates_existing_query_log_with_reasoning_and_log_id(
     client: Client, monkeypatch: pytest.MonkeyPatch
 ):
     starting_count = QueryLog.objects.count()
@@ -227,7 +227,7 @@ def test_ask_qwen_updates_existing_query_log_with_reasoning_and_log_id(
     )
 
     response = client.post(
-        "/api/ask_qwen",
+        "/api/chat",
         data='{"query": "[TEST_ONLY] Explain this answer"}',
         content_type="application/json",
     )
@@ -309,11 +309,42 @@ def test_providers_handler_uses_local_base_url_when_current_provider_not_local(
     assert called["url"] == "http://localhost:8080/v1/models"
 
 
+def test_providers_handler_falls_back_to_default_local_model_when_llamacpp_down(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "api_key": "x",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        },
+    )
+    monkeypatch.setattr("django_app.views.rag._load_persisted_settings", lambda: {})
+    monkeypatch.setattr(
+        "django_app.views.rag.settings.LOCAL_LLM_MODEL",
+        "qwen2.5:3b",
+    )
+
+    def raise_connect_error(*args, **kwargs):
+        raise requests.ConnectionError("connection refused")
+
+    monkeypatch.setattr("django_app.views.rag.requests.get", raise_connect_error)
+
+    response = client.get("/api/settings/providers")
+
+    assert response.status_code == 200
+    payload = response.json()
+    local_provider = next(p for p in payload["providers"] if p["id"] == "local_llm")
+    assert local_provider["models"] == ["qwen2.5:3b"]
+
+
 def test_chat_citations_endpoint_degrades_to_plain_chat(
     client: Client, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setattr(
-        "django_app.views.rag.ask_qwen",
+        "django_app.views.rag.ask",
         lambda request: JsonResponse(
             {
                 "answer": "Plain answer",
@@ -364,6 +395,49 @@ def test_llm_health_handler_reports_disconnected(
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "disconnected"
+
+
+def test_llm_health_handler_uses_requested_local_model(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        "django_app.views.rag._build_runtime_llm_settings",
+        lambda: {
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "api_key": "x",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        },
+    )
+
+    get_response = Mock()
+    get_response.raise_for_status.return_value = None
+    get_response.json.side_effect = [{"status": "ok"}, {"data": [{"id": "qwen-local"}]}]
+
+    post_payload = {}
+    post_response = Mock()
+    post_response.raise_for_status.return_value = None
+    post_response.json.return_value = {
+        "choices": [{"message": {"content": "OK"}}]
+    }
+
+    def fake_post(url, json=None, timeout=20):
+        post_payload.update(json or {})
+        return post_response
+
+    monkeypatch.setattr(
+        "django_app.views.rag.requests.get", lambda *args, **kwargs: get_response
+    )
+    monkeypatch.setattr("django_app.views.rag.requests.post", fake_post)
+
+    response = client.get("/api/health/llm?provider=local_llm&model=qwen-local")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "healthy"
+    assert payload["provider"] == "local_llm"
+    assert payload["model"] == "qwen-local"
+    assert post_payload["model"] == "qwen-local"
 
 
 def test_llm_health_handler_reports_stalled_on_generation_timeout(

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useLlmSettingsStore } from '../../stores/llmSettingsStore'
-import { saveSettings } from '../../services/api'
 
 const emit = defineEmits(['close'])
 
@@ -89,18 +88,22 @@ const availableModels = computed(() => {
 const handleProviderSelect = (providerId) => {
   selectedProvider.value = providerId
   const p = providers.value.find(pr => pr.id === providerId)
-  if (p?.models?.length) selectedModel.value = p.models[0]
+  selectedModel.value = p?.models?.[0] || ''
+  testResult.value = null
+  saveMessage.value = ''
 }
 
 const handleSave = async () => {
   saving.value = true
   saveMessage.value = ''
   try {
-    await llmStore.switchProvider(selectedProvider.value, selectedModel.value)
-    saveMessage.value = 'Configuration saved successfully'
+    const success = await llmStore.switchProvider(selectedProvider.value, selectedModel.value)
+    saveMessage.value = success
+      ? 'Configuration saved successfully'
+      : llmStore.error || 'Failed to save configuration'
     setTimeout(() => { saveMessage.value = '' }, 3000)
   } catch (err) {
-    saveMessage.value = 'Failed to save configuration'
+    saveMessage.value = err.message || 'Failed to save configuration'
   } finally {
     saving.value = false
   }
@@ -110,8 +113,8 @@ const handleTestConnection = async () => {
   testingConnection.value = true
   testResult.value = null
   try {
-    await llmStore.switchProvider(selectedProvider.value, selectedModel.value)
-    testResult.value = { success: true, message: 'Connection successful' }
+    const health = await llmStore.testConnection(selectedProvider.value, selectedModel.value)
+    testResult.value = { success: true, message: health.detail || 'Connection successful' }
   } catch (err) {
     testResult.value = { success: false, message: err.message || 'Connection failed' }
   } finally {
@@ -300,7 +303,7 @@ const getStatusClass = (status) => {
           </div>
 
           <!-- Test Connection -->
-          <button class="test-btn" @click="handleTestConnection" :disabled="testingConnection">
+          <button class="test-btn" @click="handleTestConnection" :disabled="testingConnection || !selectedModel">
             <svg v-if="testingConnection" class="spin" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"/></svg>
             <svg v-else viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
             {{ testingConnection ? 'Testing...' : 'Test Connection' }}
@@ -322,7 +325,7 @@ const getStatusClass = (status) => {
           <!-- Actions -->
           <div class="form-actions">
             <button class="btn-discard" @click="emit('close')">Discard</button>
-            <button class="btn-save" @click="handleSave" :disabled="saving">
+            <button class="btn-save" @click="handleSave" :disabled="saving || !selectedModel">
               {{ saving ? 'Saving...' : 'Save Configuration' }}
             </button>
           </div>

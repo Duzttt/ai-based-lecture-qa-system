@@ -3,6 +3,7 @@
 This module is intentionally Django-free at import time so the CLI scripts
 under ``scripts/`` can run without ``manage.py``.
 """
+
 from __future__ import annotations
 
 import json
@@ -232,9 +233,7 @@ def generate_qa_dataset(
                 )
             except requests.exceptions.Timeout:
                 logger.warning("Timeout on first try, retrying with truncated text")
-                prompt = _build_qa_prompt(
-                    text[:2000], num_questions_per_pdf, language
-                )
+                prompt = _build_qa_prompt(text[:2000], num_questions_per_pdf, language)
                 try:
                     qa_pairs = _qa_with_retries(
                         base_url=base_url,
@@ -252,7 +251,10 @@ def generate_qa_dataset(
             for qa in qa_pairs:
                 fh.write(
                     json.dumps(
-                        {"question": qa["question"], "ground_truth": qa["ground_truth"]},
+                        {
+                            "question": qa["question"],
+                            "ground_truth": qa["ground_truth"],
+                        },
                         ensure_ascii=False,
                     )
                     + "\n"
@@ -326,9 +328,7 @@ def evaluate_dataset(
             except json.JSONDecodeError as exc:
                 raise DatasetFormatError(f"Bad JSONL line: {exc}") from exc
             if "question" not in record or "ground_truth" not in record:
-                raise DatasetFormatError(
-                    f"Missing required field in record: {record}"
-                )
+                raise DatasetFormatError(f"Missing required field in record: {record}")
             questions.append(str(record["question"]))
             ground_truths.append(str(record["ground_truth"]))
 
@@ -377,11 +377,7 @@ def evaluate_dataset(
         "answer": [r["answer"] for r in rows if r["answer"]],
         "contexts": [r["contexts"] for r in rows if r["answer"]],
         "ground_truth": [
-            next(
-                gt
-                for q_, gt in zip(questions, ground_truths)
-                if q_ == r["question"]
-            )
+            next(gt for q_, gt in zip(questions, ground_truths) if q_ == r["question"])
             for r in rows
             if r["answer"]
         ],

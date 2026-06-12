@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from pypdf import PdfReader
 
@@ -124,8 +124,6 @@ def split_text_into_chunks(
     normalized_text = re.sub(r"\s+", " ", text).strip()
     sentences = re.split(r"(?<=[。！？.!?])\s+", normalized_text)
 
-    effective_size = chunk_size - overlap
-
     chunks: List[str] = []
     current_chunk = ""
 
@@ -182,17 +180,247 @@ def split_text_into_chunks(
     return chunks
 
 
+_COURSE_CODE_RE = re.compile(
+    r"""(?ixm)
+    (?:course\s*code|kod\s*kursus)\s*[:\-]?\s*
+    (?P<code>[A-Z]{2,5}\s*\d{3,4}[A-Z]?)
+    |
+    ^\s*(?P<bare>[A-Z]{2,5}\s*\d{3,4}[A-Z]?)\b
+"""
+)
+
+_TITLE_SEPARATORS = ("\u2013", "\u2014", "-", ":", "|", "/", "\t")
+
+_LECTURER_RE = re.compile(
+    r"""(?ix)
+    (?:^|\n)\s*
+    (?:
+        (?:course\s*(?:is\s*)?taught\s*by|
+           lecturer|
+           instructor|
+           author|
+           prepared\s*by|
+           coordinator|
+           pensyarah|
+           disusun\s*oleh|
+           disediakan\s*oleh)
+        \s*[:\-]?\s*
+    )
+    (?P<name>
+        (?:(?:Dr|Prof|Mr|Mrs|Ms|Madam)\.?\s+)?
+        (?:(?:Assoc\.?\s*Prof\.?\s+)?|(?:Prof\.?\s+Madya\s+)?)?
+        [A-Z][a-zA-Z\.'\-]+
+        (?:\s+[A-Z][a-zA-Z\.'\-]+){1,4}
+    )
+    \s*(?:\n|$)
+"""
+)
+
+# Matches a standalone name line such as "Dr. Nur Zareen Zulkarnain"
+# even when no "Lecturer:" label precedes it.
+_LECTURER_BARE_RE = re.compile(
+    r"(?m)^\s*(?P<name>(?:Dr|Prof|Mr|Mrs|Ms|Madam)\.?\s+[A-Z][a-zA-Z\.'\-]+"
+    r"(?:\s+[A-Z][a-zA-Z\.'\-]+){1,4})\s*(?:\([^)]+\))?\s*$"
+)
+
+_DEPARTMENT_RE = re.compile(
+    r"""(?ix)
+    (?:
+        (?:department|jabatan)\s+of\s+
+        |
+        (?:undergraduate\s+)?department\s+of\s+
+    )
+    (?P<name>[A-Z][^\n;]+?(?:\s*\([A-Za-z0-9 &]+\))?)
+    (?=\s*(?:\n|;|$))
+"""
+)
+
+_FACULTY_RE = re.compile(
+    r"""(?ix)
+    (?:faculty|fakulti)\s+of\s+(?P<name>[A-Z][^\n,;]+?)
+    (?=\s*(?:\n|,|;|\(|$|\s{2,}))
+"""
+)
+
+_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+
+def _clean_name(name: str) -> str:
+    cleaned = re.sub(r"\s+", " ", name).strip()
+    return cleaned.rstrip(".,;")
+
+
+def _find_course_code(cover_text: str) -> str:
+    for match in _COURSE_CODE_RE.finditer(cover_text):
+        code = match.group("code") or match.group("bare") or ""
+        code = re.sub(r"\s+", " ", code).strip()
+        if code:
+            return code
+    return ""
+
+
+def _find_course_title(
+    cover_text: str, course_code: str, max_lines_after: int = 5
+) -> str:
+    if not course_code:
+        return ""
+    lines = [line.strip() for line in cover_text.splitlines() if line.strip()]
+    for idx, line in enumerate(lines):
+        if course_code not in line:
+            continue
+        for sep in _TITLE_SEPARATORS:
+            if sep in line:
+                _, _, after = line.partition(sep)
+                title = re.sub(r"^[\s\-–—:]+", "", after).strip()
+                title = re.split(r"[\n\.]", title, maxsplit=1)[0].strip()
+                if 2 < len(title) < 120:
+                    return title
+        for offset in range(1, max_lines_after + 1):
+            if idx + offset >= len(lines):
+                break
+            candidate = lines[idx + offset]
+            if any(
+                keyword in candidate.lower()
+                for keyword in (
+                    "department",
+                    "jabatan",
+                    "faculty",
+                    "fakulti",
+                    "lecturer",
+                    "instructor",
+                    "author",
+                    "pensyarah",
+                    "course",
+                    "kod",
+                )
+            ):
+                continue
+            if re.match(r"^[\d\W]", candidate):
+                continue
+            if 2 < len(candidate) < 120:
+                return candidate
+    return ""
+
+
+def _find_lecturer(cover_text: str) -> str:
+    for match in _LECTURER_RE.finditer(cover_text):
+        name = _clean_name(match.group("name"))
+        if name and len(name) > 5:
+            return name
+    for match in _LECTURER_BARE_RE.finditer(cover_text):
+        name = _clean_name(match.group("name"))
+        if name and len(name) > 5:
+            return name
+    return ""
+
+
+def _find_department(cover_text: str) -> str:
+    match = _DEPARTMENT_RE.search(cover_text)
+    if not match:
+        return ""
+    name = _clean_name(match.group("name"))
+    name = re.sub(r"\s+", " ", name)
+    return name
+
+
+def _find_faculty(cover_text: str) -> str:
+    match = _FACULTY_RE.search(cover_text)
+    if not match:
+        return ""
+    return _clean_name(match.group("name"))
+
+
+def extract_course_metadata(
+    pages: List[Dict[str, Any]],
+    max_pages: int = 3,
+) -> Dict[str, str]:
+    """Extract course-level metadata from the first few pages of a PDF.
+
+    Returns a dict with the following keys (all strings, possibly empty):
+        - course_code: e.g. "BAXI 3113"
+        - course_title: e.g. "INTELLIGENT AGENT"
+        - lecturer: e.g. "Dr. Nur Zareen Zulkarnain"
+        - department: e.g. "Department of Intelligent Computing and Analytics (ICA)"
+        - faculty: e.g. "Faculty of Computer Science"
+    """
+    empty: Dict[str, str] = {
+        "course_code": "",
+        "course_title": "",
+        "lecturer": "",
+        "department": "",
+        "faculty": "",
+    }
+    if not pages:
+        return empty
+
+    cover_text = "\n".join(str(page.get("text", "")) for page in pages[:max_pages])
+    if not cover_text.strip():
+        return empty
+
+    course_code = _find_course_code(cover_text)
+    course_title = _find_course_title(cover_text, course_code)
+    lecturer = _find_lecturer(cover_text)
+    department = _find_department(cover_text)
+    faculty = _find_faculty(cover_text)
+
+    # Discard lecturer if it accidentally matched the department name.
+    if department and lecturer and department.lower().startswith(lecturer.lower()):
+        lecturer = ""
+
+    return {
+        "course_code": course_code,
+        "course_title": course_title,
+        "lecturer": lecturer,
+        "department": department,
+        "faculty": faculty,
+    }
+
+
+def _format_metadata_header(metadata: Dict[str, str]) -> str:
+    parts: List[str] = []
+    course = " ".join(
+        part
+        for part in (metadata.get("course_code"), metadata.get("course_title"))
+        if part
+    )
+    if course:
+        parts.append(f"Course: {course}")
+    if metadata.get("lecturer"):
+        parts.append(f"Lecturer/Author: {metadata['lecturer']}")
+    if metadata.get("department"):
+        parts.append(f"Department: {metadata['department']}")
+    if metadata.get("faculty"):
+        parts.append(f"Faculty: {metadata['faculty']}")
+    if not parts:
+        return ""
+    return "[Course Metadata] " + "; ".join(parts) + "\n\n---\n\n"
+
+
 def chunk_pdf_with_metadata(
     pdf_path: str,
     chunk_size: int = 500,
     overlap: int = 100,
     source_name: Optional[str] = None,
+    prepend_course_metadata: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Chunk a PDF while preserving source filename and page number metadata."""
+    """Chunk a PDF while preserving source filename and page number metadata.
+
+    When ``prepend_course_metadata`` is True (the default), a compact header
+    describing the course (code, title, lecturer, department, faculty) is
+    prepended to every chunk. This is a contextual-retrieval technique that
+    dramatically improves recall for questions about course-level metadata
+    (e.g. "Who is the author?" or "What is the course code?") which would
+    otherwise be confined to a single chunk on the cover page.
+    """
     cleaned_path = _normalize_path_arg(pdf_path)
     pdf_file = Path(cleaned_path)
     resolved_source = source_name or pdf_file.name
     page_records = read_pdf_pages(cleaned_path)
+
+    metadata_header = ""
+    if prepend_course_metadata:
+        course_metadata = extract_course_metadata(page_records)
+        metadata_header = _format_metadata_header(course_metadata)
 
     chunk_records: List[Dict[str, Any]] = []
     for page_record in page_records:
@@ -205,9 +433,10 @@ def chunk_pdf_with_metadata(
         char_position = 0
         for chunk in page_chunks:
             chunk_length = len(chunk)
+            final_text = f"{metadata_header}{chunk}" if metadata_header else chunk
             chunk_records.append(
                 {
-                    "text": chunk,
+                    "text": final_text,
                     "source": resolved_source,
                     "page": page_num,
                     "char_start": char_position,

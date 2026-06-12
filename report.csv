@@ -1,0 +1,43 @@
+question,answer,contexts,ground_truth,faithfulness,answer_relevancy,context_precision,context_recall
+What is the definition of an intelligent agent provided in the text?,"The text [S2] provides a definition of an intelligent agent as ""a computer system that is capable of independent (autonomous) action on behalf of its user or owner"".","['SUMMARY •This lecture has looked in detail at what constitutes an intelligent agent •We looked at the properties of an intelligent agent and the properties of the environments in which it may operate •We introduced the intentional stance and discussed its use •Finally, we discussed what kinds of task an agent might need to carry out. 50'
+ 'AGENTS: A FIRST DEFINITION •An agent is a computer system that is capable of independent (autonomous) action on behalf of its user or owner •I.e., figuring out what needs to be done to satisfy design objectives, rather than constantly being told •Modern agents may use generative AI models to reason, adapt to context, and create solutions without explicit re -programming 24'
+ 'WHAT IS PRACTICAL REASONING? •Practical reasoning is reasoning directed towards actions — the process of figuring out what to do •Practical reasoning is a matter of weighing conflicting considerations for and against competing options, where the relevant considerations are provided by what the agent desires/values/cares about and what the agent believes (Bratman) •Distinguish practical reasoning from theoretical reasoning – directed towards belief 3']",An agent is a computer system that is capable of independent (autonomous) action on behalf of its user or owner.,1.0,0.9608117426800806,0.9999999999666667,1.0
+What is the primary characteristic of complex software as understood by software engineers?,"The primary characteristic of complex software, as understood by software engineers, is interaction.","['SOME VIEWS OF THE FIELD •Software engineers have derived a progressively better understanding of the characteristics of complexity in software. It is now widely recognized that interaction is probably the most important single characteristic of complex software. •Multiagent systems provide a novel new tool for simulating societies , which may help shed some light on various kinds of social processes.'
+ 'AGENT ORIENTED METHODOLOGIES •Each methodology may introduce further abstractions - around which to model software and to organize the software process •For example: roles, organizations, responsibilities, belief, desire and intentions •Not directly translating into concrete entities of the software system → the concept of role is an aspect of an agent , not an agent 4'
+ '“... [A] specific collection of software (or hardware) modules , typically designated by boxes with arrows indicating the data and control flow among the modules. A more abstract view of an architecture is as a general methodology for designing particular modular decompositions for particular tasks ...” 6Leslie Kaelbling, 1991 (MIT)AGENT ARCHITECTURES']",It is now widely recognized that interaction is probably the most important single characteristic of complex software.,0.5,0.0,0.9999999999666667,0.125
+How does multiagent systems provide a new tool according to the text?,"According to the text, multiagent systems provide a new tool for simulating societies, which may help shed some light on various kinds of social processes.","['SOME VIEWS OF THE FIELD •Software engineers have derived a progressively better understanding of the characteristics of complexity in software. It is now widely recognized that interaction is probably the most important single characteristic of complex software. •Multiagent systems provide a novel new tool for simulating societies , which may help shed some light on various kinds of social processes.'
+ 'WHAT ARE MULTI -AGENT SYSTEMS? •A multiagent system contains a number of agents that: •interact through communication •can act in an environment •have different “spheres of influence” (which may coincide) •will be linked by other (organisational ) relationships •We will look at how agents decide how to interact in competitive situations 4'
+ 'MULTIAGENT SYSTEM IS INTERDISCIPLINARY •The field of Multiagent Systems is influenced and inspired by many other fields: 34Economics Philosophy Logic Ecology Game Theory Social Sciences Humanities •This can be both a strength (infusing well -founded methodologies into the field) and a weakness (there are many different views as to what the field is about)']","Multiagent systems provide a novel new tool for simulating societies, which may help shed some light on various kinds of social processes.",0.9090909090909091,0.0,0.8333333332916666,0.5
+What are the key learning outcomes for the course?,"Based on the provided sources, the key learning outcomes for the course can be identified as follows:
+
+1. Identify and explain the pitfalls of agent development.
+2. Describe practical reasoning.
+3. Relate practical reasoning with intentions.
+4. Describe the steps involved in contract net protocol.
+
+These learning outcomes cover a range of topics in agent development, practical reasoning, and collaboration between agents.","['LEARNING OUTCOMES At the end of this lecture, you should be able to: •Identify and explain the pitfalls of agent development 2'
+ 'LEARNING OUTCOMES At the end of this lecture, you should be able to: •Describe practical reasoning •Relate practical reasoning with intentions 2'
+ 'LEARNING OUTCOMES At the end of this lecture, you should be able to: •Describe the steps involved in contract net protocol 2']","Upon completing this subject, you should be able to:
+CLO1: Evaluate various concepts of intelligent agent.
+CLO2: Organise effective solution steps in solving intelligent agent problems.
+CLO3: Manipulate techniques of intelligent agents for problem solving.",1.0,0.0,0.9999999999666667,1.0
+"What are some examples of intelligent agents in various fields, according to the text?","Unfortunately, the provided text snippets do not explicitly list examples of intelligent agents in various fields. However, based on general knowledge and the context provided, here are some examples of intelligent agents in various fields:
+
+1. Virtual Assistants (e.g., Siri, Alexa) - They are autonomous and can perform tasks such as scheduling appointments, setting reminders, and providing information.
+2. Self-Driving Cars (e.g., Tesla, Waymo) - They use machine learning algorithms to make decisions and navigate through roads.
+3. Chatbots (e.g., Facebook's Messenger Bot) - They can understand and respond to user queries, making decisions based on their programming and training data.
+4. Smart Home Devices (e.g., Amazon Echo, Google Home) - They can perform tasks such as controlling lighting, temperature, and entertainment systems.
+5. Medical Diagnosis Systems (e.g., IBM's Watson) - They analyze medical data and make decisions to diagnose diseases and recommend treatments.
+6. Financial Trading Platforms (e.g., Goldman Sachs' AlphaGo) - They use machine learning algorithms to analyze market data and make decisions on trades.
+7. Robotics (e.g., Boston Dynamics' Atlas) - They can perform tasks such as assembly, warehouse management, and healthcare.
+8. Autonomous Drones (e.g., DJI's Matrice) - They can perform tasks such as surveillance, inspection, and delivery.
+
+These are just a few examples, and intelligent agents can be found in many other fields, including education, marketing, and healthcare.","['SUMMARY •This lecture has looked in detail at what constitutes an intelligent agent •We looked at the properties of an intelligent agent and the properties of the environments in which it may operate •We introduced the intentional stance and discussed its use •Finally, we discussed what kinds of task an agent might need to carry out. 50'
+ 'AGENTS IN VARIOUS FIELDS 33'
+ 'WHAT IS AN AGENT? •The main point about agents is they are autonomous : capable independent action 4An agent is a computer system that is situated in some environment, and that is capable of autonomous action in that environment in order to meet its delegated objectives •It is all about decisions: •An agent must choose what action to perform •An agent must decide when to perform an action']","MODERN EXAMPLES OF INTELLIGENT AGENTS
+Field Example
+Education AI tutors & content generators (ChatGPT, Khanmigo )
+Healthcare Diagnosis & therapy bots (Woebot, Glass Health)
+Software GitHub Copilot & debug agents
+Creativity Adobe Firefly, Midjourney, Gemini for design support
+Planning Autonomous research assistants",0.0,0.0,0.9999999999666667,1.0

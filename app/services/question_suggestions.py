@@ -522,13 +522,16 @@ Do NOT add any other text, explanation, or commentary."""
         """Call Gemini API."""
         try:
             from app.services.llm_client import call_llm
+
             api_key = self._runtime_api_key or settings.GEMINI_API_KEY
             if not api_key:
                 raise QuestionSuggestionError("GEMINI_API_KEY is not configured")
 
             return call_llm(
                 provider="gemini",
-                model=resolve_gemini_api_model(self._runtime_model, settings.GEMINI_MODEL),
+                model=resolve_gemini_api_model(
+                    self._runtime_model, settings.GEMINI_MODEL
+                ),
                 call_type="suggestion",
                 messages=[{"role": "user", "content": prompt}],
                 query_text=prompt[:200],
@@ -544,6 +547,7 @@ Do NOT add any other text, explanation, or commentary."""
         """Call OpenRouter API."""
         try:
             from app.services.llm_client import call_llm
+
             api_key = self._runtime_api_key or settings.OPENROUTER_API_KEY
             if not api_key:
                 raise QuestionSuggestionError("OPENROUTER_API_KEY is not configured")

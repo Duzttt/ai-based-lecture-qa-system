@@ -88,7 +88,7 @@ _model_cache = EmbeddingModelCache(max_size=3)
 class EmbeddingModelManager:
     """
     Manager for loading and using embedding models with caching.
-    
+
     Supports multiple embedding models and caches recently used models
     to avoid repeated loading overhead.
     """
@@ -246,6 +246,7 @@ class EmbeddingModelManager:
         """Load an embedding model using SentenceTransformers."""
         try:
             from sentence_transformers import SentenceTransformer
+
             return SentenceTransformer(model_id)
         except Exception as e:
             raise EmbeddingModelError(f"Failed to load model '{model_id}': {str(e)}")
@@ -253,67 +254,67 @@ class EmbeddingModelManager:
     def get_model(self, model_id: str = None) -> Any:
         """
         Get an embedding model, loading from cache if available.
-        
+
         Args:
             model_id: Model ID to load. If None, uses current model.
-            
+
         Returns:
             Loaded SentenceTransformer model.
         """
         target_id = model_id or self.get_current_model_id()
-        
+
         # Try cache first
         model = _model_cache.get(target_id)
         if model is not None:
             return model
-        
+
         # Load model
         start_time = time.time()
         model = self._load_model(target_id)
         load_time = (time.time() - start_time) * 1000  # ms
-        
+
         # Cache the model
         _model_cache.put(target_id, model)
-        
+
         # Record metric
         self._record_metric("load", target_id, load_time)
-        
+
         return model
 
     def set_current_model(self, model_id: str) -> Dict[str, Any]:
         """
         Set the current active model.
-        
+
         Args:
             model_id: Model ID to switch to.
-            
+
         Returns:
             Dict with model info and load time.
         """
         if model_id not in self.AVAILABLE_MODELS:
             raise EmbeddingModelError(f"Unknown model: {model_id}")
-        
+
         start_time = time.time()
-        
+
         with self._lock:
             # Load model (will use cache if available)
             model = self.get_model(model_id)
-            
+
             # Verify model works
             try:
                 test_embedding = model.encode(["test"], show_progress_bar=False)
                 dimension = len(test_embedding[0])
             except Exception as e:
                 raise EmbeddingModelError(f"Model validation failed: {str(e)}")
-            
+
             old_model_id = self._current_model_id
             self._current_model_id = model_id
-        
+
         load_time = (time.time() - start_time) * 1000  # ms
-        
+
         # Record metric
         self._record_metric("switch", model_id, load_time)
-        
+
         return {
             "model_id": model_id,
             "model_name": self.AVAILABLE_MODELS[model_id]["name"],
@@ -328,75 +329,88 @@ class EmbeddingModelManager:
         model = self.get_model(model_id)
         if not texts:
             return np.array([])
-        
+
         start_time = time.time()
         embeddings = model.encode(texts, show_progress_bar=False)
         embed_time = (time.time() - start_time) * 1000
-        
-        self._record_metric("embed", model_id or self.get_current_model_id(), embed_time)
-        
+
+        self._record_metric(
+            "embed", model_id or self.get_current_model_id(), embed_time
+        )
+
         return embeddings
 
     def embed_query(self, query: str, model_id: str = None) -> np.ndarray:
         """Embed a single query using the specified or current model."""
         if not query or not query.strip():
             raise EmbeddingModelError("Query cannot be empty")
-        
+
         model = self.get_model(model_id)
-        
+
         start_time = time.time()
         embedding = model.encode([query], show_progress_bar=False)[0]
         embed_time = (time.time() - start_time) * 1000
-        
-        self._record_metric("embed_query", model_id or self.get_current_model_id(), embed_time)
-        
+
+        self._record_metric(
+            "embed_query", model_id or self.get_current_model_id(), embed_time
+        )
+
         return embedding
 
     def test_model(self, model_id: str, query: str, top_k: int = 3) -> Dict[str, Any]:
         """
         Test a model by embedding a query and retrieving results.
-        
+
         Args:
             model_id: Model to test.
             query: Test query.
             top_k: Number of results to retrieve.
-            
+
         Returns:
             Test results with retrieval time and chunks.
         """
         from app.services.vector_store import VectorStore
-        
+
         start_time = time.time()
-        
+
         # Embed query
         query_embedding = self.embed_query(query, model_id)
         embed_time = (time.time() - start_time) * 1000
-        
+
         # Search in vector store
         vector_store = VectorStore(
             index_path=settings.FAISS_INDEX_PATH,
             embedding_dim=self.AVAILABLE_MODELS.get(model_id, {}).get("dimension", 384),
         )
-        
+
         search_start = time.time()
         results = vector_store.search(query_embedding, top_k=top_k)
         search_time = (time.time() - search_start) * 1000
-        
+
         total_time = (time.time() - start_time) * 1000
-        
+
         # Format results
         formatted_results = []
-        for i, (distance, idx) in enumerate(zip(results["distances"], results["indices"])):
+        for i, (distance, idx) in enumerate(
+            zip(results["distances"], results["indices"])
+        ):
             similarity = 1.0 - distance  # Simple similarity conversion
-            formatted_results.append({
-                "rank": i + 1,
-                "text": vector_store.chunks[idx] if hasattr(vector_store, 'chunks') and idx < len(vector_store.chunks) else "N/A",
-                "distance": round(float(distance), 4),
-                "score": round(float(similarity), 4),
-            })
-        
+            formatted_results.append(
+                {
+                    "rank": i + 1,
+                    "text": (
+                        vector_store.chunks[idx]
+                        if hasattr(vector_store, "chunks")
+                        and idx < len(vector_store.chunks)
+                        else "N/A"
+                    ),
+                    "distance": round(float(distance), 4),
+                    "score": round(float(similarity), 4),
+                }
+            )
+
         self._record_metric("test", model_id, total_time)
-        
+
         return {
             "model_id": model_id,
             "query": query,
@@ -409,18 +423,22 @@ class EmbeddingModelManager:
 
     def _record_metric(self, action: str, model_id: str, time_ms: float) -> None:
         """Record a performance metric."""
-        self._performance_metrics.append({
-            "action": action,
-            "model_id": model_id,
-            "time_ms": round(time_ms, 2),
-            "timestamp": time.time(),
-        })
-        
+        self._performance_metrics.append(
+            {
+                "action": action,
+                "model_id": model_id,
+                "time_ms": round(time_ms, 2),
+                "timestamp": time.time(),
+            }
+        )
+
         # Keep only last 100 metrics
         if len(self._performance_metrics) > 100:
             self._performance_metrics = self._performance_metrics[-100:]
 
-    def get_performance_metrics(self, model_id: str = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_performance_metrics(
+        self, model_id: str = None, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """Get recent performance metrics."""
         metrics = self._performance_metrics[-limit:]
         if model_id:
@@ -438,6 +456,7 @@ class EmbeddingModelManager:
 
 class EmbeddingModelError(Exception):
     """Exception raised for embedding model errors."""
+
     pass
 
 

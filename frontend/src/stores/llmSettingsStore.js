@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getProviders, saveSettings } from '../services/api'
+import { getLlmHealth, getProviders, saveSettings } from '../services/api'
 
 export const useLlmSettingsStore = defineStore('llmSettings', () => {
   const currentProvider = ref('')
@@ -31,7 +31,8 @@ export const useLlmSettingsStore = defineStore('llmSettings', () => {
   }
 
   async function switchProvider(providerId, model) {
-    if (!providerId || !model) {
+    const selectedModel = String(model || '').trim()
+    if (!providerId || !selectedModel) {
       error.value = 'Provider and model are required'
       return false
     }
@@ -40,14 +41,19 @@ export const useLlmSettingsStore = defineStore('llmSettings', () => {
       isSwitching.value = true
       error.value = null
 
-      await saveSettings({
+      const response = await saveSettings({
         llm_provider: providerId,
-        model: model,
+        model: selectedModel,
         api_key: '',
       })
 
+      if (!response.success) {
+        throw new Error(response.detail || response.message || 'Failed to switch provider')
+      }
+
       currentProvider.value = providerId
-      currentModel.value = model
+      currentModel.value = selectedModel
+      await loadProviders()
       return true
     } catch (err) {
       error.value = err.message
@@ -55,6 +61,42 @@ export const useLlmSettingsStore = defineStore('llmSettings', () => {
       return false
     } finally {
       isSwitching.value = false
+    }
+  }
+
+  async function testConnection(providerId, model) {
+    const selectedProvider = providerId || currentProvider.value
+    const selectedModel = String(model || currentModel.value || '').trim()
+
+    if (!selectedProvider || !selectedModel) {
+      const err = new Error('Provider and model are required')
+      error.value = err.message
+      throw err
+    }
+
+    if (selectedProvider !== 'local_llm') {
+      return {
+        status: 'ready',
+        detail: 'Provider configuration is ready to save.',
+      }
+    }
+
+    try {
+      error.value = null
+      const health = await getLlmHealth({
+        provider: selectedProvider,
+        model: selectedModel,
+      })
+
+      if (health.status !== 'healthy') {
+        throw new Error(health.detail || 'llama.cpp connection failed')
+      }
+
+      return health
+    } catch (err) {
+      error.value = err.message
+      console.error('Failed to test LLM connection:', err)
+      throw err
     }
   }
 
@@ -68,5 +110,6 @@ export const useLlmSettingsStore = defineStore('llmSettings', () => {
     currentProviderName,
     loadProviders,
     switchProvider,
+    testConnection,
   }
 })

@@ -1,4 +1,3 @@
-from functools import lru_cache
 from typing import Dict, List, Optional
 
 from django.http import HttpRequest, JsonResponse
@@ -36,6 +35,7 @@ def _get_document_text(filename: str) -> Optional[str]:
         if os.path.exists(media_path):
             if filename.lower().endswith(".pdf"):
                 import fitz
+
                 text = ""
                 with fitz.open(media_path) as doc:
                     for page in doc:

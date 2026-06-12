@@ -6,10 +6,12 @@ from app.config import settings
 from app.services.runtime_embedding import load_runtime_embedding_settings
 from app.services.vector_store import VectorStore
 
+
 def _get_hybrid_retriever_class():
     from retrieval.hybrid_retriever import FusionMethod, HybridRetriever
 
     return FusionMethod, HybridRetriever
+
 
 logger = logging.getLogger("hybrid_retriever_service")
 
@@ -88,9 +90,7 @@ class HybridRetrieverService:
             cls._instance = None
             cls._initialized = False
 
-    def search(
-        self, query: str, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         hybrid_results = self._retriever.retrieve(query=query, top_k=top_k)
         return [
             {

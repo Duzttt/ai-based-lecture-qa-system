@@ -156,6 +156,17 @@ def _call_local_llm(
         if with_thinking:
             call_payload["think"] = True
 
+        prompt_chars = sum(
+            len(m.get("content", "")) for m in call_payload.get("messages", [])
+        )
+        logger.debug(
+            "LLM request | model=%s chars=%d max_tokens=%s think=%s",
+            target_model,
+            prompt_chars,
+            call_payload.get("max_tokens"),
+            call_payload.get("think", False),
+        )
+
         try:
             response = requests.post(
                 f"{base_url.rstrip('/')}/v1/chat/completions",
@@ -180,18 +191,24 @@ def _call_local_llm(
                     start = raw.index("<think>") + len("<think>")
                     end = raw.index("</think>")
                     thinking_text = raw[start:end].strip()
-                    content = (raw[:raw.index("<think>")] + raw[end + len("</think>"):]).strip()
+                    content = (
+                        raw[: raw.index("<think>")] + raw[end + len("</think>") :]
+                    ).strip()
 
             if return_thinking:
                 return str(content).strip(), thinking_text
             return str(content).strip()
         except requests.HTTPError as exc:
-            if (
-                exc.response is not None
-                and exc.response.status_code == 400
-                and with_thinking
-            ):
-                return _call_model_once(target_model, with_thinking=False)
+            if exc.response is not None and exc.response.status_code == 400:
+                response_body = exc.response.text[:2000]
+                logger.error(
+                    "LLM 400 error | model=%s status=%d body=%s",
+                    target_model,
+                    exc.response.status_code,
+                    response_body,
+                )
+                if with_thinking:
+                    return _call_model_once(target_model, with_thinking=False)
             raise
 
     try:
@@ -240,10 +257,15 @@ def call_llm(
 
     dispatch_fn = _PROVIDER_DISPATCH[provider]
     start_time = time.monotonic()
-    effective_query = query_text or (messages[-1].get("content", "") if messages else "")
+    effective_query = query_text or (
+        messages[-1].get("content", "") if messages else ""
+    )
     logger.info(
         "LLM call | provider=%s model=%s type=%s query=%s",
-        provider, model, call_type, effective_query[:120],
+        provider,
+        model,
+        call_type,
+        effective_query[:120],
     )
 
     try:
@@ -260,7 +282,10 @@ def call_llm(
         content_for_log = result[0] if isinstance(result, tuple) else result
         logger.info(
             "LLM success | provider=%s model=%s latency=%dms answer_len=%d",
-            provider, model, elapsed_ms, len(content_for_log),
+            provider,
+            model,
+            elapsed_ms,
+            len(content_for_log),
         )
 
         log_entry = QueryLog.objects.create(
@@ -293,7 +318,10 @@ def call_llm(
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
         logger.error(
             "LLM error | provider=%s model=%s latency=%dms error=%s",
-            provider, model, elapsed_ms, exc,
+            provider,
+            model,
+            elapsed_ms,
+            exc,
         )
 
         QueryLog.objects.create(
