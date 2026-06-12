@@ -1,0 +1,175 @@
+<h2>RAGAS Evaluation Flowchart Design (Vertical Sequence)</h2>
+<p class="subtitle">A portrait-oriented, step-by-step flowchart from inputs to the final RAGAS metrics CSV. Here is the visual layout:</p>
+
+<style>
+  .flowchart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    font-family: 'Times New Roman', Times, serif;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .flow-step {
+    border-radius: 8px;
+    padding: 12px 18px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    border: 2px solid;
+    position: relative;
+  }
+  
+  /* Color coding */
+  .color-io {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+    color: #1f2937;
+  }
+  
+  .color-prep {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #78350f;
+  }
+  
+  .color-rag {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e3a8a;
+  }
+  
+  .color-eval {
+    background-color: #ccfbf1;
+    border-color: #0d9488;
+    color: #115e59;
+  }
+  
+  .flow-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+  
+  .flow-desc {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+  
+  .flow-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 25px;
+  }
+  
+  .flow-arrow svg {
+    fill: #6b7280;
+    width: 24px;
+    height: 24px;
+  }
+  
+  .flow-split {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 500px;
+    gap: 10px;
+  }
+  
+  .flow-split .flow-step {
+    width: 48%;
+    padding: 10px;
+  }
+</style>
+
+<div class="flowchart">
+
+  <!-- Step 1: Input -->
+  <div class="flow-step color-io">
+    <div class="flow-title">1. Input Sources</div>
+    <div class="flow-desc">PDF Lecture Notes (e.g., in <code>media/data_source/</code>) OR pre-defined evaluation dataset in JSONL format</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 2 & 3: PDF Processing vs Direct Load -->
+  <div class="flow-step color-prep">
+    <div class="flow-title">2. Text Preparation & Smart Chunking</div>
+    <div class="flow-desc">Extract text using <strong>PDFLoader</strong> &rarr; Split into 500-character chunks with 100-character overlap</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+  
+  <div class="flow-step color-prep">
+    <div class="flow-title">3. QA Pair Generation (LLM-based)</div>
+    <div class="flow-desc">Prompt generator LLM (Gemini/Qwen) to output JSON array of <code>{question, ground_truth}</code> pairs &rarr; Save as dataset JSONL</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 4: RAG Pipeline - Hybrid Retrieval -->
+  <div class="flow-step color-rag">
+    <div class="flow-title">4. Hybrid Retrieval Engine</div>
+    <div class="flow-desc">For each question: query <strong>Dense Retriever (FAISS)</strong> + <strong>Sparse Retriever (BM25)</strong> &rarr; Fuse using Reciprocal Rank Fusion (RRF, <code>k=60</code>) &rarr; Select top <code>top_k</code> context chunks</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 5: RAG Pipeline - Generation -->
+  <div class="flow-step color-rag">
+    <div class="flow-title">5. Answer Generation</div>
+    <div class="flow-desc">Format retrieved context + question &rarr; Send to LLM generator (local Llama.cpp / Gemini) &rarr; Produce answer</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 6: Dataset Assembly -->
+  <div class="flow-step color-rag">
+    <div class="flow-title">6. Dataset Assembly</div>
+    <div class="flow-desc">Compile evaluation records containing: <code>question</code>, <code>contexts</code>, <code>answer</code>, and <code>ground_truth</code> into Hugging Face Dataset format</div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 7: RAGAS Execution -->
+  <div class="flow-step color-eval">
+    <div class="flow-title">7. RAGAS Evaluation Engine</div>
+    <div class="flow-desc">
+      Initialize <strong>ChatOpenAI</strong> (Judge LLM wrapper) + <strong>_LocalRagasEmbeddings</strong> (MiniLM embeddings). Run RAGAS <code>evaluate()</code> to calculate metrics:
+      <div style="margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-weight: bold; text-align: left; font-size: 0.8rem; padding: 0 10px;">
+        <div>• Faithfulness</div>
+        <div>• Answer Relevancy</div>
+        <div>• Context Precision</div>
+        <div>• Context Recall</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flow-arrow">
+    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+  </div>
+
+  <!-- Step 8: Outputs -->
+  <div class="flow-step color-io">
+    <div class="flow-title">8. Evaluation Output Reports</div>
+    <div class="flow-desc">Write complete dataframe with metrics to <strong>CSV report</strong> + Log aggregate metrics summary (overall score report)</div>
+  </div>
+
+</div>

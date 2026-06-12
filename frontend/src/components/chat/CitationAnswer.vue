@@ -1,5 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+  breaks: true
+})
+
+const renderMarkdown = (text) => {
+  if (!text) return ''
+  return md.renderInline(text)
+}
 
 const props = defineProps({
   /**
@@ -243,9 +256,8 @@ const getCitationLabel = (citations) => {
         <template v-for="(segment, segmentIdx) in getSentenceSegments(sentence)" :key="`${idx}-${segmentIdx}`">
           <span
             :class="{ 'retrieved-phrase': segment.matched }"
-          >
-            {{ segment.text }}
-          </span>
+            v-html="renderMarkdown(segment.text)"
+          />
         </template>
         <sup v-if="hasCitations(sentence)" class="citation-marker">
           {{ getCitationLabel(sentence.citations) }}
@@ -300,6 +312,39 @@ const getCitationLabel = (citations) => {
   line-height: 1.7;
   color: var(--text-main);
   margin: 0;
+}
+
+/* Markdown styling within citation answer */
+.citation-answer :deep(strong) {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.citation-answer :deep(em) {
+  font-style: italic;
+}
+
+.citation-answer :deep(code) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(129, 140, 248, 0.1);
+  color: rgba(129, 140, 248, 0.9);
+}
+
+.citation-answer :deep(a) {
+  color: var(--accent, #6366f1);
+  text-decoration: none;
+}
+
+.citation-answer :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.citation-answer :deep(del) {
+  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .sentence {

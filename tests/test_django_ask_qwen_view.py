@@ -15,7 +15,7 @@ def client() -> Client:
     return Client()
 
 
-def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
+def test_ask_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
@@ -30,7 +30,7 @@ def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.services.local_rag.call_llm", fake_call_llm)
 
     response = client.post(
-        "/api/ask_qwen",
+        "/api/chat",
         data=json.dumps({"query": "What are the five trends?"}),
         content_type="application/json",
     )
@@ -42,7 +42,7 @@ def test_ask_qwen_success(client: Client, monkeypatch: pytest.MonkeyPatch):
     assert len(data["source_snippets"]) == 2
 
 
-def test_ask_qwen_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
+def test_ask_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         "django_app.views.rag.retrieve_with_faiss",
         lambda query, top_k=3, source_filter=None: [
@@ -58,7 +58,7 @@ def test_ask_qwen_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.services.local_rag.call_llm", fake_call_llm)
 
     response = client.post(
-        "/api/ask_qwen",
+        "/api/chat",
         data=json.dumps({"query": "test"}),
         content_type="application/json",
     )
@@ -67,9 +67,9 @@ def test_ask_qwen_timeout(client: Client, monkeypatch: pytest.MonkeyPatch):
     assert "timed out" in response.json()["detail"].lower()
 
 
-def test_ask_qwen_missing_query(client: Client):
+def test_ask_missing_query(client: Client):
     response = client.post(
-        "/api/ask_qwen",
+        "/api/chat",
         data=json.dumps({}),
         content_type="application/json",
     )

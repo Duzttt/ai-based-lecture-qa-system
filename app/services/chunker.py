@@ -70,12 +70,9 @@ class TextChunker:
 
         for sentence in sentences:
             candidate = f"{current_chunk} {sentence}".strip()
-            if (
-                current_chunk
-                and len(candidate) > self.chunk_size
-            ):
+            if current_chunk and len(candidate) > self.chunk_size:
                 chunks.append(current_chunk.strip())
-                overlap = current_chunk[-self.chunk_overlap:]
+                overlap = current_chunk[-self.chunk_overlap :]
                 current_chunk = f"{overlap} {sentence}".strip()
             else:
                 current_chunk = candidate
@@ -93,15 +90,11 @@ class TextChunker:
 
         # 优先使用LlamaIndex分割器
         if self._use_llama:
-            return self._clean_chunks(
-                self._splitter.split_text(cleaned_text)
-            )
+            return self._clean_chunks(self._splitter.split_text(cleaned_text))
 
         # 回退到LangChain分割器
         if self._character_splitter is not None:
-            return self._clean_chunks(
-                self._character_splitter.split_text(cleaned_text)
-            )
+            return self._clean_chunks(self._character_splitter.split_text(cleaned_text))
 
         # 最终回退到自定义实现
         return self._chunk_text_fallback(cleaned_text)
@@ -114,15 +107,11 @@ class TextChunker:
 
         # 优先使用LlamaIndex分割器（它本身就按句子分割）
         if self._use_llama:
-            return self._clean_chunks(
-                self._splitter.split_text(cleaned_text)
-            )
+            return self._clean_chunks(self._splitter.split_text(cleaned_text))
 
         # 回退到LangChain分割器
         if self._sentence_splitter is not None:
-            return self._clean_chunks(
-                self._sentence_splitter.split_text(cleaned_text)
-            )
+            return self._clean_chunks(self._sentence_splitter.split_text(cleaned_text))
 
         # 最终回退到自定义实现
         return self._chunk_text_by_sentences_fallback(cleaned_text)

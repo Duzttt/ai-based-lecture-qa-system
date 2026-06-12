@@ -1,0 +1,44 @@
+<h2>RAGAS Evaluation Flowchart - Layout Options</h2>
+<p class="subtitle">Select the visual layout structure you prefer for your academic report.</p>
+
+<div class="options">
+  <div class="option" data-choice="vertical" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Vertical Flow (Strictly Sequential)</h3>
+      <p>A single linear vertical sequence. From PDF/JSONL inputs, to PDF extraction & chunking, hybrid retrieval, LLM response generation, and finally RAGAS metric calculations. Clean, easy to follow, and fits perfectly in a standard portrait A4 column.</p>
+    </div>
+  </div>
+  
+  <div class="option" data-choice="two-stage" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Two-Stage Functional Blocks</h3>
+      <p>Splits the diagram into two distinct, stacked phases: (1) <em>RAG System Pipeline</em> (the application under test) and (2) <em>RAGAS Evaluation Engine</em> (the judge pipeline). Clearly separates the system logic from the evaluation logic.</p>
+    </div>
+  </div>
+  
+  <div class="option" data-choice="iterative" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Iterative CRISP-eval Loop</h3>
+      <p>A sequential layout but with a feedback loop arrow running from the final evaluation scores (CSV report) back to the system hyperparameters (chunking overlap, Fusion Method, local LLM selection), emphasizing optimization and continuous integration.</p>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Recommended: Option A (Vertical Flow) or Option B (Two-Stage)</h4>
+    <ul>
+      <li><strong>Option A</strong> is very simple and matches standard academic system architecture diagrams.</li>
+      <li><strong>Option B</strong> highlights that RAGAS is an external evaluation harness querying the RAG pipeline.</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Considerations</h4>
+    <ul>
+      <li><strong>Option C</strong> adds complexity that may not be necessary if you only run evaluation on-demand.</li>
+    </ul>
+  </div>
+</div>

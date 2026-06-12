@@ -61,7 +61,7 @@ const sendMessage = async (questionText) => {
     }
 
     const controller = new AbortController()
-    timeoutId = setTimeout(() => controller.abort(), 30000)
+    timeoutId = setTimeout(() => controller.abort(), 90000)
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

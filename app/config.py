@@ -61,6 +61,15 @@ class Settings(BaseSettings):
     LOCAL_LLM_BASE_URL: str = "http://localhost:8080"
     LOCAL_LLM_TIMEOUT_SECONDS: int = 300
 
+    QA_GEN_BASE_URL: Optional[str] = None
+    QA_GEN_MODEL: Optional[str] = None
+    QA_GEN_TIMEOUT_SECONDS: int = 120
+
+    EVAL_BASE_URL: Optional[str] = None
+    EVAL_MODEL: Optional[str] = None
+    EVAL_TIMEOUT_SECONDS: int = 300
+    EVAL_MAX_WORKERS: int = 4
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def parse_debug_flag(cls, value):

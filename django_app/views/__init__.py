@@ -27,7 +27,7 @@ from django_app.views.documents import (
 # RAG / Chat
 from django_app.views.rag import (
     ask_question,
-    ask_qwen,
+    ask,
     ask_with_citations,
     settings_handler,
     providers_handler,
@@ -150,7 +150,7 @@ __all__ = [
     "generate_podcast",
     # RAG / Chat
     "ask_question",
-    "ask_qwen",
+    "ask",
     "ask_with_citations",
     "settings_handler",
     "providers_handler",

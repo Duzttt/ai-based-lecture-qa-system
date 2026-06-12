@@ -243,7 +243,7 @@ class TestQueryMethod:
                 pipeline = CitationRAGPipeline()
 
                 # Mock the LLM generation
-                with patch.object(pipeline, "_generate_with_qwen") as mock_generate:
+                with patch.object(pipeline, "_generate") as mock_generate:
                     mock_generate.return_value = json.dumps(
                         {
                             "sentences": [

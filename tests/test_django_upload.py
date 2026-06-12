@@ -24,7 +24,7 @@ def test_upload_pdf_success(
     monkeypatch.setattr(settings, "UPLOAD_INDEXING_STRATEGY", "full_rebuild")
     monkeypatch.setattr(settings, "UPLOAD_INDEXING_ASYNC", True)
     monkeypatch.setattr(
-        "django_app.views._enqueue_full_rebuild",
+        "django_app.views.documents._enqueue_full_rebuild",
         lambda uploaded_filename: {
             "status": "queued",
             "last_uploaded_filename": uploaded_filename,
@@ -45,7 +45,7 @@ def test_upload_pdf_success(
     assert data["message"] == "File uploaded. Full reindex is running in background."
     assert data["indexing_mode"] == "full_rebuild"
     assert data["indexing_status"] == "queued"
-    assert data["filename"].endswith("_lecture.pdf")
+    assert data["filename"].endswith("lecture.pdf")
 
     saved_file = tmp_path / data["filename"]
     assert saved_file.exists()

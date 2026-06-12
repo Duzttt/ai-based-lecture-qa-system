@@ -92,7 +92,7 @@ def ask_question(request: HttpRequest) -> JsonResponse:
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def ask_qwen(request: HttpRequest) -> JsonResponse:
+def ask(request: HttpRequest) -> JsonResponse:
     try:
         payload = _get_json_body(request)
     except ValueError as exc:
@@ -129,7 +129,7 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
             context=context,
             model=llm_model,
             temperature=temperature,
-            timeout_seconds=20,
+            timeout_seconds=60,
             return_log=True,
             return_thinking=True,
         )
@@ -203,7 +203,7 @@ def ask_qwen(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["POST"])
 def ask_with_citations(request: HttpRequest) -> JsonResponse:
     # Citation mode is temporarily disabled: reuse the plain chat path.
-    plain_response = ask_qwen(request)
+    plain_response = ask(request)
     if plain_response.status_code != 200:
         return plain_response
 
@@ -319,7 +319,11 @@ LLM_PROVIDERS_CATALOG = [
 ]
 
 
-def _fetch_local_models(base_url: str, current_model: str) -> List[str]:
+def _fetch_local_models(
+    base_url: str,
+    current_model: str,
+    fallback_model: str,
+) -> List[str]:
     models: List[str] = []
     try:
         response = requests.get(f"{base_url.rstrip('/')}/v1/models", timeout=5)
@@ -333,8 +337,14 @@ def _fetch_local_models(base_url: str, current_model: str) -> List[str]:
     except (requests.RequestException, ValueError, TypeError):
         pass
 
-    if current_model and current_model not in models:
-        models.append(current_model)
+    if models:
+        if current_model and current_model not in models:
+            models.append(current_model)
+        return models
+
+    for model in (current_model, fallback_model):
+        if model and model not in models:
+            models.append(model)
     return models
 
 
@@ -363,6 +373,7 @@ def providers_handler(request: HttpRequest) -> JsonResponse:
             entry["models"] = _fetch_local_models(
                 settings.LOCAL_LLM_BASE_URL,
                 current_model if current_provider == "local_llm" else "",
+                settings.LOCAL_LLM_MODEL,
             )
         providers.append(entry)
 
@@ -378,8 +389,16 @@ def providers_handler(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["GET"])
 def llm_health_handler(request: HttpRequest) -> JsonResponse:
     runtime_settings = _build_runtime_llm_settings()
-    provider = runtime_settings["provider"] or settings.LLM_PROVIDER
-    configured_model = runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+    requested_provider = str(request.GET.get("provider") or "").strip().lower()
+    provider = (
+        requested_provider
+        if requested_provider in VALID_PROVIDERS
+        else runtime_settings["provider"] or settings.LLM_PROVIDER
+    )
+    requested_model = str(request.GET.get("model") or "").strip()
+    configured_model = (
+        requested_model or runtime_settings["model"] or settings.LOCAL_LLM_MODEL
+    )
     base_url = settings.LOCAL_LLM_BASE_URL.rstrip("/")
     model_for_probe = (
         configured_model if provider == "local_llm" else settings.LOCAL_LLM_MODEL

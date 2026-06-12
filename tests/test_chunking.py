@@ -194,7 +194,7 @@ class TestSmartChunkerMergeAndSplit:
         """Test that long paragraphs are split."""
         from chunking.smart_chunker import SmartChunker
 
-        chunker = SmartChunker(chunk_size=100, max_paragraph_size=200)
+        chunker = SmartChunker(chunk_size=100, overlap=20, max_paragraph_size=200)
         long_text = "This is a very long piece of text. " * 50  # Create very long text
         paragraphs = [long_text]
 

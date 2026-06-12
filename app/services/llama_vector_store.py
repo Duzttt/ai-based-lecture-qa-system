@@ -166,9 +166,7 @@ class LlamaVectorStore:
                 self.chunks = [self._normalize_chunk(chunk) for chunk in loaded_chunks]
                 if os.path.exists(mapping_file):
                     items = np.load(mapping_file, allow_pickle=True).tolist()
-                    self._node_id_to_chunk_index = {
-                        str(k): int(v) for k, v in items
-                    }
+                    self._node_id_to_chunk_index = {str(k): int(v) for k, v in items}
             except Exception as e:
                 raise LlamaVectorStoreError(f"Failed to load index: {str(e)}")
         else:
@@ -219,9 +217,7 @@ class LlamaVectorStore:
             return []
 
         actual_k = min(top_k, self.faiss_index.ntotal)
-        norm_query = self._normalize(
-            np.array([query_embedding], dtype="float32")
-        )[0]
+        norm_query = self._normalize(np.array([query_embedding], dtype="float32"))[0]
         query = VectorStoreQuery(
             query_embedding=norm_query.tolist(),
             similarity_top_k=actual_k,

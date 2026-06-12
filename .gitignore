@@ -52,6 +52,7 @@ htmlcov/
 outputs/
 report/
 source/
+.worktrees/
 
 # Empty placeholder directories
 data_source/

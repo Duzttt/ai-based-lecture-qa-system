@@ -50,6 +50,15 @@ export const getProviders = async () => {
   return response.data
 }
 
+export const getLlmHealth = async (options = {}) => {
+  const params = new URLSearchParams()
+  if (options.provider) params.set('provider', options.provider)
+  if (options.model) params.set('model', options.model)
+  const query = params.toString()
+  const response = await api.get(`/health/llm${query ? `?${query}` : ''}`)
+  return response.data
+}
+
 export const getRagConfig = async () => {
   const response = await api.get('/rag-config')
   return response.data

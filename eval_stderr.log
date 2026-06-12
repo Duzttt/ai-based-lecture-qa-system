@@ -1,0 +1,1258 @@
+2026-06-02 01:00:14.868703: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-06-02 01:00:18.150408: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-06-02 01:00:25,097 WARNING From C:\Users\wongs\AppData\Local\Programs\Python\Python311\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+2026-06-02 01:00:25,787 INFO TensorFlow version 2.20.0 available.
+2026-06-02 01:00:27,404 INFO Loading faiss with AVX2 support.
+2026-06-02 01:00:27,404 INFO Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-06-02 01:00:27,405 INFO Loading faiss.
+2026-06-02 01:00:27,460 INFO Successfully loaded faiss.
+2026-06-02 01:00:27,572 INFO No device provided, using cuda:0
+2026-06-02 01:00:28,573 INFO Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+C:\Users\wongs\Documents\GitHub\AI-Based-Lecture-Note-Question-Answering-System-Using-Retrieval-Augmented-Generation-RAG-\retrieval\dense_retriever.py:82: FutureWarning: The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.
+  dim = self.embedder.get_sentence_embedding_dimension()
+2026-06-02 01:00:34,988 INFO HybridRetrieverService initialized with 416 documents
+Evaluating:   0%|          | 0/380 [00:00<?, ?it/s]2026-06-02 01:11:14,034 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:14,036 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:14,036 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:14,037 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:14,038 INFO Retrying request to /chat/completions in 0.403404 seconds
+2026-06-02 01:11:14,039 INFO Retrying request to /chat/completions in 0.424567 seconds
+2026-06-02 01:11:14,039 INFO Retrying request to /chat/completions in 0.413187 seconds
+2026-06-02 01:11:14,040 INFO Retrying request to /chat/completions in 0.394510 seconds
+2026-06-02 01:11:40,899 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:40,914 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:40,915 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:40,916 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:11:40,916 INFO Retrying request to /chat/completions in 0.976522 seconds
+2026-06-02 01:11:40,917 INFO Retrying request to /chat/completions in 0.885319 seconds
+2026-06-02 01:11:40,917 INFO Retrying request to /chat/completions in 0.818327 seconds
+2026-06-02 01:11:40,918 INFO Retrying request to /chat/completions in 0.797176 seconds
+2026-06-02 01:12:08,226 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:12:08,240 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:12:08,241 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:12:08,241 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:12:08,246 ERROR Exception raised in Job[39]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:12:08,247 ERROR Exception raised in Job[175]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:12:08,247 ERROR Exception raised in Job[311]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:12:08,247 ERROR Exception raised in Job[40]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   0%|          | 1/380 [01:21<8:32:11, 81.09s/it]2026-06-02 01:12:26,672 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:12:35,104 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:12:35,130 INFO No device provided, using cuda:0
+2026-06-02 01:12:36,212 INFO Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+Evaluating:   1%|1         | 5/380 [01:54<1:59:20, 19.10s/it]2026-06-02 01:12:46,335 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:12:53,024 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   2%|1         | 6/380 [02:05<1:48:26, 17.40s/it]2026-06-02 01:13:14,578 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:13:19,778 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:13:23,219 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:23,235 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:23,235 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:23,236 INFO Retrying request to /chat/completions in 0.416349 seconds
+2026-06-02 01:13:23,237 INFO Retrying request to /chat/completions in 0.378556 seconds
+2026-06-02 01:13:23,237 INFO Retrying request to /chat/completions in 0.392338 seconds
+2026-06-02 01:13:36,748 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   2%|1         | 7/380 [02:49<2:29:01, 23.97s/it]2026-06-02 01:13:56,039 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:56,053 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:56,054 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:56,055 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:13:56,056 INFO Retrying request to /chat/completions in 0.879540 seconds
+2026-06-02 01:13:56,056 INFO Retrying request to /chat/completions in 0.954394 seconds
+2026-06-02 01:13:56,057 INFO Retrying request to /chat/completions in 0.897592 seconds
+2026-06-02 01:13:56,057 INFO Retrying request to /chat/completions in 0.380652 seconds
+2026-06-02 01:14:23,671 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:23,672 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:23,673 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:23,673 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:23,674 INFO Retrying request to /chat/completions in 0.791959 seconds
+2026-06-02 01:14:23,676 ERROR Exception raised in Job[176]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:14:23,676 ERROR Exception raised in Job[312]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:14:23,677 ERROR Exception raised in Job[42]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   2%|2         | 8/380 [03:36<3:05:59, 30.00s/it]2026-06-02 01:14:50,574 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:50,589 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:50,589 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:50,590 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:14:50,590 INFO Retrying request to /chat/completions in 0.473906 seconds
+2026-06-02 01:14:50,591 INFO Retrying request to /chat/completions in 0.484273 seconds
+2026-06-02 01:14:50,591 INFO Retrying request to /chat/completions in 0.432470 seconds
+2026-06-02 01:14:50,592 ERROR Exception raised in Job[178]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   3%|2         | 11/380 [04:03<1:55:58, 18.86s/it]2026-06-02 01:15:17,747 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:17,763 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:17,763 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:17,764 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:17,765 INFO Retrying request to /chat/completions in 0.402992 seconds
+2026-06-02 01:15:17,765 INFO Retrying request to /chat/completions in 0.797995 seconds
+2026-06-02 01:15:17,765 INFO Retrying request to /chat/completions in 0.948700 seconds
+2026-06-02 01:15:17,766 INFO Retrying request to /chat/completions in 0.835484 seconds
+2026-06-02 01:15:45,352 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:45,355 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:45,355 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:45,356 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:15:45,356 INFO Retrying request to /chat/completions in 0.937241 seconds
+2026-06-02 01:15:45,358 ERROR Exception raised in Job[179]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:15:45,358 ERROR Exception raised in Job[43]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:15:45,358 ERROR Exception raised in Job[314]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   3%|3         | 12/380 [04:58<2:40:02, 26.09s/it]2026-06-02 01:16:14,575 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   4%|3         | 15/380 [05:27<1:52:38, 18.52s/it]2026-06-02 01:16:15,258 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:16:26,150 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:16:36,629 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:16:53,359 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:16:53,361 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:16:53,362 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:16:53,363 INFO Retrying request to /chat/completions in 0.395147 seconds
+2026-06-02 01:16:53,364 INFO Retrying request to /chat/completions in 0.467108 seconds
+2026-06-02 01:16:53,364 INFO Retrying request to /chat/completions in 0.395241 seconds
+2026-06-02 01:17:04,656 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   4%|4         | 16/380 [06:17<2:26:58, 24.23s/it]2026-06-02 01:17:29,662 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:17:29,677 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:17:29,677 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:17:29,679 INFO Retrying request to /chat/completions in 0.800284 seconds
+2026-06-02 01:17:29,680 INFO Retrying request to /chat/completions in 0.952174 seconds
+2026-06-02 01:17:29,680 INFO Retrying request to /chat/completions in 0.921994 seconds
+2026-06-02 01:17:40,660 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   4%|4         | 17/380 [06:53<2:41:11, 26.64s/it]2026-06-02 01:18:06,209 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:06,224 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:06,225 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:06,227 ERROR Exception raised in Job[316]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   5%|4         | 18/380 [07:19<2:39:13, 26.39s/it]2026-06-02 01:18:06,229 ERROR Exception raised in Job[180]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:18:06,230 ERROR Exception raised in Job[44]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:18:17,707 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   6%|5         | 21/380 [07:30<1:31:23, 15.28s/it]2026-06-02 01:18:39,332 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:39,334 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:39,334 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:39,335 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:18:39,335 INFO Retrying request to /chat/completions in 0.432752 seconds
+2026-06-02 01:18:39,336 INFO Retrying request to /chat/completions in 0.477410 seconds
+2026-06-02 01:18:39,336 INFO Retrying request to /chat/completions in 0.421684 seconds
+2026-06-02 01:18:39,337 INFO Retrying request to /chat/completions in 0.479062 seconds
+2026-06-02 01:19:00,291 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:00,294 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:00,294 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:00,296 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:00,296 INFO Retrying request to /chat/completions in 0.810964 seconds
+2026-06-02 01:19:00,297 INFO Retrying request to /chat/completions in 0.937594 seconds
+2026-06-02 01:19:00,297 INFO Retrying request to /chat/completions in 0.932575 seconds
+2026-06-02 01:19:00,298 INFO Retrying request to /chat/completions in 0.750272 seconds
+2026-06-02 01:19:28,416 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:28,432 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:28,432 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:28,433 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:28,435 ERROR Exception raised in Job[182]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:19:28,435 ERROR Exception raised in Job[46]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:19:28,437 ERROR Exception raised in Job[47]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:19:28,437 ERROR Exception raised in Job[318]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   6%|5         | 22/380 [08:41<2:34:00, 25.81s/it]2026-06-02 01:19:49,078 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:49,083 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:49,084 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:49,085 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:19:49,085 INFO Retrying request to /chat/completions in 0.384277 seconds
+2026-06-02 01:19:49,086 INFO Retrying request to /chat/completions in 0.474748 seconds
+2026-06-02 01:19:49,086 INFO Retrying request to /chat/completions in 0.490877 seconds
+2026-06-02 01:19:49,086 INFO Retrying request to /chat/completions in 0.456173 seconds
+2026-06-02 01:20:12,686 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:12,701 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:12,701 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:12,702 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:12,702 INFO Retrying request to /chat/completions in 0.785443 seconds
+2026-06-02 01:20:12,703 INFO Retrying request to /chat/completions in 0.866946 seconds
+2026-06-02 01:20:12,704 INFO Retrying request to /chat/completions in 0.943294 seconds
+2026-06-02 01:20:12,704 INFO Retrying request to /chat/completions in 0.784443 seconds
+2026-06-02 01:20:40,603 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:40,617 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:40,618 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:40,618 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:20:40,620 ERROR Exception raised in Job[183]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:20:40,621 ERROR Exception raised in Job[319]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:20:40,621 ERROR Exception raised in Job[48]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:20:40,621 ERROR Exception raised in Job[184]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   7%|6         | 26/380 [09:53<2:08:25, 21.77s/it]2026-06-02 01:20:48,952 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   8%|7         | 30/380 [10:01<1:18:01, 13.38s/it]2026-06-02 01:20:53,459 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:   8%|8         | 31/380 [10:06<1:10:58, 12.20s/it]2026-06-02 01:21:10,113 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:21:10,197 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:21:19,685 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:21:19,686 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:21:19,687 INFO Retrying request to /chat/completions in 0.473675 seconds
+2026-06-02 01:21:19,687 INFO Retrying request to /chat/completions in 0.475691 seconds
+2026-06-02 01:21:41,118 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:21:41,201 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:21:50,914 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:21:50,915 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:21:50,916 INFO Retrying request to /chat/completions in 0.857246 seconds
+2026-06-02 01:21:50,917 INFO Retrying request to /chat/completions in 0.956976 seconds
+2026-06-02 01:22:11,151 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:22:11,388 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:22:20,868 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:20,882 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:20,884 ERROR Exception raised in Job[321]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Invalid input batch.', 'type': 'server_error'}})
+2026-06-02 01:22:20,884 ERROR Exception raised in Job[320]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Invalid input batch.', 'type': 'server_error'}})
+Evaluating:   8%|8         | 32/380 [11:33<2:20:02, 24.15s/it]2026-06-02 01:22:47,032 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:47,046 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:47,047 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:47,048 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:22:47,049 INFO Retrying request to /chat/completions in 0.469850 seconds
+2026-06-02 01:22:47,049 INFO Retrying request to /chat/completions in 0.493104 seconds
+2026-06-02 01:22:47,050 INFO Retrying request to /chat/completions in 0.417542 seconds
+2026-06-02 01:22:47,050 INFO Retrying request to /chat/completions in 0.385619 seconds
+2026-06-02 01:23:14,726 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:14,740 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:14,741 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:14,741 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:14,742 INFO Retrying request to /chat/completions in 0.973149 seconds
+2026-06-02 01:23:14,743 INFO Retrying request to /chat/completions in 0.991548 seconds
+2026-06-02 01:23:14,743 INFO Retrying request to /chat/completions in 0.799577 seconds
+2026-06-02 01:23:14,743 INFO Retrying request to /chat/completions in 0.958136 seconds
+2026-06-02 01:23:42,333 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:42,334 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:42,335 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:42,336 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:23:42,340 ERROR Exception raised in Job[50]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:23:42,340 ERROR Exception raised in Job[186]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:23:42,341 ERROR Exception raised in Job[51]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:   9%|8         | 34/380 [12:55<2:49:05, 29.32s/it]2026-06-02 01:23:42,342 ERROR Exception raised in Job[322]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:24:09,373 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:09,375 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:09,375 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:09,376 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:09,376 INFO Retrying request to /chat/completions in 0.381119 seconds
+2026-06-02 01:24:09,377 INFO Retrying request to /chat/completions in 0.498370 seconds
+2026-06-02 01:24:09,377 INFO Retrying request to /chat/completions in 0.430431 seconds
+2026-06-02 01:24:09,378 INFO Retrying request to /chat/completions in 0.375177 seconds
+2026-06-02 01:24:36,226 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:36,228 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:36,228 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:36,228 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:24:36,229 INFO Retrying request to /chat/completions in 0.839566 seconds
+2026-06-02 01:24:36,230 INFO Retrying request to /chat/completions in 0.768436 seconds
+2026-06-02 01:24:36,230 INFO Retrying request to /chat/completions in 0.884469 seconds
+2026-06-02 01:24:36,231 INFO Retrying request to /chat/completions in 0.894338 seconds
+2026-06-02 01:25:03,937 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:03,940 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:03,940 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:03,940 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:03,942 ERROR Exception raised in Job[323]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:  10%|#         | 38/380 [14:16<2:23:09, 25.12s/it]2026-06-02 01:25:03,945 ERROR Exception raised in Job[187]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:25:03,945 ERROR Exception raised in Job[52]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:25:03,945 ERROR Exception raised in Job[188]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:25:15,288 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  11%|#1        | 42/380 [14:28<1:30:59, 16.15s/it]2026-06-02 01:25:19,661 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:25:19,888 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  11%|#1        | 43/380 [14:32<1:22:34, 14.70s/it]2026-06-02 01:25:32,038 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  12%|#1        | 44/380 [14:44<1:20:09, 14.31s/it]2026-06-02 01:25:54,228 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:54,242 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:54,243 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:54,243 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:25:54,244 INFO Retrying request to /chat/completions in 0.499115 seconds
+2026-06-02 01:25:54,245 INFO Retrying request to /chat/completions in 0.425443 seconds
+2026-06-02 01:25:54,245 INFO Retrying request to /chat/completions in 0.450412 seconds
+2026-06-02 01:25:54,246 INFO Retrying request to /chat/completions in 0.408163 seconds
+2026-06-02 01:26:21,120 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:21,120 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:21,121 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:21,122 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:21,122 INFO Retrying request to /chat/completions in 0.820568 seconds
+2026-06-02 01:26:21,124 INFO Retrying request to /chat/completions in 0.776910 seconds
+2026-06-02 01:26:21,124 INFO Retrying request to /chat/completions in 0.874165 seconds
+2026-06-02 01:26:21,124 INFO Retrying request to /chat/completions in 0.868150 seconds
+2026-06-02 01:26:49,097 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:49,101 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:49,101 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:49,102 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:26:49,111 ERROR Exception raised in Job[190]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:26:49,111 ERROR Exception raised in Job[54]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:26:49,111 ERROR Exception raised in Job[324]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 01:26:49,111 ERROR Exception raised in Job[326]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:  12%|#1        | 45/380 [16:01<2:22:27, 25.52s/it]2026-06-02 01:27:27,377 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:27:27,395 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:27:27,397 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:27:27,398 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:27:27,410 INFO Retrying request to /chat/completions in 0.442700 seconds
+2026-06-02 01:27:27,414 INFO Retrying request to /chat/completions in 0.433657 seconds
+2026-06-02 01:27:27,414 INFO Retrying request to /chat/completions in 0.482180 seconds
+2026-06-02 01:27:27,415 INFO Retrying request to /chat/completions in 0.390667 seconds
+2026-06-02 01:30:30,830 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:30:30,849 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:30:30,852 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:30:30,856 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:30:30,859 INFO Retrying request to /chat/completions in 0.909259 seconds
+2026-06-02 01:30:30,860 INFO Retrying request to /chat/completions in 0.925992 seconds
+2026-06-02 01:30:30,862 INFO Retrying request to /chat/completions in 0.763794 seconds
+2026-06-02 01:30:30,862 INFO Retrying request to /chat/completions in 0.758153 seconds
+2026-06-02 01:31:49,134 ERROR Exception raised in Job[191]: TimeoutError()
+2026-06-02 01:31:49,140 ERROR Exception raised in Job[327]: TimeoutError()
+2026-06-02 01:31:49,141 ERROR Exception raised in Job[55]: TimeoutError()
+2026-06-02 01:31:49,143 ERROR Exception raised in Job[56]: TimeoutError()
+Evaluating:  13%|#2        | 49/380 [21:02<4:38:46, 50.53s/it]2026-06-02 01:34:02,861 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  14%|#3        | 53/380 [23:16<3:56:36, 43.41s/it]2026-06-02 01:34:49,523 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:34:58,912 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  14%|#4        | 54/380 [24:11<4:04:25, 44.99s/it]2026-06-02 01:35:58,133 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 01:36:49,183 ERROR Exception raised in Job[192]: TimeoutError()
+2026-06-02 01:36:49,184 ERROR Exception raised in Job[328]: TimeoutError()
+Evaluating:  14%|#4        | 55/380 [26:02<4:59:04, 55.21s/it]2026-06-02 01:39:03,506 ERROR Exception raised in Job[329]: TimeoutError()
+Evaluating:  15%|#5        | 57/380 [28:16<5:17:08, 58.91s/it]2026-06-02 01:39:58,977 ERROR Exception raised in Job[58]: TimeoutError()
+Evaluating:  15%|#5        | 58/380 [29:11<5:12:49, 58.29s/it]2026-06-02 01:40:27,995 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:40:27,998 INFO Retrying request to /chat/completions in 0.493285 seconds
+2026-06-02 01:41:49,206 ERROR Exception raised in Job[194]: TimeoutError()
+2026-06-02 01:41:49,206 ERROR Exception raised in Job[330]: TimeoutError()
+Evaluating:  16%|#5        | 59/380 [31:02<6:08:55, 68.96s/it]2026-06-02 01:44:03,522 ERROR Exception raised in Job[59]: TimeoutError()
+Evaluating:  16%|#6        | 61/380 [33:16<6:03:05, 68.29s/it]2026-06-02 01:44:58,985 ERROR Exception raised in Job[195]: TimeoutError()
+Evaluating:  16%|#6        | 62/380 [34:11<5:47:45, 65.61s/it]2026-06-02 01:46:49,218 ERROR Exception raised in Job[331]: TimeoutError()
+2026-06-02 01:46:49,219 ERROR Exception raised in Job[60]: TimeoutError()
+Evaluating:  17%|#6        | 63/380 [36:02<6:40:50, 75.87s/it]2026-06-02 01:49:03,526 ERROR Exception raised in Job[196]: TimeoutError()
+Evaluating:  17%|#7        | 65/380 [38:16<6:20:11, 72.42s/it]2026-06-02 01:49:58,995 ERROR Exception raised in Job[332]: TimeoutError()
+Evaluating:  17%|#7        | 66/380 [39:11<5:59:23, 68.67s/it]2026-06-02 01:51:49,235 ERROR Exception raised in Job[61]: TimeoutError()
+2026-06-02 01:51:49,249 ERROR Exception raised in Job[197]: TimeoutError()
+Evaluating:  18%|#7        | 67/380 [41:02<6:50:14, 78.64s/it]2026-06-02 01:52:05,160 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:52:05,162 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:52:05,165 INFO Retrying request to /chat/completions in 0.455461 seconds
+2026-06-02 01:52:05,166 INFO Retrying request to /chat/completions in 0.424269 seconds
+2026-06-02 01:54:03,556 ERROR Exception raised in Job[333]: TimeoutError()
+Evaluating:  18%|#8        | 69/380 [43:16<6:23:25, 73.97s/it]2026-06-02 01:54:59,000 ERROR Exception raised in Job[62]: TimeoutError()
+Evaluating:  18%|#8        | 70/380 [44:11<6:00:39, 69.80s/it]2026-06-02 01:56:28,588 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:56:28,591 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:56:28,592 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:56:28,593 INFO Retrying request to /chat/completions in 0.428136 seconds
+2026-06-02 01:56:28,594 INFO Retrying request to /chat/completions in 0.442642 seconds
+2026-06-02 01:56:28,594 INFO Retrying request to /chat/completions in 0.416604 seconds
+2026-06-02 01:56:49,263 ERROR Exception raised in Job[198]: TimeoutError()
+2026-06-02 01:56:49,277 ERROR Exception raised in Job[334]: TimeoutError()
+Evaluating:  19%|#8        | 71/380 [46:02<6:50:10, 79.65s/it]2026-06-02 01:58:44,445 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:58:44,448 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 01:58:44,449 INFO Retrying request to /chat/completions in 0.974839 seconds
+2026-06-02 01:58:44,450 INFO Retrying request to /chat/completions in 0.435733 seconds
+2026-06-02 01:59:03,581 ERROR Exception raised in Job[63]: TimeoutError()
+Evaluating:  19%|#9        | 73/380 [48:16<6:21:19, 74.53s/it]2026-06-02 01:59:59,028 ERROR Exception raised in Job[199]: TimeoutError()
+Evaluating:  19%|#9        | 74/380 [49:11<5:58:03, 70.21s/it]2026-06-02 02:00:19,364 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:00:19,381 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:00:19,386 INFO Retrying request to /chat/completions in 0.392648 seconds
+2026-06-02 02:00:19,387 INFO Retrying request to /chat/completions in 0.479844 seconds
+2026-06-02 02:01:39,369 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+2026-06-02 02:01:49,275 ERROR Exception raised in Job[335]: TimeoutError()
+2026-06-02 02:01:49,291 ERROR Exception raised in Job[64]: TimeoutError()
+Evaluating:  20%|#9        | 75/380 [51:02<6:46:38, 79.99s/it]2026-06-02 02:01:56,014 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:01:56,018 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:01:56,019 INFO Retrying request to /chat/completions in 0.473316 seconds
+2026-06-02 02:01:56,019 INFO Retrying request to /chat/completions in 0.401706 seconds
+2026-06-02 02:02:22,097 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  20%|##        | 77/380 [51:35<4:32:09, 53.89s/it]2026-06-02 02:03:15,149 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  21%|##        | 78/380 [52:27<4:30:01, 53.65s/it]2026-06-02 02:03:31,836 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  21%|##        | 79/380 [52:44<3:43:47, 44.61s/it]2026-06-02 02:04:59,054 ERROR Exception raised in Job[336]: TimeoutError()
+Evaluating:  21%|##1       | 80/380 [54:11<4:38:11, 55.64s/it]2026-06-02 02:05:29,784 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:05:29,785 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:05:29,786 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:05:29,788 INFO Retrying request to /chat/completions in 0.484494 seconds
+2026-06-02 02:05:29,789 INFO Retrying request to /chat/completions in 0.406819 seconds
+2026-06-02 02:05:29,790 INFO Retrying request to /chat/completions in 0.484961 seconds
+2026-06-02 02:06:05,452 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  21%|##1       | 81/380 [55:18<4:51:49, 58.56s/it]2026-06-02 02:07:19,896 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:07:19,912 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:07:19,913 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:07:19,914 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:07:19,914 INFO Retrying request to /chat/completions in 0.963119 seconds
+2026-06-02 02:07:19,916 INFO Retrying request to /chat/completions in 0.973578 seconds
+2026-06-02 02:07:19,916 INFO Retrying request to /chat/completions in 0.388789 seconds
+2026-06-02 02:07:19,917 INFO Retrying request to /chat/completions in 0.994234 seconds
+2026-06-02 02:08:15,164 ERROR Exception raised in Job[66]: TimeoutError()
+Evaluating:  22%|##1       | 82/380 [57:27<6:29:11, 78.36s/it]2026-06-02 02:08:26,996 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:08:27,014 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:08:27,016 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:08:27,017 INFO Retrying request to /chat/completions in 0.911523 seconds
+2026-06-02 02:08:27,037 ERROR Exception raised in Job[202]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 02:08:27,038 ERROR Exception raised in Job[338]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:  22%|##1       | 83/380 [57:39<4:54:11, 59.43s/it]2026-06-02 02:09:53,172 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:09:53,175 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:09:53,175 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:09:53,176 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:09:53,180 INFO Retrying request to /chat/completions in 0.460565 seconds
+2026-06-02 02:09:53,182 INFO Retrying request to /chat/completions in 0.380098 seconds
+2026-06-02 02:09:53,184 INFO Retrying request to /chat/completions in 0.461901 seconds
+2026-06-02 02:09:53,186 ERROR Exception raised in Job[67]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:  22%|##2       | 85/380 [59:06<4:16:08, 52.10s/it]2026-06-02 02:11:20,767 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:11:20,781 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:11:20,782 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:11:20,783 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:11:20,784 INFO Retrying request to /chat/completions in 0.791696 seconds
+2026-06-02 02:11:20,785 INFO Retrying request to /chat/completions in 0.993157 seconds
+2026-06-02 02:11:20,786 INFO Retrying request to /chat/completions in 0.451855 seconds
+2026-06-02 02:11:20,786 INFO Retrying request to /chat/completions in 0.791525 seconds
+2026-06-02 02:12:26,826 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:12:26,827 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:12:26,829 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:12:26,830 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 500 Internal Server Error"
+2026-06-02 02:12:26,830 INFO Retrying request to /chat/completions in 0.771733 seconds
+2026-06-02 02:12:26,832 ERROR Exception raised in Job[203]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+Evaluating:  23%|##2       | 86/380 [1:01:39<6:16:00, 76.74s/it]2026-06-02 02:12:26,839 ERROR Exception raised in Job[339]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 02:12:26,839 ERROR Exception raised in Job[68]: InternalServerError(Error code: 500 - {'error': {'code': 500, 'message': 'Context size has been exceeded.', 'type': 'server_error'}})
+2026-06-02 02:12:36,203 INFO HTTP Request: POST http://localhost:8080/chat/completions "HTTP/1.1 200 OK"
+Evaluating:  23%|##3       | 89/380 [1:01:49<3:10:11, 39.22s/it]2026-06-02 02:12:38,625 INFO Retrying request to /chat/completions in 0.420199 seconds
+2026-06-02 02:12:38,626 INFO Retrying request to /chat/completions in 0.376376 seconds
+2026-06-02 02:12:38,626 INFO Retrying request to /chat/completions in 0.378179 seconds
+2026-06-02 02:12:38,627 ERROR Exception raised in Job[204]: APIConnectionError(Connection error.)
+Evaluating:  24%|##3       | 90/380 [1:01:51<2:34:46, 32.02s/it]2026-06-02 02:12:40,953 INFO Retrying request to /chat/completions in 0.389865 seconds
+2026-06-02 02:12:41,328 INFO Retrying request to /chat/completions in 0.841479 seconds
+2026-06-02 02:12:41,328 INFO Retrying request to /chat/completions in 0.838438 seconds
+2026-06-02 02:12:41,389 INFO Retrying request to /chat/completions in 0.944901 seconds
+2026-06-02 02:12:43,631 INFO Retrying request to /chat/completions in 0.752662 seconds
+2026-06-02 02:12:44,486 ERROR Exception raised in Job[69]: APIConnectionError(Connection error.)
+Evaluating:  24%|##3       | 91/380 [1:01:57<2:06:45, 26.32s/it]2026-06-02 02:12:44,494 ERROR Exception raised in Job[340]: APIConnectionError(Connection error.)
+2026-06-02 02:12:44,656 ERROR Exception raised in Job[341]: APIConnectionError(Connection error.)
+Evaluating:  24%|##4       | 93/380 [1:01:57<1:17:41, 16.24s/it]2026-06-02 02:12:46,714 ERROR Exception raised in Job[70]: APIConnectionError(Connection error.)
+Evaluating:  25%|##4       | 94/380 [1:01:59<1:02:53, 13.19s/it]2026-06-02 02:12:46,789 INFO Retrying request to /chat/completions in 0.452328 seconds
+2026-06-02 02:12:46,797 INFO Retrying request to /chat/completions in 0.497595 seconds
+2026-06-02 02:12:46,980 INFO Retrying request to /chat/completions in 0.456875 seconds
+2026-06-02 02:12:49,017 INFO Retrying request to /chat/completions in 0.445744 seconds
+2026-06-02 02:12:49,560 INFO Retrying request to /chat/completions in 0.845014 seconds
+2026-06-02 02:12:49,644 INFO Retrying request to /chat/completions in 0.822621 seconds
+2026-06-02 02:12:49,747 INFO Retrying request to /chat/completions in 0.958377 seconds
+2026-06-02 02:12:51,786 INFO Retrying request to /chat/completions in 0.989592 seconds
+2026-06-02 02:12:52,755 ERROR Exception raised in Job[342]: APIConnectionError(Connection error.)
+Evaluating:  25%|##5       | 95/380 [1:02:05<54:39, 11.51s/it]  2026-06-02 02:12:52,770 ERROR Exception raised in Job[206]: APIConnectionError(Connection error.)
+2026-06-02 02:12:53,005 ERROR Exception raised in Job[71]: APIConnectionError(Connection error.)
+Evaluating:  26%|##5       | 97/380 [1:02:05<32:43,  6.94s/it]2026-06-02 02:12:55,074 INFO Retrying request to /chat/completions in 0.498539 seconds
+2026-06-02 02:12:55,090 INFO Retrying request to /chat/completions in 0.409165 seconds
+2026-06-02 02:12:55,091 ERROR Exception raised in Job[207]: APIConnectionError(Connection error.)
+Evaluating:  26%|##5       | 98/380 [1:02:07<27:29,  5.85s/it]2026-06-02 02:12:55,369 INFO Retrying request to /chat/completions in 0.397111 seconds
+2026-06-02 02:12:57,375 INFO Retrying request to /chat/completions in 0.429874 seconds
+2026-06-02 02:12:57,826 INFO Retrying request to /chat/completions in 0.761890 seconds
+2026-06-02 02:12:57,933 INFO Retrying request to /chat/completions in 0.911704 seconds
+2026-06-02 02:12:58,087 INFO Retrying request to /chat/completions in 0.855923 seconds
+2026-06-02 02:13:00,130 INFO Retrying request to /chat/completions in 0.889623 seconds
+2026-06-02 02:13:00,910 ERROR Exception raised in Job[72]: APIConnectionError(Connection error.)
+Evaluating:  26%|##6       | 99/380 [1:02:13<27:21,  5.84s/it]2026-06-02 02:13:01,170 ERROR Exception raised in Job[343]: APIConnectionError(Connection error.)
+Evaluating:  26%|##6       | 100/380 [1:02:13<20:35,  4.41s/it]2026-06-02 02:13:01,278 ERROR Exception raised in Job[208]: APIConnectionError(Connection error.)
+2026-06-02 02:13:03,222 INFO Retrying request to /chat/completions in 0.451399 seconds
+2026-06-02 02:13:03,329 ERROR Exception raised in Job[344]: APIConnectionError(Connection error.)
+Evaluating:  27%|##6       | 102/380 [1:02:16<13:54,  3.00s/it]2026-06-02 02:13:03,482 INFO Retrying request to /chat/completions in 0.425830 seconds
+2026-06-02 02:13:03,593 INFO Retrying request to /chat/completions in 0.459162 seconds
+2026-06-02 02:13:05,647 INFO Retrying request to /chat/completions in 0.457792 seconds
+2026-06-02 02:13:06,019 INFO Retrying request to /chat/completions in 0.946789 seconds
+2026-06-02 02:13:06,235 INFO Retrying request to /chat/completions in 0.783703 seconds
+2026-06-02 02:13:06,358 INFO Retrying request to /chat/completions in 0.807192 seconds
+2026-06-02 02:13:08,439 INFO Retrying request to /chat/completions in 0.981823 seconds
+2026-06-02 02:13:09,277 ERROR Exception raised in Job[73]: APIConnectionError(Connection error.)
+Evaluating:  27%|##7       | 103/380 [1:02:22<17:01,  3.69s/it]2026-06-02 02:13:09,356 ERROR Exception raised in Job[209]: APIConnectionError(Connection error.)
+2026-06-02 02:13:09,479 ERROR Exception raised in Job[345]: APIConnectionError(Connection error.)
+Evaluating:  28%|##7       | 105/380 [1:02:22<10:20,  2.25s/it]2026-06-02 02:13:11,613 INFO Retrying request to /chat/completions in 0.454266 seconds
+2026-06-02 02:13:11,681 INFO Retrying request to /chat/completions in 0.472920 seconds
+2026-06-02 02:13:11,785 INFO Retrying request to /chat/completions in 0.439546 seconds
+2026-06-02 02:13:11,787 ERROR Exception raised in Job[74]: APIConnectionError(Connection error.)
+Evaluating:  28%|##7       | 106/380 [1:02:24<10:21,  2.27s/it]2026-06-02 02:13:14,100 INFO Retrying request to /chat/completions in 0.487415 seconds
+2026-06-02 02:13:14,412 INFO Retrying request to /chat/completions in 0.954415 seconds
+2026-06-02 02:13:14,488 INFO Retrying request to /chat/completions in 0.770194 seconds
+2026-06-02 02:13:14,551 INFO Retrying request to /chat/completions in 0.791974 seconds
+2026-06-02 02:13:16,919 INFO Retrying request to /chat/completions in 0.849002 seconds
+2026-06-02 02:13:17,587 ERROR Exception raised in Job[346]: APIConnectionError(Connection error.)
+Evaluating:  28%|##8       | 107/380 [1:02:30<14:11,  3.12s/it]2026-06-02 02:13:17,679 ERROR Exception raised in Job[75]: APIConnectionError(Connection error.)
+2026-06-02 02:13:17,710 ERROR Exception raised in Job[210]: APIConnectionError(Connection error.)
+Evaluating:  29%|##8       | 109/380 [1:02:30<08:28,  1.87s/it]2026-06-02 02:13:19,920 INFO Retrying request to /chat/completions in 0.414040 seconds
+2026-06-02 02:13:19,996 INFO Retrying request to /chat/completions in 0.386561 seconds
+2026-06-02 02:13:20,043 INFO Retrying request to /chat/completions in 0.484117 seconds
+2026-06-02 02:13:20,094 ERROR Exception raised in Job[211]: APIConnectionError(Connection error.)
+Evaluating:  29%|##8       | 110/380 [1:02:32<08:56,  1.99s/it]2026-06-02 02:13:22,427 INFO Retrying request to /chat/completions in 0.375366 seconds
+2026-06-02 02:13:22,662 INFO Retrying request to /chat/completions in 0.799768 seconds
+2026-06-02 02:13:22,690 INFO Retrying request to /chat/completions in 0.771185 seconds
+2026-06-02 02:13:22,862 INFO Retrying request to /chat/completions in 0.992733 seconds
+2026-06-02 02:13:25,136 INFO Retrying request to /chat/completions in 0.808081 seconds
+2026-06-02 02:13:25,774 ERROR Exception raised in Job[76]: APIConnectionError(Connection error.)
+2026-06-02 02:13:25,789 ERROR Exception raised in Job[347]: APIConnectionError(Connection error.)
+Evaluating:  29%|##9       | 111/380 [1:02:38<12:57,  2.89s/it]2026-06-02 02:13:26,179 ERROR Exception raised in Job[212]: APIConnectionError(Connection error.)
+Evaluating:  30%|##9       | 113/380 [1:02:39<07:57,  1.79s/it]2026-06-02 02:13:28,105 INFO Retrying request to /chat/completions in 0.458732 seconds
+2026-06-02 02:13:28,105 INFO Retrying request to /chat/completions in 0.390443 seconds
+2026-06-02 02:13:28,278 ERROR Exception raised in Job[348]: APIConnectionError(Connection error.)
+Evaluating:  30%|###       | 114/380 [1:02:41<08:13,  1.85s/it]2026-06-02 02:13:28,525 INFO Retrying request to /chat/completions in 0.392253 seconds
+2026-06-02 02:13:30,583 INFO Retrying request to /chat/completions in 0.422764 seconds
+2026-06-02 02:13:30,831 INFO Retrying request to /chat/completions in 0.762538 seconds
+2026-06-02 02:13:30,893 INFO Retrying request to /chat/completions in 0.919712 seconds
+2026-06-02 02:13:31,247 INFO Retrying request to /chat/completions in 0.990456 seconds
+2026-06-02 02:13:33,333 INFO Retrying request to /chat/completions in 0.904420 seconds
+2026-06-02 02:13:33,910 ERROR Exception raised in Job[77]: APIConnectionError(Connection error.)
+Evaluating:  30%|###       | 115/380 [1:02:46<12:17,  2.78s/it]2026-06-02 02:13:34,115 ERROR Exception raised in Job[213]: APIConnectionError(Connection error.)
+Evaluating:  31%|###       | 116/380 [1:02:46<09:16,  2.11s/it]2026-06-02 02:13:34,567 ERROR Exception raised in Job[349]: APIConnectionError(Connection error.)
+Evaluating:  31%|###       | 117/380 [1:02:47<07:17,  1.66s/it]2026-06-02 02:13:36,243 INFO Retrying request to /chat/completions in 0.444079 seconds
+2026-06-02 02:13:36,452 INFO Retrying request to /chat/completions in 0.375504 seconds
+2026-06-02 02:13:36,575 ERROR Exception raised in Job[78]: APIConnectionError(Connection error.)
+Evaluating:  31%|###1      | 118/380 [1:02:49<07:40,  1.76s/it]2026-06-02 02:13:36,901 INFO Retrying request to /chat/completions in 0.402946 seconds
+2026-06-02 02:13:38,893 INFO Retrying request to /chat/completions in 0.491037 seconds
+2026-06-02 02:13:39,001 INFO Retrying request to /chat/completions in 0.768490 seconds
+2026-06-02 02:13:39,162 INFO Retrying request to /chat/completions in 0.844184 seconds
+2026-06-02 02:13:39,640 INFO Retrying request to /chat/completions in 0.973096 seconds
+2026-06-02 02:13:41,714 INFO Retrying request to /chat/completions in 0.938573 seconds
+2026-06-02 02:13:42,103 ERROR Exception raised in Job[214]: APIConnectionError(Connection error.)
+Evaluating:  31%|###1      | 119/380 [1:02:54<12:18,  2.83s/it]2026-06-02 02:13:42,309 ERROR Exception raised in Job[350]: APIConnectionError(Connection error.)
+Evaluating:  32%|###1      | 120/380 [1:02:55<09:00,  2.08s/it]2026-06-02 02:13:42,964 ERROR Exception raised in Job[79]: APIConnectionError(Connection error.)
+Evaluating:  32%|###1      | 121/380 [1:02:55<07:09,  1.66s/it]2026-06-02 02:13:44,428 INFO Retrying request to /chat/completions in 0.405371 seconds
+2026-06-02 02:13:44,661 INFO Retrying request to /chat/completions in 0.458791 seconds
+2026-06-02 02:13:44,990 ERROR Exception raised in Job[215]: APIConnectionError(Connection error.)
+Evaluating:  32%|###2      | 122/380 [1:02:57<07:37,  1.77s/it]2026-06-02 02:13:45,285 INFO Retrying request to /chat/completions in 0.498972 seconds
+2026-06-02 02:13:47,167 INFO Retrying request to /chat/completions in 0.792011 seconds
+2026-06-02 02:13:47,355 INFO Retrying request to /chat/completions in 0.441718 seconds
+2026-06-02 02:13:47,463 INFO Retrying request to /chat/completions in 0.836306 seconds
+2026-06-02 02:13:48,115 INFO Retrying request to /chat/completions in 0.816373 seconds
+2026-06-02 02:13:50,124 INFO Retrying request to /chat/completions in 0.786450 seconds
+2026-06-02 02:13:50,295 ERROR Exception raised in Job[351]: APIConnectionError(Connection error.)
+Evaluating:  32%|###2      | 123/380 [1:03:03<12:02,  2.81s/it]2026-06-02 02:13:50,657 ERROR Exception raised in Job[80]: APIConnectionError(Connection error.)
+Evaluating:  33%|###2      | 124/380 [1:03:03<08:54,  2.09s/it]2026-06-02 02:13:51,278 ERROR Exception raised in Job[216]: APIConnectionError(Connection error.)
+Evaluating:  33%|###2      | 125/380 [1:03:04<06:59,  1.65s/it]2026-06-02 02:13:52,614 INFO Retrying request to /chat/completions in 0.442689 seconds
+2026-06-02 02:13:52,987 INFO Retrying request to /chat/completions in 0.434761 seconds
+2026-06-02 02:13:53,255 ERROR Exception raised in Job[352]: APIConnectionError(Connection error.)
+Evaluating:  33%|###3      | 126/380 [1:03:06<07:24,  1.75s/it]2026-06-02 02:13:53,594 INFO Retrying request to /chat/completions in 0.437705 seconds
+2026-06-02 02:13:55,365 INFO Retrying request to /chat/completions in 0.799660 seconds
+2026-06-02 02:13:55,596 INFO Retrying request to /chat/completions in 0.427349 seconds
+2026-06-02 02:13:55,735 INFO Retrying request to /chat/completions in 0.843958 seconds
+2026-06-02 02:13:56,345 INFO Retrying request to /chat/completions in 0.885560 seconds
+2026-06-02 02:13:58,368 INFO Retrying request to /chat/completions in 0.969307 seconds
+2026-06-02 02:13:58,479 ERROR Exception raised in Job[81]: APIConnectionError(Connection error.)
+Evaluating:  33%|###3      | 127/380 [1:03:11<11:44,  2.78s/it]2026-06-02 02:13:58,898 ERROR Exception raised in Job[217]: APIConnectionError(Connection error.)
+Evaluating:  34%|###3      | 128/380 [1:03:11<08:44,  2.08s/it]2026-06-02 02:13:59,562 ERROR Exception raised in Job[353]: APIConnectionError(Connection error.)
+Evaluating:  34%|###3      | 129/380 [1:03:12<06:54,  1.65s/it]2026-06-02 02:14:00,789 INFO Retrying request to /chat/completions in 0.376760 seconds
+2026-06-02 02:14:01,241 INFO Retrying request to /chat/completions in 0.460662 seconds
+2026-06-02 02:14:01,697 ERROR Exception raised in Job[82]: APIConnectionError(Connection error.)
+Evaluating:  34%|###4      | 130/380 [1:03:14<07:30,  1.80s/it]2026-06-02 02:14:01,881 INFO Retrying request to /chat/completions in 0.446813 seconds
+2026-06-02 02:14:03,515 INFO Retrying request to /chat/completions in 0.779829 seconds
+2026-06-02 02:14:04,027 INFO Retrying request to /chat/completions in 0.383885 seconds
+2026-06-02 02:14:04,042 INFO Retrying request to /chat/completions in 0.936831 seconds
+2026-06-02 02:14:04,638 INFO Retrying request to /chat/completions in 0.768167 seconds
+2026-06-02 02:14:06,616 ERROR Exception raised in Job[218]: APIConnectionError(Connection error.)
+Evaluating:  34%|###4      | 131/380 [1:03:19<11:20,  2.73s/it]2026-06-02 02:14:06,743 INFO Retrying request to /chat/completions in 0.956098 seconds
+2026-06-02 02:14:07,318 ERROR Exception raised in Job[354]: APIConnectionError(Connection error.)
+Evaluating:  35%|###4      | 132/380 [1:03:20<08:47,  2.13s/it]2026-06-02 02:14:07,741 ERROR Exception raised in Job[83]: APIConnectionError(Connection error.)
+Evaluating:  35%|###5      | 133/380 [1:03:20<06:38,  1.61s/it]2026-06-02 02:14:08,953 INFO Retrying request to /chat/completions in 0.453011 seconds
+2026-06-02 02:14:09,667 INFO Retrying request to /chat/completions in 0.499326 seconds
+2026-06-02 02:14:10,015 ERROR Exception raised in Job[219]: APIConnectionError(Connection error.)
+Evaluating:  35%|###5      | 134/380 [1:03:22<07:26,  1.81s/it]2026-06-02 02:14:10,075 INFO Retrying request to /chat/completions in 0.432502 seconds
+2026-06-02 02:14:11,724 INFO Retrying request to /chat/completions in 0.754976 seconds
+2026-06-02 02:14:12,362 INFO Retrying request to /chat/completions in 0.461877 seconds
+2026-06-02 02:14:12,518 INFO Retrying request to /chat/completions in 0.999066 seconds
+2026-06-02 02:14:12,830 INFO Retrying request to /chat/completions in 0.830577 seconds
+2026-06-02 02:14:14,805 ERROR Exception raised in Job[355]: APIConnectionError(Connection error.)
+Evaluating:  36%|###5      | 135/380 [1:03:27<11:02,  2.71s/it]2026-06-02 02:14:15,164 INFO Retrying request to /chat/completions in 0.955224 seconds
+2026-06-02 02:14:15,832 ERROR Exception raised in Job[84]: APIConnectionError(Connection error.)
+Evaluating:  36%|###5      | 136/380 [1:03:28<08:56,  2.20s/it]2026-06-02 02:14:16,004 ERROR Exception raised in Job[220]: APIConnectionError(Connection error.)
+Evaluating:  36%|###6      | 137/380 [1:03:28<06:26,  1.59s/it]2026-06-02 02:14:17,142 INFO Retrying request to /chat/completions in 0.474575 seconds
+2026-06-02 02:14:18,137 INFO Retrying request to /chat/completions in 0.437259 seconds
+2026-06-02 02:14:18,337 INFO Retrying request to /chat/completions in 0.397067 seconds
+2026-06-02 02:14:18,448 ERROR Exception raised in Job[356]: APIConnectionError(Connection error.)
+Evaluating:  36%|###6      | 138/380 [1:03:31<07:26,  1.85s/it]2026-06-02 02:14:19,914 INFO Retrying request to /chat/completions in 0.972048 seconds
+2026-06-02 02:14:20,751 INFO Retrying request to /chat/completions in 0.439962 seconds
+2026-06-02 02:14:20,910 INFO Retrying request to /chat/completions in 0.771926 seconds
+2026-06-02 02:14:21,046 INFO Retrying request to /chat/completions in 0.894077 seconds
+2026-06-02 02:14:23,213 ERROR Exception raised in Job[85]: APIConnectionError(Connection error.)
+Evaluating:  37%|###6      | 139/380 [1:03:36<10:56,  2.73s/it]2026-06-02 02:14:23,507 INFO Retrying request to /chat/completions in 0.927227 seconds
+2026-06-02 02:14:23,991 ERROR Exception raised in Job[221]: APIConnectionError(Connection error.)
+Evaluating:  37%|###6      | 140/380 [1:03:36<08:33,  2.14s/it]2026-06-02 02:14:24,257 ERROR Exception raised in Job[357]: APIConnectionError(Connection error.)
+Evaluating:  37%|###7      | 141/380 [1:03:37<06:17,  1.58s/it]2026-06-02 02:14:25,546 INFO Retrying request to /chat/completions in 0.399737 seconds
+2026-06-02 02:14:26,309 INFO Retrying request to /chat/completions in 0.462935 seconds
+2026-06-02 02:14:26,605 INFO Retrying request to /chat/completions in 0.481197 seconds
+2026-06-02 02:14:26,778 ERROR Exception raised in Job[86]: APIConnectionError(Connection error.)
+Evaluating:  37%|###7      | 142/380 [1:03:39<07:22,  1.86s/it]2026-06-02 02:14:28,257 INFO Retrying request to /chat/completions in 0.911835 seconds
+2026-06-02 02:14:29,079 INFO Retrying request to /chat/completions in 0.395044 seconds
+2026-06-02 02:14:29,090 INFO Retrying request to /chat/completions in 0.794258 seconds
+2026-06-02 02:14:29,437 INFO Retrying request to /chat/completions in 0.824116 seconds
+2026-06-02 02:14:31,473 ERROR Exception raised in Job[222]: APIConnectionError(Connection error.)
+Evaluating:  38%|###7      | 143/380 [1:03:44<10:42,  2.71s/it]2026-06-02 02:14:31,798 INFO Retrying request to /chat/completions in 0.922580 seconds
+2026-06-02 02:14:32,209 ERROR Exception raised in Job[358]: APIConnectionError(Connection error.)
+Evaluating:  38%|###7      | 144/380 [1:03:45<08:20,  2.12s/it]2026-06-02 02:14:32,548 ERROR Exception raised in Job[87]: APIConnectionError(Connection error.)
+Evaluating:  38%|###8      | 145/380 [1:03:45<06:13,  1.59s/it]2026-06-02 02:14:33,811 INFO Retrying request to /chat/completions in 0.411381 seconds
+2026-06-02 02:14:34,559 INFO Retrying request to /chat/completions in 0.487257 seconds
+2026-06-02 02:14:34,885 INFO Retrying request to /chat/completions in 0.459493 seconds
+2026-06-02 02:14:35,059 ERROR Exception raised in Job[223]: APIConnectionError(Connection error.)
+Evaluating:  38%|###8      | 146/380 [1:03:47<07:15,  1.86s/it]2026-06-02 02:14:36,562 INFO Retrying request to /chat/completions in 0.798055 seconds
+2026-06-02 02:14:37,372 INFO Retrying request to /chat/completions in 0.814851 seconds
+2026-06-02 02:14:37,373 INFO Retrying request to /chat/completions in 0.427445 seconds
+2026-06-02 02:14:37,667 INFO Retrying request to /chat/completions in 0.999653 seconds
+2026-06-02 02:14:39,676 ERROR Exception raised in Job[359]: APIConnectionError(Connection error.)
+Evaluating:  39%|###8      | 147/380 [1:03:52<10:26,  2.69s/it]2026-06-02 02:14:40,099 INFO Retrying request to /chat/completions in 0.931376 seconds
+2026-06-02 02:14:40,520 ERROR Exception raised in Job[88]: APIConnectionError(Connection error.)
+Evaluating:  39%|###8      | 148/380 [1:03:53<08:15,  2.14s/it]2026-06-02 02:14:40,970 ERROR Exception raised in Job[224]: APIConnectionError(Connection error.)
+Evaluating:  39%|###9      | 149/380 [1:03:53<06:16,  1.63s/it]2026-06-02 02:14:41,998 INFO Retrying request to /chat/completions in 0.381324 seconds
+2026-06-02 02:14:42,853 INFO Retrying request to /chat/completions in 0.381506 seconds
+2026-06-02 02:14:43,288 INFO Retrying request to /chat/completions in 0.410266 seconds
+2026-06-02 02:14:43,383 ERROR Exception raised in Job[360]: APIConnectionError(Connection error.)
+Evaluating:  39%|###9      | 150/380 [1:03:56<07:08,  1.86s/it]2026-06-02 02:14:44,708 INFO Retrying request to /chat/completions in 0.808148 seconds
+2026-06-02 02:14:45,562 INFO Retrying request to /chat/completions in 0.760420 seconds
+2026-06-02 02:14:45,700 INFO Retrying request to /chat/completions in 0.481115 seconds
+2026-06-02 02:14:46,029 INFO Retrying request to /chat/completions in 0.975760 seconds
+2026-06-02 02:14:47,849 ERROR Exception raised in Job[89]: APIConnectionError(Connection error.)
+Evaluating:  40%|###9      | 151/380 [1:04:00<10:05,  2.64s/it]2026-06-02 02:14:48,505 INFO Retrying request to /chat/completions in 0.984275 seconds
+2026-06-02 02:14:48,662 ERROR Exception raised in Job[225]: APIConnectionError(Connection error.)
+Evaluating:  40%|####      | 152/380 [1:04:01<07:57,  2.09s/it]2026-06-02 02:14:49,330 ERROR Exception raised in Job[361]: APIConnectionError(Connection error.)
+Evaluating:  40%|####      | 153/380 [1:04:02<06:19,  1.67s/it]2026-06-02 02:14:50,156 INFO Retrying request to /chat/completions in 0.449310 seconds
+2026-06-02 02:14:50,981 INFO Retrying request to /chat/completions in 0.489364 seconds
+2026-06-02 02:14:51,679 INFO Retrying request to /chat/completions in 0.396989 seconds
+2026-06-02 02:14:51,805 ERROR Exception raised in Job[90]: APIConnectionError(Connection error.)
+Evaluating:  41%|####      | 154/380 [1:04:04<07:11,  1.91s/it]2026-06-02 02:14:52,942 INFO Retrying request to /chat/completions in 0.983686 seconds
+2026-06-02 02:14:53,813 INFO Retrying request to /chat/completions in 0.840059 seconds
+2026-06-02 02:14:54,122 INFO Retrying request to /chat/completions in 0.413282 seconds
+2026-06-02 02:14:54,386 INFO Retrying request to /chat/completions in 0.757508 seconds
+2026-06-02 02:14:56,246 ERROR Exception raised in Job[226]: APIConnectionError(Connection error.)
+Evaluating:  41%|####      | 155/380 [1:04:09<10:00,  2.67s/it]2026-06-02 02:14:56,851 INFO Retrying request to /chat/completions in 0.891348 seconds
+2026-06-02 02:14:56,992 ERROR Exception raised in Job[362]: APIConnectionError(Connection error.)
+Evaluating:  41%|####1     | 156/380 [1:04:09<07:48,  2.09s/it]2026-06-02 02:14:57,490 ERROR Exception raised in Job[91]: APIConnectionError(Connection error.)
+Evaluating:  41%|####1     | 157/380 [1:04:10<06:01,  1.62s/it]2026-06-02 02:14:58,564 INFO Retrying request to /chat/completions in 0.458016 seconds
+2026-06-02 02:14:59,314 INFO Retrying request to /chat/completions in 0.438195 seconds
+2026-06-02 02:14:59,827 INFO Retrying request to /chat/completions in 0.484610 seconds
+2026-06-02 02:15:00,046 ERROR Exception raised in Job[227]: APIConnectionError(Connection error.)
+Evaluating:  42%|####1     | 158/380 [1:04:12<07:02,  1.90s/it]2026-06-02 02:15:01,364 INFO Retrying request to /chat/completions in 0.750766 seconds
+2026-06-02 02:15:02,097 INFO Retrying request to /chat/completions in 0.944152 seconds
+2026-06-02 02:15:02,365 INFO Retrying request to /chat/completions in 0.426873 seconds
+2026-06-02 02:15:02,643 INFO Retrying request to /chat/completions in 0.825992 seconds
+2026-06-02 02:15:04,416 ERROR Exception raised in Job[363]: APIConnectionError(Connection error.)
+Evaluating:  42%|####1     | 159/380 [1:04:17<09:42,  2.64s/it]2026-06-02 02:15:05,136 INFO Retrying request to /chat/completions in 0.794371 seconds
+2026-06-02 02:15:05,371 ERROR Exception raised in Job[92]: APIConnectionError(Connection error.)
+Evaluating:  42%|####2     | 160/380 [1:04:18<07:49,  2.13s/it]2026-06-02 02:15:05,774 ERROR Exception raised in Job[228]: APIConnectionError(Connection error.)
+Evaluating:  42%|####2     | 161/380 [1:04:18<05:53,  1.61s/it]2026-06-02 02:15:06,737 INFO Retrying request to /chat/completions in 0.478493 seconds
+2026-06-02 02:15:07,705 INFO Retrying request to /chat/completions in 0.480380 seconds
+2026-06-02 02:15:08,105 INFO Retrying request to /chat/completions in 0.475707 seconds
+2026-06-02 02:15:08,277 ERROR Exception raised in Job[364]: APIConnectionError(Connection error.)
+Evaluating:  43%|####2     | 162/380 [1:04:21<06:49,  1.88s/it]2026-06-02 02:15:09,504 INFO Retrying request to /chat/completions in 0.812440 seconds
+2026-06-02 02:15:10,475 INFO Retrying request to /chat/completions in 0.934690 seconds
+2026-06-02 02:15:10,554 INFO Retrying request to /chat/completions in 0.447171 seconds
+2026-06-02 02:15:10,940 INFO Retrying request to /chat/completions in 0.903983 seconds
+2026-06-02 02:15:12,624 ERROR Exception raised in Job[93]: APIConnectionError(Connection error.)
+Evaluating:  43%|####2     | 163/380 [1:04:25<09:28,  2.62s/it]2026-06-02 02:15:13,309 INFO Retrying request to /chat/completions in 0.989827 seconds
+2026-06-02 02:15:13,744 ERROR Exception raised in Job[229]: APIConnectionError(Connection error.)
+Evaluating:  43%|####3     | 164/380 [1:04:26<07:49,  2.17s/it]2026-06-02 02:15:14,167 ERROR Exception raised in Job[365]: APIConnectionError(Connection error.)
+Evaluating:  43%|####3     | 165/380 [1:04:26<05:54,  1.65s/it]2026-06-02 02:15:14,945 INFO Retrying request to /chat/completions in 0.445883 seconds
+2026-06-02 02:15:16,063 INFO Retrying request to /chat/completions in 0.460508 seconds
+2026-06-02 02:15:16,487 INFO Retrying request to /chat/completions in 0.434986 seconds
+2026-06-02 02:15:16,629 ERROR Exception raised in Job[94]: APIConnectionError(Connection error.)
+Evaluating:  44%|####3     | 166/380 [1:04:29<06:43,  1.89s/it]2026-06-02 02:15:17,719 INFO Retrying request to /chat/completions in 0.874756 seconds
+2026-06-02 02:15:18,858 INFO Retrying request to /chat/completions in 0.773348 seconds
+2026-06-02 02:15:18,936 INFO Retrying request to /chat/completions in 0.401678 seconds
+2026-06-02 02:15:19,264 INFO Retrying request to /chat/completions in 0.898458 seconds
+2026-06-02 02:15:20,917 ERROR Exception raised in Job[230]: APIConnectionError(Connection error.)
+Evaluating:  44%|####3     | 167/380 [1:04:33<09:16,  2.61s/it]2026-06-02 02:15:21,667 INFO Retrying request to /chat/completions in 0.969951 seconds
+2026-06-02 02:15:21,977 ERROR Exception raised in Job[366]: APIConnectionError(Connection error.)
+Evaluating:  44%|####4     | 168/380 [1:04:34<07:35,  2.15s/it]2026-06-02 02:15:22,493 ERROR Exception raised in Job[95]: APIConnectionError(Connection error.)
+Evaluating:  44%|####4     | 169/380 [1:04:35<05:50,  1.66s/it]2026-06-02 02:15:23,254 INFO Retrying request to /chat/completions in 0.388488 seconds
+2026-06-02 02:15:24,300 INFO Retrying request to /chat/completions in 0.491612 seconds
+2026-06-02 02:15:24,830 INFO Retrying request to /chat/completions in 0.470845 seconds
+2026-06-02 02:15:24,986 ERROR Exception raised in Job[231]: APIConnectionError(Connection error.)
+Evaluating:  45%|####4     | 170/380 [1:04:37<06:39,  1.90s/it]2026-06-02 02:15:25,981 INFO Retrying request to /chat/completions in 0.833375 seconds
+2026-06-02 02:15:27,115 INFO Retrying request to /chat/completions in 0.877152 seconds
+2026-06-02 02:15:27,316 INFO Retrying request to /chat/completions in 0.379224 seconds
+2026-06-02 02:15:27,647 INFO Retrying request to /chat/completions in 0.806190 seconds
+2026-06-02 02:15:29,159 ERROR Exception raised in Job[367]: APIConnectionError(Connection error.)
+Evaluating:  45%|####5     | 171/380 [1:04:41<08:59,  2.58s/it]2026-06-02 02:15:30,018 INFO Retrying request to /chat/completions in 0.875248 seconds
+2026-06-02 02:15:30,360 ERROR Exception raised in Job[96]: APIConnectionError(Connection error.)
+Evaluating:  45%|####5     | 172/380 [1:04:43<07:31,  2.17s/it]2026-06-02 02:15:30,812 ERROR Exception raised in Job[232]: APIConnectionError(Connection error.)
+Evaluating:  46%|####5     | 173/380 [1:04:43<05:42,  1.65s/it]2026-06-02 02:15:31,478 INFO Retrying request to /chat/completions in 0.413080 seconds
+2026-06-02 02:15:32,691 INFO Retrying request to /chat/completions in 0.438903 seconds
+2026-06-02 02:15:33,146 INFO Retrying request to /chat/completions in 0.452213 seconds
+2026-06-02 02:15:33,220 ERROR Exception raised in Job[368]: APIConnectionError(Connection error.)
+Evaluating:  46%|####5     | 174/380 [1:04:46<06:26,  1.88s/it]2026-06-02 02:15:34,216 INFO Retrying request to /chat/completions in 0.830739 seconds
+2026-06-02 02:15:35,460 INFO Retrying request to /chat/completions in 0.858931 seconds
+2026-06-02 02:15:35,523 INFO Retrying request to /chat/completions in 0.410964 seconds
+2026-06-02 02:15:35,929 INFO Retrying request to /chat/completions in 0.920592 seconds
+2026-06-02 02:15:37,392 ERROR Exception raised in Job[97]: APIConnectionError(Connection error.)
+Evaluating:  46%|####6     | 175/380 [1:04:50<08:46,  2.57s/it]2026-06-02 02:15:38,249 INFO Retrying request to /chat/completions in 0.846120 seconds
+2026-06-02 02:15:38,683 ERROR Exception raised in Job[233]: APIConnectionError(Connection error.)
+Evaluating:  46%|####6     | 176/380 [1:04:51<07:26,  2.19s/it]2026-06-02 02:15:39,214 ERROR Exception raised in Job[369]: APIConnectionError(Connection error.)
+Evaluating:  47%|####6     | 177/380 [1:04:52<05:43,  1.69s/it]2026-06-02 02:15:39,698 INFO Retrying request to /chat/completions in 0.408244 seconds
+2026-06-02 02:15:41,017 INFO Retrying request to /chat/completions in 0.461160 seconds
+2026-06-02 02:15:41,438 ERROR Exception raised in Job[98]: APIConnectionError(Connection error.)
+Evaluating:  47%|####6     | 178/380 [1:04:54<06:13,  1.85s/it]2026-06-02 02:15:41,537 INFO Retrying request to /chat/completions in 0.454010 seconds
+2026-06-02 02:15:42,448 INFO Retrying request to /chat/completions in 0.778300 seconds
+2026-06-02 02:15:43,755 INFO Retrying request to /chat/completions in 0.471964 seconds
+2026-06-02 02:15:43,803 INFO Retrying request to /chat/completions in 0.819175 seconds
+2026-06-02 02:15:44,285 INFO Retrying request to /chat/completions in 0.991406 seconds
+2026-06-02 02:15:45,546 ERROR Exception raised in Job[234]: APIConnectionError(Connection error.)
+Evaluating:  47%|####7     | 179/380 [1:04:58<08:28,  2.53s/it]2026-06-02 02:15:46,584 INFO Retrying request to /chat/completions in 0.956938 seconds
+2026-06-02 02:15:46,942 ERROR Exception raised in Job[370]: APIConnectionError(Connection error.)
+Evaluating:  47%|####7     | 180/380 [1:04:59<07:17,  2.19s/it]2026-06-02 02:15:47,600 ERROR Exception raised in Job[99]: APIConnectionError(Connection error.)
+Evaluating:  48%|####7     | 181/380 [1:05:00<05:45,  1.74s/it]2026-06-02 02:15:47,859 INFO Retrying request to /chat/completions in 0.498774 seconds
+2026-06-02 02:15:49,277 INFO Retrying request to /chat/completions in 0.442699 seconds
+2026-06-02 02:15:49,864 ERROR Exception raised in Job[235]: APIConnectionError(Connection error.)
+Evaluating:  48%|####7     | 182/380 [1:05:02<06:13,  1.88s/it]2026-06-02 02:15:49,930 INFO Retrying request to /chat/completions in 0.486205 seconds
+2026-06-02 02:15:50,705 INFO Retrying request to /chat/completions in 0.877856 seconds
+2026-06-02 02:15:52,059 INFO Retrying request to /chat/completions in 0.760077 seconds
+2026-06-02 02:15:52,183 INFO Retrying request to /chat/completions in 0.394953 seconds
+2026-06-02 02:15:52,744 INFO Retrying request to /chat/completions in 0.996150 seconds
+2026-06-02 02:15:53,925 ERROR Exception raised in Job[371]: APIConnectionError(Connection error.)
+Evaluating:  48%|####8     | 183/380 [1:05:06<08:19,  2.54s/it]2026-06-02 02:15:54,892 INFO Retrying request to /chat/completions in 0.787222 seconds
+2026-06-02 02:15:55,137 ERROR Exception raised in Job[100]: APIConnectionError(Connection error.)
+Evaluating:  48%|####8     | 184/380 [1:05:07<07:00,  2.14s/it]2026-06-02 02:15:56,039 ERROR Exception raised in Job[236]: APIConnectionError(Connection error.)
+Evaluating:  49%|####8     | 185/380 [1:05:08<05:44,  1.77s/it]2026-06-02 02:15:56,247 INFO Retrying request to /chat/completions in 0.441941 seconds
+2026-06-02 02:15:57,460 INFO Retrying request to /chat/completions in 0.471928 seconds
+2026-06-02 02:15:57,971 ERROR Exception raised in Job[372]: APIConnectionError(Connection error.)
+Evaluating:  49%|####8     | 186/380 [1:05:10<05:53,  1.82s/it]2026-06-02 02:15:58,364 INFO Retrying request to /chat/completions in 0.447029 seconds
+2026-06-02 02:15:59,001 INFO Retrying request to /chat/completions in 0.908606 seconds
+2026-06-02 02:16:00,292 INFO Retrying request to /chat/completions in 0.823430 seconds
+2026-06-02 02:16:00,324 INFO Retrying request to /chat/completions in 0.462658 seconds
+2026-06-02 02:16:01,133 INFO Retrying request to /chat/completions in 0.882315 seconds
+2026-06-02 02:16:02,240 ERROR Exception raised in Job[101]: APIConnectionError(Connection error.)
+Evaluating:  49%|####9     | 187/380 [1:05:15<08:12,  2.55s/it]2026-06-02 02:16:03,096 INFO Retrying request to /chat/completions in 0.981681 seconds
+2026-06-02 02:16:03,438 ERROR Exception raised in Job[237]: APIConnectionError(Connection error.)
+Evaluating:  49%|####9     | 188/380 [1:05:16<06:52,  2.15s/it]2026-06-02 02:16:04,344 ERROR Exception raised in Job[373]: APIConnectionError(Connection error.)
+Evaluating:  50%|####9     | 189/380 [1:05:17<05:39,  1.78s/it]2026-06-02 02:16:04,541 INFO Retrying request to /chat/completions in 0.485646 seconds
+2026-06-02 02:16:05,772 INFO Retrying request to /chat/completions in 0.382120 seconds
+2026-06-02 02:16:06,364 ERROR Exception raised in Job[102]: APIConnectionError(Connection error.)
+Evaluating:  50%|#####     | 190/380 [1:05:19<05:50,  1.85s/it]2026-06-02 02:16:06,677 INFO Retrying request to /chat/completions in 0.376135 seconds
+2026-06-02 02:16:07,347 INFO Retrying request to /chat/completions in 0.790661 seconds
+2026-06-02 02:16:08,498 INFO Retrying request to /chat/completions in 0.811683 seconds
+2026-06-02 02:16:08,670 INFO Retrying request to /chat/completions in 0.386406 seconds
+2026-06-02 02:16:09,367 INFO Retrying request to /chat/completions in 0.800289 seconds
+2026-06-02 02:16:10,470 ERROR Exception raised in Job[238]: APIConnectionError(Connection error.)
+Evaluating:  50%|#####     | 191/380 [1:05:23<07:56,  2.52s/it]2026-06-02 02:16:11,360 INFO Retrying request to /chat/completions in 0.999700 seconds
+2026-06-02 02:16:11,642 ERROR Exception raised in Job[374]: APIConnectionError(Connection error.)
+Evaluating:  51%|#####     | 192/380 [1:05:24<06:38,  2.12s/it]2026-06-02 02:16:12,494 ERROR Exception raised in Job[103]: APIConnectionError(Connection error.)
+Evaluating:  51%|#####     | 193/380 [1:05:25<05:26,  1.74s/it]2026-06-02 02:16:12,803 INFO Retrying request to /chat/completions in 0.393197 seconds
+2026-06-02 02:16:13,970 INFO Retrying request to /chat/completions in 0.461851 seconds
+2026-06-02 02:16:14,704 ERROR Exception raised in Job[239]: APIConnectionError(Connection error.)
+Evaluating:  51%|#####1    | 194/380 [1:05:27<05:50,  1.88s/it]2026-06-02 02:16:14,845 INFO Retrying request to /chat/completions in 0.469781 seconds
+2026-06-02 02:16:15,530 INFO Retrying request to /chat/completions in 0.943220 seconds
+2026-06-02 02:16:16,747 INFO Retrying request to /chat/completions in 0.943625 seconds
+2026-06-02 02:16:17,054 INFO Retrying request to /chat/completions in 0.388676 seconds
+2026-06-02 02:16:17,647 INFO Retrying request to /chat/completions in 0.842519 seconds
+2026-06-02 02:16:18,801 ERROR Exception raised in Job[375]: APIConnectionError(Connection error.)
+Evaluating:  51%|#####1    | 195/380 [1:05:31<07:50,  2.54s/it]2026-06-02 02:16:19,783 INFO Retrying request to /chat/completions in 0.756818 seconds
+2026-06-02 02:16:20,018 ERROR Exception raised in Job[104]: APIConnectionError(Connection error.)
+Evaluating:  52%|#####1    | 196/380 [1:05:32<06:35,  2.15s/it]2026-06-02 02:16:20,826 ERROR Exception raised in Job[240]: APIConnectionError(Connection error.)
+Evaluating:  52%|#####1    | 197/380 [1:05:33<05:19,  1.75s/it]2026-06-02 02:16:21,142 INFO Retrying request to /chat/completions in 0.457748 seconds
+2026-06-02 02:16:22,352 INFO Retrying request to /chat/completions in 0.465604 seconds
+2026-06-02 02:16:22,867 ERROR Exception raised in Job[376]: APIConnectionError(Connection error.)
+Evaluating:  52%|#####2    | 198/380 [1:05:35<05:32,  1.83s/it]2026-06-02 02:16:23,174 INFO Retrying request to /chat/completions in 0.475743 seconds
+2026-06-02 02:16:23,937 INFO Retrying request to /chat/completions in 0.953367 seconds
+2026-06-02 02:16:25,123 INFO Retrying request to /chat/completions in 0.765506 seconds
+2026-06-02 02:16:25,199 INFO Retrying request to /chat/completions in 0.425044 seconds
+2026-06-02 02:16:25,964 INFO Retrying request to /chat/completions in 0.830455 seconds
+2026-06-02 02:16:27,176 ERROR Exception raised in Job[105]: APIConnectionError(Connection error.)
+Evaluating:  52%|#####2    | 199/380 [1:05:40<07:46,  2.58s/it]2026-06-02 02:16:27,949 INFO Retrying request to /chat/completions in 0.973176 seconds
+2026-06-02 02:16:28,215 ERROR Exception raised in Job[241]: APIConnectionError(Connection error.)
+Evaluating:  53%|#####2    | 200/380 [1:05:41<06:20,  2.12s/it]2026-06-02 02:16:29,132 ERROR Exception raised in Job[377]: APIConnectionError(Connection error.)
+Evaluating:  53%|#####2    | 201/380 [1:05:41<05:14,  1.76s/it]2026-06-02 02:16:29,520 INFO Retrying request to /chat/completions in 0.495822 seconds
+2026-06-02 02:16:30,542 INFO Retrying request to /chat/completions in 0.470436 seconds
+2026-06-02 02:16:31,246 ERROR Exception raised in Job[106]: APIConnectionError(Connection error.)
+Evaluating:  53%|#####3    | 202/380 [1:05:44<05:31,  1.86s/it]2026-06-02 02:16:31,460 INFO Retrying request to /chat/completions in 0.408713 seconds
+2026-06-02 02:16:32,333 INFO Retrying request to /chat/completions in 0.949867 seconds
+2026-06-02 02:16:33,362 INFO Retrying request to /chat/completions in 0.976182 seconds
+2026-06-02 02:16:33,582 INFO Retrying request to /chat/completions in 0.490644 seconds
+2026-06-02 02:16:34,203 INFO Retrying request to /chat/completions in 0.880049 seconds
+2026-06-02 02:16:35,606 ERROR Exception raised in Job[242]: APIConnectionError(Connection error.)
+Evaluating:  53%|#####3    | 203/380 [1:05:48<07:42,  2.61s/it]2026-06-02 02:16:36,368 INFO Retrying request to /chat/completions in 0.957937 seconds
+2026-06-02 02:16:36,655 ERROR Exception raised in Job[378]: APIConnectionError(Connection error.)
+Evaluating:  54%|#####3    | 204/380 [1:05:49<06:17,  2.15s/it]2026-06-02 02:16:37,426 ERROR Exception raised in Job[107]: APIConnectionError(Connection error.)
+Evaluating:  54%|#####3    | 205/380 [1:05:50<05:03,  1.73s/it]2026-06-02 02:16:37,938 INFO Retrying request to /chat/completions in 0.415834 seconds
+2026-06-02 02:16:38,997 INFO Retrying request to /chat/completions in 0.466482 seconds
+2026-06-02 02:16:39,651 ERROR Exception raised in Job[243]: APIConnectionError(Connection error.)
+Evaluating:  54%|#####4    | 206/380 [1:05:52<05:26,  1.88s/it]2026-06-02 02:16:39,779 INFO Retrying request to /chat/completions in 0.405660 seconds
+2026-06-02 02:16:40,694 INFO Retrying request to /chat/completions in 0.930376 seconds
+2026-06-02 02:16:41,782 INFO Retrying request to /chat/completions in 0.985491 seconds
+2026-06-02 02:16:41,982 INFO Retrying request to /chat/completions in 0.460337 seconds
+2026-06-02 02:16:42,481 INFO Retrying request to /chat/completions in 0.824448 seconds
+2026-06-02 02:16:43,947 ERROR Exception raised in Job[379]: APIConnectionError(Connection error.)
+Evaluating:  54%|#####4    | 207/380 [1:05:56<07:29,  2.60s/it]2026-06-02 02:16:44,756 INFO Retrying request to /chat/completions in 0.954353 seconds
+2026-06-02 02:16:45,099 ERROR Exception raised in Job[108]: APIConnectionError(Connection error.)
+Evaluating:  55%|#####4    | 208/380 [1:05:57<06:13,  2.17s/it]2026-06-02 02:16:45,620 ERROR Exception raised in Job[244]: APIConnectionError(Connection error.)
+Evaluating:  55%|#####5    | 209/380 [1:05:58<04:46,  1.67s/it]2026-06-02 02:16:46,251 INFO Retrying request to /chat/completions in 0.487529 seconds
+2026-06-02 02:16:47,416 INFO Retrying request to /chat/completions in 0.446791 seconds
+2026-06-02 02:16:47,943 INFO Retrying request to /chat/completions in 0.455226 seconds
+2026-06-02 02:16:48,037 ERROR Exception raised in Job[109]: APIConnectionError(Connection error.)
+Evaluating:  55%|#####5    | 210/380 [1:06:00<05:21,  1.89s/it]2026-06-02 02:16:49,061 INFO Retrying request to /chat/completions in 0.951874 seconds
+2026-06-02 02:16:50,198 INFO Retrying request to /chat/completions in 0.997872 seconds
+2026-06-02 02:16:50,340 INFO Retrying request to /chat/completions in 0.421957 seconds
+2026-06-02 02:16:50,728 INFO Retrying request to /chat/completions in 0.997014 seconds
+2026-06-02 02:16:52,346 ERROR Exception raised in Job[245]: APIConnectionError(Connection error.)
+Evaluating:  56%|#####5    | 211/380 [1:06:05<07:23,  2.62s/it]2026-06-02 02:16:53,092 INFO Retrying request to /chat/completions in 0.941764 seconds
+2026-06-02 02:16:53,528 ERROR Exception raised in Job[110]: APIConnectionError(Connection error.)
+Evaluating:  56%|#####5    | 212/380 [1:06:06<06:08,  2.19s/it]2026-06-02 02:16:54,027 ERROR Exception raised in Job[246]: APIConnectionError(Connection error.)
+Evaluating:  56%|#####6    | 213/380 [1:06:06<04:41,  1.68s/it]2026-06-02 02:16:54,680 INFO Retrying request to /chat/completions in 0.462129 seconds
+2026-06-02 02:16:55,861 INFO Retrying request to /chat/completions in 0.464176 seconds
+2026-06-02 02:16:56,346 INFO Retrying request to /chat/completions in 0.378632 seconds
+2026-06-02 02:16:56,348 ERROR Exception raised in Job[111]: APIConnectionError(Connection error.)
+Evaluating:  56%|#####6    | 214/380 [1:06:09<05:10,  1.87s/it]2026-06-02 02:16:57,465 INFO Retrying request to /chat/completions in 0.905510 seconds
+2026-06-02 02:16:58,644 INFO Retrying request to /chat/completions in 0.915589 seconds
+2026-06-02 02:16:58,645 INFO Retrying request to /chat/completions in 0.406359 seconds
+2026-06-02 02:16:59,049 INFO Retrying request to /chat/completions in 0.840203 seconds
+2026-06-02 02:17:00,719 ERROR Exception raised in Job[247]: APIConnectionError(Connection error.)
+Evaluating:  57%|#####6    | 215/380 [1:06:13<07:12,  2.62s/it]2026-06-02 02:17:01,374 INFO Retrying request to /chat/completions in 0.984903 seconds
+2026-06-02 02:17:01,883 ERROR Exception raised in Job[112]: APIConnectionError(Connection error.)
+Evaluating:  57%|#####6    | 216/380 [1:06:14<05:58,  2.19s/it]2026-06-02 02:17:02,240 ERROR Exception raised in Job[248]: APIConnectionError(Connection error.)
+Evaluating:  57%|#####7    | 217/380 [1:06:15<04:26,  1.63s/it]2026-06-02 02:17:03,038 INFO Retrying request to /chat/completions in 0.382226 seconds
+2026-06-02 02:17:04,222 INFO Retrying request to /chat/completions in 0.388397 seconds
+2026-06-02 02:17:04,546 INFO Retrying request to /chat/completions in 0.464466 seconds
+2026-06-02 02:17:04,689 ERROR Exception raised in Job[113]: APIConnectionError(Connection error.)
+Evaluating:  57%|#####7    | 218/380 [1:06:17<05:04,  1.88s/it]2026-06-02 02:17:05,758 INFO Retrying request to /chat/completions in 0.822428 seconds
+2026-06-02 02:17:06,958 INFO Retrying request to /chat/completions in 0.840318 seconds
+2026-06-02 02:17:07,002 INFO Retrying request to /chat/completions in 0.476714 seconds
+2026-06-02 02:17:07,328 INFO Retrying request to /chat/completions in 0.979408 seconds
+2026-06-02 02:17:08,886 ERROR Exception raised in Job[249]: APIConnectionError(Connection error.)
+Evaluating:  58%|#####7    | 219/380 [1:06:21<06:54,  2.58s/it]2026-06-02 02:17:09,804 INFO Retrying request to /chat/completions in 0.819925 seconds
+2026-06-02 02:17:10,131 ERROR Exception raised in Job[114]: APIConnectionError(Connection error.)
+Evaluating:  58%|#####7    | 220/380 [1:06:22<05:48,  2.18s/it]2026-06-02 02:17:10,631 ERROR Exception raised in Job[250]: APIConnectionError(Connection error.)
+Evaluating:  58%|#####8    | 221/380 [1:06:23<04:25,  1.67s/it]2026-06-02 02:17:11,190 INFO Retrying request to /chat/completions in 0.427230 seconds
+2026-06-02 02:17:12,476 INFO Retrying request to /chat/completions in 0.413553 seconds
+2026-06-02 02:17:12,960 INFO Retrying request to /chat/completions in 0.435263 seconds
+2026-06-02 02:17:12,975 ERROR Exception raised in Job[115]: APIConnectionError(Connection error.)
+Evaluating:  58%|#####8    | 222/380 [1:06:25<04:55,  1.87s/it]2026-06-02 02:17:13,953 INFO Retrying request to /chat/completions in 0.758700 seconds
+2026-06-02 02:17:15,250 INFO Retrying request to /chat/completions in 0.946630 seconds
+2026-06-02 02:17:15,293 INFO Retrying request to /chat/completions in 0.478880 seconds
+2026-06-02 02:17:15,727 INFO Retrying request to /chat/completions in 0.941944 seconds
+2026-06-02 02:17:17,021 ERROR Exception raised in Job[251]: APIConnectionError(Connection error.)
+Evaluating:  59%|#####8    | 223/380 [1:06:29<06:36,  2.53s/it]2026-06-02 02:17:18,096 INFO Retrying request to /chat/completions in 0.765988 seconds
+2026-06-02 02:17:18,518 ERROR Exception raised in Job[116]: APIConnectionError(Connection error.)
+Evaluating:  59%|#####8    | 224/380 [1:06:31<05:45,  2.22s/it]2026-06-02 02:17:19,017 ERROR Exception raised in Job[252]: APIConnectionError(Connection error.)
+Evaluating:  59%|#####9    | 225/380 [1:06:31<04:23,  1.70s/it]2026-06-02 02:17:19,358 INFO Retrying request to /chat/completions in 0.383671 seconds
+2026-06-02 02:17:20,854 INFO Retrying request to /chat/completions in 0.499217 seconds
+2026-06-02 02:17:21,197 ERROR Exception raised in Job[117]: APIConnectionError(Connection error.)
+Evaluating:  59%|#####9    | 226/380 [1:06:34<04:43,  1.84s/it]2026-06-02 02:17:21,354 INFO Retrying request to /chat/completions in 0.487155 seconds
+2026-06-02 02:17:22,069 INFO Retrying request to /chat/completions in 0.853114 seconds
+2026-06-02 02:17:23,502 INFO Retrying request to /chat/completions in 0.444451 seconds
+2026-06-02 02:17:23,642 INFO Retrying request to /chat/completions in 0.750563 seconds
+2026-06-02 02:17:24,155 INFO Retrying request to /chat/completions in 0.865628 seconds
+2026-06-02 02:17:25,244 ERROR Exception raised in Job[253]: APIConnectionError(Connection error.)
+Evaluating:  60%|#####9    | 227/380 [1:06:38<06:23,  2.51s/it]2026-06-02 02:17:26,272 INFO Retrying request to /chat/completions in 0.961910 seconds
+2026-06-02 02:17:26,711 ERROR Exception raised in Job[118]: APIConnectionError(Connection error.)
+Evaluating:  60%|######    | 228/380 [1:06:39<05:33,  2.19s/it]2026-06-02 02:17:27,347 ERROR Exception raised in Job[254]: APIConnectionError(Connection error.)
+Evaluating:  60%|######    | 229/380 [1:06:40<04:21,  1.73s/it]2026-06-02 02:17:27,579 INFO Retrying request to /chat/completions in 0.471689 seconds
+2026-06-02 02:17:29,014 INFO Retrying request to /chat/completions in 0.430596 seconds
+2026-06-02 02:17:29,578 ERROR Exception raised in Job[119]: APIConnectionError(Connection error.)
+Evaluating:  61%|######    | 230/380 [1:06:42<04:41,  1.88s/it]2026-06-02 02:17:29,670 INFO Retrying request to /chat/completions in 0.392073 seconds
+2026-06-02 02:17:30,413 INFO Retrying request to /chat/completions in 0.907231 seconds
+2026-06-02 02:17:31,727 INFO Retrying request to /chat/completions in 0.936053 seconds
+2026-06-02 02:17:31,913 INFO Retrying request to /chat/completions in 0.491714 seconds
+2026-06-02 02:17:32,399 INFO Retrying request to /chat/completions in 0.920738 seconds
+2026-06-02 02:17:33,628 ERROR Exception raised in Job[255]: APIConnectionError(Connection error.)
+Evaluating:  61%|######    | 231/380 [1:06:46<06:16,  2.53s/it]2026-06-02 02:17:34,712 INFO Retrying request to /chat/completions in 0.799029 seconds
+2026-06-02 02:17:34,979 ERROR Exception raised in Job[120]: APIConnectionError(Connection error.)
+Evaluating:  61%|######1   | 232/380 [1:06:47<05:22,  2.18s/it]2026-06-02 02:17:35,678 ERROR Exception raised in Job[256]: APIConnectionError(Connection error.)
+Evaluating:  61%|######1   | 233/380 [1:06:48<04:14,  1.73s/it]2026-06-02 02:17:35,946 INFO Retrying request to /chat/completions in 0.480183 seconds
+2026-06-02 02:17:37,310 INFO Retrying request to /chat/completions in 0.443686 seconds
+2026-06-02 02:17:37,874 ERROR Exception raised in Job[121]: APIConnectionError(Connection error.)
+Evaluating:  62%|######1   | 234/380 [1:06:50<04:32,  1.87s/it]2026-06-02 02:17:38,016 INFO Retrying request to /chat/completions in 0.403037 seconds
+2026-06-02 02:17:38,752 INFO Retrying request to /chat/completions in 0.842067 seconds
+2026-06-02 02:17:40,059 INFO Retrying request to /chat/completions in 0.998946 seconds
+2026-06-02 02:17:40,199 INFO Retrying request to /chat/completions in 0.438317 seconds
+2026-06-02 02:17:40,711 INFO Retrying request to /chat/completions in 0.996012 seconds
+2026-06-02 02:17:41,942 ERROR Exception raised in Job[257]: APIConnectionError(Connection error.)
+Evaluating:  62%|######1   | 235/380 [1:06:54<06:07,  2.53s/it]2026-06-02 02:17:42,967 INFO Retrying request to /chat/completions in 0.935924 seconds
+2026-06-02 02:17:43,405 ERROR Exception raised in Job[122]: APIConnectionError(Connection error.)
+Evaluating:  62%|######2   | 236/380 [1:06:56<05:18,  2.21s/it]2026-06-02 02:17:44,056 ERROR Exception raised in Job[258]: APIConnectionError(Connection error.)
+Evaluating:  62%|######2   | 237/380 [1:06:56<04:08,  1.74s/it]2026-06-02 02:17:44,260 INFO Retrying request to /chat/completions in 0.420235 seconds
+2026-06-02 02:17:45,740 INFO Retrying request to /chat/completions in 0.390237 seconds
+2026-06-02 02:17:46,240 ERROR Exception raised in Job[123]: APIConnectionError(Connection error.)
+Evaluating:  63%|######2   | 238/380 [1:06:59<04:26,  1.88s/it]2026-06-02 02:17:46,380 INFO Retrying request to /chat/completions in 0.443039 seconds
+2026-06-02 02:17:47,002 INFO Retrying request to /chat/completions in 0.805670 seconds
+2026-06-02 02:17:48,483 INFO Retrying request to /chat/completions in 0.851259 seconds
+2026-06-02 02:17:48,560 INFO Retrying request to /chat/completions in 0.463118 seconds
+2026-06-02 02:17:49,134 INFO Retrying request to /chat/completions in 0.936012 seconds
+2026-06-02 02:17:50,127 ERROR Exception raised in Job[259]: APIConnectionError(Connection error.)
+Evaluating:  63%|######2   | 239/380 [1:07:02<05:49,  2.48s/it]2026-06-02 02:17:51,337 INFO Retrying request to /chat/completions in 0.850382 seconds
+2026-06-02 02:17:51,631 ERROR Exception raised in Job[124]: APIConnectionError(Connection error.)
+Evaluating:  63%|######3   | 240/380 [1:07:04<05:05,  2.18s/it]2026-06-02 02:17:52,399 ERROR Exception raised in Job[260]: APIConnectionError(Connection error.)
+Evaluating:  63%|######3   | 241/380 [1:07:05<04:04,  1.76s/it]2026-06-02 02:17:52,458 INFO Retrying request to /chat/completions in 0.436915 seconds
+2026-06-02 02:17:53,949 INFO Retrying request to /chat/completions in 0.485748 seconds
+2026-06-02 02:17:54,494 ERROR Exception raised in Job[125]: APIConnectionError(Connection error.)
+Evaluating:  64%|######3   | 242/380 [1:07:07<04:16,  1.86s/it]2026-06-02 02:17:54,728 INFO Retrying request to /chat/completions in 0.493876 seconds
+2026-06-02 02:17:55,227 INFO Retrying request to /chat/completions in 0.854668 seconds
+2026-06-02 02:17:56,762 INFO Retrying request to /chat/completions in 0.820457 seconds
+2026-06-02 02:17:56,793 INFO Retrying request to /chat/completions in 0.413328 seconds
+2026-06-02 02:17:57,557 INFO Retrying request to /chat/completions in 0.921411 seconds
+2026-06-02 02:17:58,414 ERROR Exception raised in Job[261]: APIConnectionError(Connection error.)
+Evaluating:  64%|######3   | 243/380 [1:07:11<05:39,  2.48s/it]2026-06-02 02:17:59,512 INFO Retrying request to /chat/completions in 0.945984 seconds
+2026-06-02 02:17:59,905 ERROR Exception raised in Job[126]: APIConnectionError(Connection error.)
+Evaluating:  64%|######4   | 244/380 [1:07:12<04:57,  2.19s/it]2026-06-02 02:18:00,728 INFO Retrying request to /chat/completions in 0.407808 seconds
+2026-06-02 02:18:00,806 ERROR Exception raised in Job[262]: APIConnectionError(Connection error.)
+Evaluating:  64%|######4   | 245/380 [1:07:13<04:02,  1.80s/it]2026-06-02 02:18:02,237 INFO Retrying request to /chat/completions in 0.454967 seconds
+2026-06-02 02:18:02,768 ERROR Exception raised in Job[127]: APIConnectionError(Connection error.)
+Evaluating:  65%|######4   | 246/380 [1:07:15<04:07,  1.85s/it]2026-06-02 02:18:03,126 INFO Retrying request to /chat/completions in 0.413203 seconds
+2026-06-02 02:18:03,469 INFO Retrying request to /chat/completions in 0.787803 seconds
+2026-06-02 02:18:05,026 INFO Retrying request to /chat/completions in 0.799027 seconds
+2026-06-02 02:18:05,120 INFO Retrying request to /chat/completions in 0.485721 seconds
+2026-06-02 02:18:05,869 INFO Retrying request to /chat/completions in 0.869322 seconds
+2026-06-02 02:18:06,584 ERROR Exception raised in Job[263]: APIConnectionError(Connection error.)
+Evaluating:  65%|######5   | 247/380 [1:07:19<05:23,  2.43s/it]2026-06-02 02:18:07,927 INFO Retrying request to /chat/completions in 0.755430 seconds
+2026-06-02 02:18:08,146 ERROR Exception raised in Job[128]: APIConnectionError(Connection error.)
+Evaluating:  65%|######5   | 248/380 [1:07:20<04:46,  2.17s/it]2026-06-02 02:18:08,899 INFO Retrying request to /chat/completions in 0.411133 seconds
+2026-06-02 02:18:09,098 ERROR Exception raised in Job[264]: APIConnectionError(Connection error.)
+Evaluating:  66%|######5   | 249/380 [1:07:21<03:56,  1.81s/it]2026-06-02 02:18:10,471 INFO Retrying request to /chat/completions in 0.395022 seconds
+2026-06-02 02:18:11,019 ERROR Exception raised in Job[129]: APIConnectionError(Connection error.)
+Evaluating:  66%|######5   | 250/380 [1:07:23<03:59,  1.84s/it]2026-06-02 02:18:11,421 INFO Retrying request to /chat/completions in 0.484897 seconds
+2026-06-02 02:18:11,651 INFO Retrying request to /chat/completions in 0.982466 seconds
+2026-06-02 02:18:13,180 INFO Retrying request to /chat/completions in 0.902196 seconds
+2026-06-02 02:18:13,350 INFO Retrying request to /chat/completions in 0.430591 seconds
+2026-06-02 02:18:14,253 INFO Retrying request to /chat/completions in 0.774200 seconds
+2026-06-02 02:18:14,949 ERROR Exception raised in Job[265]: APIConnectionError(Connection error.)
+Evaluating:  66%|######6   | 251/380 [1:07:27<05:18,  2.47s/it]2026-06-02 02:18:16,111 INFO Retrying request to /chat/completions in 0.776919 seconds
+2026-06-02 02:18:16,439 ERROR Exception raised in Job[130]: APIConnectionError(Connection error.)
+Evaluating:  66%|######6   | 252/380 [1:07:29<04:39,  2.18s/it]2026-06-02 02:18:17,278 INFO Retrying request to /chat/completions in 0.471214 seconds
+2026-06-02 02:18:17,342 ERROR Exception raised in Job[266]: APIConnectionError(Connection error.)
+Evaluating:  67%|######6   | 253/380 [1:07:30<03:47,  1.79s/it]2026-06-02 02:18:18,789 INFO Retrying request to /chat/completions in 0.453806 seconds
+2026-06-02 02:18:19,211 ERROR Exception raised in Job[131]: APIConnectionError(Connection error.)
+Evaluating:  67%|######6   | 254/380 [1:07:32<03:48,  1.81s/it]2026-06-02 02:18:19,664 INFO Retrying request to /chat/completions in 0.377490 seconds
+2026-06-02 02:18:20,085 INFO Retrying request to /chat/completions in 0.760036 seconds
+2026-06-02 02:18:21,517 INFO Retrying request to /chat/completions in 0.412387 seconds
+2026-06-02 02:18:21,592 INFO Retrying request to /chat/completions in 0.791655 seconds
+2026-06-02 02:18:22,391 INFO Retrying request to /chat/completions in 0.909530 seconds
+2026-06-02 02:18:23,197 ERROR Exception raised in Job[267]: APIConnectionError(Connection error.)
+Evaluating:  67%|######7   | 255/380 [1:07:36<05:08,  2.47s/it]2026-06-02 02:18:24,269 INFO Retrying request to /chat/completions in 0.758555 seconds
+2026-06-02 02:18:24,719 ERROR Exception raised in Job[132]: APIConnectionError(Connection error.)
+Evaluating:  67%|######7   | 256/380 [1:07:37<04:30,  2.18s/it]2026-06-02 02:18:25,528 INFO Retrying request to /chat/completions in 0.410698 seconds
+2026-06-02 02:18:25,638 ERROR Exception raised in Job[268]: APIConnectionError(Connection error.)
+Evaluating:  68%|######7   | 257/380 [1:07:38<03:41,  1.80s/it]2026-06-02 02:18:27,023 INFO Retrying request to /chat/completions in 0.382135 seconds
+2026-06-02 02:18:27,380 ERROR Exception raised in Job[133]: APIConnectionError(Connection error.)
+Evaluating:  68%|######7   | 258/380 [1:07:40<03:38,  1.79s/it]2026-06-02 02:18:27,957 INFO Retrying request to /chat/completions in 0.379947 seconds
+2026-06-02 02:18:28,283 INFO Retrying request to /chat/completions in 0.843964 seconds
+2026-06-02 02:18:29,717 INFO Retrying request to /chat/completions in 0.398163 seconds
+2026-06-02 02:18:29,752 INFO Retrying request to /chat/completions in 0.914272 seconds
+2026-06-02 02:18:30,667 INFO Retrying request to /chat/completions in 0.927146 seconds
+2026-06-02 02:18:31,477 ERROR Exception raised in Job[269]: APIConnectionError(Connection error.)
+Evaluating:  68%|######8   | 259/380 [1:07:44<04:59,  2.48s/it]2026-06-02 02:18:32,430 INFO Retrying request to /chat/completions in 0.952725 seconds
+2026-06-02 02:18:32,957 ERROR Exception raised in Job[134]: APIConnectionError(Connection error.)
+Evaluating:  68%|######8   | 260/380 [1:07:45<04:21,  2.18s/it]2026-06-02 02:18:33,779 INFO Retrying request to /chat/completions in 0.417953 seconds
+2026-06-02 02:18:33,951 ERROR Exception raised in Job[270]: APIConnectionError(Connection error.)
+Evaluating:  69%|######8   | 261/380 [1:07:46<03:36,  1.82s/it]2026-06-02 02:18:35,292 INFO Retrying request to /chat/completions in 0.480516 seconds
+2026-06-02 02:18:35,744 ERROR Exception raised in Job[135]: APIConnectionError(Connection error.)
+Evaluating:  69%|######8   | 262/380 [1:07:48<03:34,  1.82s/it]2026-06-02 02:18:36,272 INFO Retrying request to /chat/completions in 0.432251 seconds
+2026-06-02 02:18:36,531 INFO Retrying request to /chat/completions in 0.765540 seconds
+2026-06-02 02:18:38,071 INFO Retrying request to /chat/completions in 0.471063 seconds
+2026-06-02 02:18:38,086 INFO Retrying request to /chat/completions in 0.833095 seconds
+2026-06-02 02:18:39,038 INFO Retrying request to /chat/completions in 0.865417 seconds
+2026-06-02 02:18:39,645 ERROR Exception raised in Job[271]: APIConnectionError(Connection error.)
+Evaluating:  69%|######9   | 263/380 [1:07:52<04:45,  2.44s/it]2026-06-02 02:18:40,870 INFO Retrying request to /chat/completions in 0.791395 seconds
+2026-06-02 02:18:41,258 ERROR Exception raised in Job[0]: APIConnectionError(Connection error.)
+Evaluating:  69%|######9   | 264/380 [1:07:54<04:13,  2.19s/it]2026-06-02 02:18:41,988 INFO Retrying request to /chat/completions in 0.421895 seconds
+2026-06-02 02:18:42,222 ERROR Exception raised in Job[136]: APIConnectionError(Connection error.)
+Evaluating:  70%|######9   | 265/380 [1:07:55<03:29,  1.82s/it]2026-06-02 02:18:43,561 INFO Retrying request to /chat/completions in 0.491135 seconds
+2026-06-02 02:18:43,982 ERROR Exception raised in Job[272]: APIConnectionError(Connection error.)
+Evaluating:  70%|#######   | 266/380 [1:07:56<03:25,  1.81s/it]2026-06-02 02:18:44,558 INFO Retrying request to /chat/completions in 0.450557 seconds
+2026-06-02 02:18:44,746 INFO Retrying request to /chat/completions in 0.771849 seconds
+2026-06-02 02:18:46,310 INFO Retrying request to /chat/completions in 0.488976 seconds
+2026-06-02 02:18:46,375 INFO Retrying request to /chat/completions in 0.879100 seconds
+2026-06-02 02:18:47,338 INFO Retrying request to /chat/completions in 0.938225 seconds
+2026-06-02 02:18:47,851 ERROR Exception raised in Job[1]: APIConnectionError(Connection error.)
+Evaluating:  70%|#######   | 267/380 [1:08:00<04:34,  2.43s/it]2026-06-02 02:18:49,127 INFO Retrying request to /chat/completions in 0.994563 seconds
+2026-06-02 02:18:49,563 ERROR Exception raised in Job[137]: APIConnectionError(Connection error.)
+Evaluating:  71%|#######   | 268/380 [1:08:02<04:07,  2.21s/it]2026-06-02 02:18:50,170 INFO Retrying request to /chat/completions in 0.481622 seconds
+2026-06-02 02:18:50,640 ERROR Exception raised in Job[273]: APIConnectionError(Connection error.)
+Evaluating:  71%|#######   | 269/380 [1:08:03<03:27,  1.87s/it]2026-06-02 02:18:51,898 INFO Retrying request to /chat/completions in 0.480016 seconds
+2026-06-02 02:18:52,412 ERROR Exception raised in Job[2]: APIConnectionError(Connection error.)
+Evaluating:  71%|#######1  | 270/380 [1:08:05<03:22,  1.84s/it]2026-06-02 02:18:52,957 INFO Retrying request to /chat/completions in 0.481055 seconds
+2026-06-02 02:18:52,971 INFO Retrying request to /chat/completions in 0.873533 seconds
+2026-06-02 02:18:54,716 INFO Retrying request to /chat/completions in 0.893867 seconds
+2026-06-02 02:18:54,747 INFO Retrying request to /chat/completions in 0.410729 seconds
+2026-06-02 02:18:55,777 INFO Retrying request to /chat/completions in 0.765824 seconds
+2026-06-02 02:18:56,178 ERROR Exception raised in Job[138]: APIConnectionError(Connection error.)
+Evaluating:  71%|#######1  | 271/380 [1:08:08<04:23,  2.41s/it]2026-06-02 02:18:57,488 INFO Retrying request to /chat/completions in 0.997074 seconds
+2026-06-02 02:18:57,937 ERROR Exception raised in Job[274]: APIConnectionError(Connection error.)
+Evaluating:  72%|#######1  | 272/380 [1:08:10<03:59,  2.22s/it]2026-06-02 02:18:58,496 INFO Retrying request to /chat/completions in 0.375429 seconds
+2026-06-02 02:18:58,901 ERROR Exception raised in Job[3]: APIConnectionError(Connection error.)
+Evaluating:  72%|#######1  | 273/380 [1:08:11<03:17,  1.85s/it]2026-06-02 02:19:00,272 INFO Retrying request to /chat/completions in 0.463457 seconds
+2026-06-02 02:19:00,799 ERROR Exception raised in Job[139]: APIConnectionError(Connection error.)
+Evaluating:  72%|#######2  | 274/380 [1:08:13<03:16,  1.86s/it]2026-06-02 02:19:01,207 INFO Retrying request to /chat/completions in 0.969356 seconds
+2026-06-02 02:19:01,243 INFO Retrying request to /chat/completions in 0.490483 seconds
+2026-06-02 02:19:03,067 INFO Retrying request to /chat/completions in 0.850776 seconds
+2026-06-02 02:19:03,099 INFO Retrying request to /chat/completions in 0.390016 seconds
+2026-06-02 02:19:04,049 INFO Retrying request to /chat/completions in 0.973956 seconds
+2026-06-02 02:19:04,520 ERROR Exception raised in Job[275]: APIConnectionError(Connection error.)
+Evaluating:  72%|#######2  | 275/380 [1:08:17<04:14,  2.42s/it]2026-06-02 02:19:05,817 INFO Retrying request to /chat/completions in 0.812379 seconds
+2026-06-02 02:19:06,249 ERROR Exception raised in Job[4]: APIConnectionError(Connection error.)
+Evaluating:  73%|#######2  | 276/380 [1:08:19<03:49,  2.21s/it]2026-06-02 02:19:06,844 INFO Retrying request to /chat/completions in 0.445343 seconds
+2026-06-02 02:19:07,356 ERROR Exception raised in Job[140]: APIConnectionError(Connection error.)
+Evaluating:  73%|#######2  | 277/380 [1:08:20<03:13,  1.88s/it]2026-06-02 02:19:08,566 INFO Retrying request to /chat/completions in 0.493413 seconds
+2026-06-02 02:19:08,971 ERROR Exception raised in Job[276]: APIConnectionError(Connection error.)
+Evaluating:  73%|#######3  | 278/380 [1:08:21<03:03,  1.80s/it]2026-06-02 02:19:09,620 INFO Retrying request to /chat/completions in 0.811819 seconds
+2026-06-02 02:19:09,681 INFO Retrying request to /chat/completions in 0.455351 seconds
+2026-06-02 02:19:11,303 INFO Retrying request to /chat/completions in 0.415008 seconds
+2026-06-02 02:19:11,395 INFO Retrying request to /chat/completions in 0.891959 seconds
+2026-06-02 02:19:12,470 INFO Retrying request to /chat/completions in 0.814745 seconds
+2026-06-02 02:19:12,751 ERROR Exception raised in Job[5]: APIConnectionError(Connection error.)
+Evaluating:  73%|#######3  | 279/380 [1:08:25<04:01,  2.39s/it]2026-06-02 02:19:14,059 INFO Retrying request to /chat/completions in 0.909211 seconds
+2026-06-02 02:19:14,634 ERROR Exception raised in Job[141]: APIConnectionError(Connection error.)
+Evaluating:  74%|#######3  | 280/380 [1:08:27<03:43,  2.24s/it]2026-06-02 02:19:15,071 INFO Retrying request to /chat/completions in 0.405583 seconds
+2026-06-02 02:19:15,616 ERROR Exception raised in Job[277]: APIConnectionError(Connection error.)
+Evaluating:  74%|#######3  | 281/380 [1:08:28<03:04,  1.87s/it]2026-06-02 02:19:16,934 INFO Retrying request to /chat/completions in 0.414369 seconds
+2026-06-02 02:19:17,305 ERROR Exception raised in Job[6]: APIConnectionError(Connection error.)
+Evaluating:  74%|#######4  | 282/380 [1:08:30<02:57,  1.81s/it]2026-06-02 02:19:17,800 INFO Retrying request to /chat/completions in 0.803539 seconds
+2026-06-02 02:19:17,939 INFO Retrying request to /chat/completions in 0.383711 seconds
+2026-06-02 02:19:19,625 INFO Retrying request to /chat/completions in 0.497758 seconds
+2026-06-02 02:19:19,701 INFO Retrying request to /chat/completions in 0.876873 seconds
+2026-06-02 02:19:20,650 INFO Retrying request to /chat/completions in 0.826671 seconds
+2026-06-02 02:19:20,915 ERROR Exception raised in Job[142]: APIConnectionError(Connection error.)
+Evaluating:  74%|#######4  | 283/380 [1:08:33<03:48,  2.35s/it]2026-06-02 02:19:22,440 INFO Retrying request to /chat/completions in 0.778910 seconds
+2026-06-02 02:19:22,908 ERROR Exception raised in Job[278]: APIConnectionError(Connection error.)
+Evaluating:  75%|#######4  | 284/380 [1:08:35<03:35,  2.24s/it]2026-06-02 02:19:23,248 INFO Retrying request to /chat/completions in 0.395604 seconds
+2026-06-02 02:19:23,809 ERROR Exception raised in Job[7]: APIConnectionError(Connection error.)
+Evaluating:  75%|#######5  | 285/380 [1:08:36<02:54,  1.84s/it]2026-06-02 02:19:25,236 INFO Retrying request to /chat/completions in 0.475382 seconds
+2026-06-02 02:19:25,546 ERROR Exception raised in Job[143]: APIConnectionError(Connection error.)
+Evaluating:  75%|#######5  | 286/380 [1:08:38<02:50,  1.82s/it]2026-06-02 02:19:25,969 INFO Retrying request to /chat/completions in 0.943824 seconds
+2026-06-02 02:19:26,124 INFO Retrying request to /chat/completions in 0.388956 seconds
+2026-06-02 02:19:27,911 INFO Retrying request to /chat/completions in 0.400984 seconds
+2026-06-02 02:19:28,005 INFO Retrying request to /chat/completions in 0.906678 seconds
+2026-06-02 02:19:28,845 INFO Retrying request to /chat/completions in 0.832898 seconds
+2026-06-02 02:19:29,233 ERROR Exception raised in Job[279]: APIConnectionError(Connection error.)
+Evaluating:  76%|#######5  | 287/380 [1:08:42<03:40,  2.37s/it]2026-06-02 02:19:30,601 INFO Retrying request to /chat/completions in 0.940169 seconds
+2026-06-02 02:19:31,230 ERROR Exception raised in Job[8]: APIConnectionError(Connection error.)
+Evaluating:  76%|#######5  | 288/380 [1:08:44<03:27,  2.26s/it]2026-06-02 02:19:31,573 INFO Retrying request to /chat/completions in 0.393784 seconds
+2026-06-02 02:19:32,008 ERROR Exception raised in Job[144]: APIConnectionError(Connection error.)
+Evaluating:  76%|#######6  | 289/380 [1:08:44<02:45,  1.82s/it]2026-06-02 02:19:33,565 INFO Retrying request to /chat/completions in 0.425067 seconds
+2026-06-02 02:19:33,894 ERROR Exception raised in Job[280]: APIConnectionError(Connection error.)
+Evaluating:  76%|#######6  | 290/380 [1:08:46<02:45,  1.84s/it]2026-06-02 02:19:34,315 INFO Retrying request to /chat/completions in 0.966695 seconds
+2026-06-02 02:19:34,343 INFO Retrying request to /chat/completions in 0.450352 seconds
+2026-06-02 02:19:36,240 INFO Retrying request to /chat/completions in 0.419067 seconds
+2026-06-02 02:19:36,319 INFO Retrying request to /chat/completions in 0.917767 seconds
+2026-06-02 02:19:37,112 INFO Retrying request to /chat/completions in 0.989539 seconds
+2026-06-02 02:19:37,627 ERROR Exception raised in Job[9]: APIConnectionError(Connection error.)
+Evaluating:  77%|#######6  | 291/380 [1:08:50<03:33,  2.40s/it]2026-06-02 02:19:38,981 INFO Retrying request to /chat/completions in 0.807154 seconds
+2026-06-02 02:19:39,588 ERROR Exception raised in Job[145]: APIConnectionError(Connection error.)
+Evaluating:  77%|#######6  | 292/380 [1:08:52<03:20,  2.27s/it]2026-06-02 02:19:39,934 INFO Retrying request to /chat/completions in 0.435832 seconds
+2026-06-02 02:19:40,418 ERROR Exception raised in Job[281]: APIConnectionError(Connection error.)
+Evaluating:  77%|#######7  | 293/380 [1:08:53<02:39,  1.84s/it]2026-06-02 02:19:41,929 INFO Retrying request to /chat/completions in 0.466861 seconds
+2026-06-02 02:19:42,103 ERROR Exception raised in Job[10]: APIConnectionError(Connection error.)
+Evaluating:  77%|#######7  | 294/380 [1:08:54<02:33,  1.79s/it]2026-06-02 02:19:42,696 INFO Retrying request to /chat/completions in 0.909053 seconds
+2026-06-02 02:19:42,740 INFO Retrying request to /chat/completions in 0.457312 seconds
+2026-06-02 02:19:44,416 INFO Retrying request to /chat/completions in 0.480920 seconds
+2026-06-02 02:19:44,727 INFO Retrying request to /chat/completions in 0.870493 seconds
+2026-06-02 02:19:45,526 INFO Retrying request to /chat/completions in 0.830499 seconds
+2026-06-02 02:19:45,958 ERROR Exception raised in Job[146]: APIConnectionError(Connection error.)
+Evaluating:  78%|#######7  | 295/380 [1:08:58<03:25,  2.41s/it]2026-06-02 02:19:47,217 INFO Retrying request to /chat/completions in 0.954915 seconds
+2026-06-02 02:19:47,935 ERROR Exception raised in Job[282]: APIConnectionError(Connection error.)
+Evaluating:  78%|#######7  | 296/380 [1:09:00<03:11,  2.28s/it]2026-06-02 02:19:48,288 INFO Retrying request to /chat/completions in 0.392110 seconds
+2026-06-02 02:19:48,731 ERROR Exception raised in Job[11]: APIConnectionError(Connection error.)
+Evaluating:  78%|#######8  | 297/380 [1:09:01<02:32,  1.84s/it]2026-06-02 02:19:50,283 INFO Retrying request to /chat/completions in 0.460597 seconds
+2026-06-02 02:19:50,520 ERROR Exception raised in Job[147]: APIConnectionError(Connection error.)
+Evaluating:  78%|#######8  | 298/380 [1:09:03<02:29,  1.82s/it]2026-06-02 02:19:51,031 INFO Retrying request to /chat/completions in 0.938624 seconds
+2026-06-02 02:19:51,078 INFO Retrying request to /chat/completions in 0.391155 seconds
+2026-06-02 02:19:52,854 INFO Retrying request to /chat/completions in 0.466571 seconds
+2026-06-02 02:19:53,073 INFO Retrying request to /chat/completions in 0.891899 seconds
+2026-06-02 02:19:53,773 INFO Retrying request to /chat/completions in 0.929888 seconds
+2026-06-02 02:19:54,302 ERROR Exception raised in Job[283]: APIConnectionError(Connection error.)
+Evaluating:  79%|#######8  | 299/380 [1:09:07<03:14,  2.41s/it]2026-06-02 02:19:55,656 INFO Retrying request to /chat/completions in 0.946181 seconds
+2026-06-02 02:19:56,295 ERROR Exception raised in Job[12]: APIConnectionError(Connection error.)
+Evaluating:  79%|#######8  | 300/380 [1:09:09<03:02,  2.28s/it]2026-06-02 02:19:56,611 INFO Retrying request to /chat/completions in 0.385098 seconds
+2026-06-02 02:19:57,045 ERROR Exception raised in Job[148]: APIConnectionError(Connection error.)
+Evaluating:  79%|#######9  | 301/380 [1:09:09<02:23,  1.82s/it]2026-06-02 02:19:58,616 INFO Retrying request to /chat/completions in 0.449514 seconds
+2026-06-02 02:19:58,925 ERROR Exception raised in Job[284]: APIConnectionError(Connection error.)
+Evaluating:  79%|#######9  | 302/380 [1:09:11<02:23,  1.84s/it]2026-06-02 02:19:59,312 INFO Retrying request to /chat/completions in 0.962853 seconds
+2026-06-02 02:19:59,359 INFO Retrying request to /chat/completions in 0.378287 seconds
+2026-06-02 02:20:01,255 INFO Retrying request to /chat/completions in 0.403524 seconds
+2026-06-02 02:20:01,394 INFO Retrying request to /chat/completions in 0.897828 seconds
+2026-06-02 02:20:02,063 INFO Retrying request to /chat/completions in 0.819317 seconds
+2026-06-02 02:20:02,589 ERROR Exception raised in Job[13]: APIConnectionError(Connection error.)
+Evaluating:  80%|#######9  | 303/380 [1:09:15<03:03,  2.39s/it]2026-06-02 02:20:03,989 INFO Retrying request to /chat/completions in 0.924501 seconds
+2026-06-02 02:20:04,627 ERROR Exception raised in Job[149]: APIConnectionError(Connection error.)
+Evaluating:  80%|########  | 304/380 [1:09:17<02:53,  2.29s/it]2026-06-02 02:20:04,892 INFO Retrying request to /chat/completions in 0.470952 seconds
+2026-06-02 02:20:05,202 ERROR Exception raised in Job[285]: APIConnectionError(Connection error.)
+Evaluating:  80%|########  | 305/380 [1:09:18<02:12,  1.77s/it]2026-06-02 02:20:06,975 INFO Retrying request to /chat/completions in 0.426642 seconds
+2026-06-02 02:20:07,242 ERROR Exception raised in Job[14]: APIConnectionError(Connection error.)
+Evaluating:  81%|########  | 306/380 [1:09:20<02:16,  1.85s/it]2026-06-02 02:20:07,522 INFO Retrying request to /chat/completions in 0.398641 seconds
+2026-06-02 02:20:07,679 INFO Retrying request to /chat/completions in 0.926110 seconds
+2026-06-02 02:20:09,561 INFO Retrying request to /chat/completions in 0.403160 seconds
+2026-06-02 02:20:09,736 INFO Retrying request to /chat/completions in 0.886065 seconds
+2026-06-02 02:20:10,246 INFO Retrying request to /chat/completions in 0.817214 seconds
+2026-06-02 02:20:10,943 ERROR Exception raised in Job[150]: APIConnectionError(Connection error.)
+Evaluating:  81%|########  | 307/380 [1:09:23<02:55,  2.40s/it]2026-06-02 02:20:12,298 INFO Retrying request to /chat/completions in 0.959966 seconds
+2026-06-02 02:20:12,936 ERROR Exception raised in Job[286]: APIConnectionError(Connection error.)
+Evaluating:  81%|########1 | 308/380 [1:09:25<02:44,  2.28s/it]2026-06-02 02:20:13,264 INFO Retrying request to /chat/completions in 0.439399 seconds
+2026-06-02 02:20:13,386 ERROR Exception raised in Job[15]: APIConnectionError(Connection error.)
+Evaluating:  81%|########1 | 309/380 [1:09:26<02:02,  1.73s/it]2026-06-02 02:20:15,267 INFO Retrying request to /chat/completions in 0.474139 seconds
+2026-06-02 02:20:15,593 ERROR Exception raised in Job[151]: APIConnectionError(Connection error.)
+Evaluating:  82%|########1 | 310/380 [1:09:28<02:11,  1.88s/it]2026-06-02 02:20:15,702 INFO Retrying request to /chat/completions in 0.453207 seconds
+2026-06-02 02:20:16,045 INFO Retrying request to /chat/completions in 0.923462 seconds
+2026-06-02 02:20:17,927 INFO Retrying request to /chat/completions in 0.423209 seconds
+2026-06-02 02:20:18,065 INFO Retrying request to /chat/completions in 0.998036 seconds
+2026-06-02 02:20:18,471 INFO Retrying request to /chat/completions in 0.866923 seconds
+2026-06-02 02:20:19,295 ERROR Exception raised in Job[287]: APIConnectionError(Connection error.)
+Evaluating:  82%|########1 | 311/380 [1:09:32<02:47,  2.42s/it]2026-06-02 02:20:20,713 INFO Retrying request to /chat/completions in 0.864343 seconds
+2026-06-02 02:20:21,384 ERROR Exception raised in Job[16]: APIConnectionError(Connection error.)
+Evaluating:  82%|########2 | 312/380 [1:09:34<02:38,  2.32s/it]2026-06-02 02:20:21,620 INFO Retrying request to /chat/completions in 0.418553 seconds
+2026-06-02 02:20:21,635 ERROR Exception raised in Job[152]: APIConnectionError(Connection error.)
+Evaluating:  82%|########2 | 313/380 [1:09:34<01:53,  1.70s/it]2026-06-02 02:20:23,715 INFO Retrying request to /chat/completions in 0.438284 seconds
+2026-06-02 02:20:23,919 ERROR Exception raised in Job[288]: APIConnectionError(Connection error.)
+Evaluating:  83%|########2 | 314/380 [1:09:36<02:03,  1.88s/it]2026-06-02 02:20:23,949 INFO Retrying request to /chat/completions in 0.473688 seconds
+2026-06-02 02:20:24,370 INFO Retrying request to /chat/completions in 0.981823 seconds
+2026-06-02 02:20:26,221 INFO Retrying request to /chat/completions in 0.401002 seconds
+2026-06-02 02:20:26,486 INFO Retrying request to /chat/completions in 0.906529 seconds
+2026-06-02 02:20:26,751 INFO Retrying request to /chat/completions in 0.838950 seconds
+2026-06-02 02:20:27,651 ERROR Exception raised in Job[17]: APIConnectionError(Connection error.)
+Evaluating:  83%|########2 | 315/380 [1:09:40<02:38,  2.44s/it]2026-06-02 02:20:28,947 INFO Retrying request to /chat/completions in 0.933240 seconds
+2026-06-02 02:20:29,696 ERROR Exception raised in Job[153]: APIConnectionError(Connection error.)
+Evaluating:  83%|########3 | 316/380 [1:09:42<02:28,  2.32s/it]2026-06-02 02:20:29,929 ERROR Exception raised in Job[289]: APIConnectionError(Connection error.)
+Evaluating:  83%|########3 | 317/380 [1:09:42<01:46,  1.69s/it]2026-06-02 02:20:29,978 INFO Retrying request to /chat/completions in 0.410807 seconds
+2026-06-02 02:20:32,028 INFO Retrying request to /chat/completions in 0.428852 seconds
+2026-06-02 02:20:32,199 ERROR Exception raised in Job[18]: APIConnectionError(Connection error.)
+Evaluating:  84%|########3 | 318/380 [1:09:45<01:55,  1.86s/it]2026-06-02 02:20:32,260 INFO Retrying request to /chat/completions in 0.444616 seconds
+2026-06-02 02:20:32,712 INFO Retrying request to /chat/completions in 0.801228 seconds
+2026-06-02 02:20:34,486 INFO Retrying request to /chat/completions in 0.438460 seconds
+2026-06-02 02:20:34,751 INFO Retrying request to /chat/completions in 0.776008 seconds
+2026-06-02 02:20:35,027 INFO Retrying request to /chat/completions in 0.923890 seconds
+2026-06-02 02:20:35,835 ERROR Exception raised in Job[154]: APIConnectionError(Connection error.)
+Evaluating:  84%|########3 | 319/380 [1:09:48<02:26,  2.40s/it]2026-06-02 02:20:37,255 INFO Retrying request to /chat/completions in 0.909810 seconds
+2026-06-02 02:20:37,821 ERROR Exception raised in Job[290]: APIConnectionError(Connection error.)
+Evaluating:  84%|########4 | 320/380 [1:09:50<02:16,  2.28s/it]2026-06-02 02:20:38,141 INFO Retrying request to /chat/completions in 0.427117 seconds
+2026-06-02 02:20:38,252 ERROR Exception raised in Job[19]: APIConnectionError(Connection error.)
+Evaluating:  84%|########4 | 321/380 [1:09:51<01:41,  1.72s/it]2026-06-02 02:20:40,165 INFO Retrying request to /chat/completions in 0.379053 seconds
+2026-06-02 02:20:40,505 ERROR Exception raised in Job[155]: APIConnectionError(Connection error.)
+Evaluating:  85%|########4 | 322/380 [1:09:53<01:49,  1.88s/it]2026-06-02 02:20:40,582 INFO Retrying request to /chat/completions in 0.499644 seconds
+2026-06-02 02:20:40,890 INFO Retrying request to /chat/completions in 0.763543 seconds
+2026-06-02 02:20:42,855 INFO Retrying request to /chat/completions in 0.395752 seconds
+2026-06-02 02:20:42,899 INFO Retrying request to /chat/completions in 0.799680 seconds
+2026-06-02 02:20:43,411 INFO Retrying request to /chat/completions in 0.985530 seconds
+2026-06-02 02:20:43,988 ERROR Exception raised in Job[291]: APIConnectionError(Connection error.)
+Evaluating:  85%|########5 | 323/380 [1:09:56<02:14,  2.36s/it]2026-06-02 02:20:45,577 INFO Retrying request to /chat/completions in 0.925392 seconds
+2026-06-02 02:20:46,028 ERROR Exception raised in Job[20]: APIConnectionError(Connection error.)
+Evaluating:  85%|########5 | 324/380 [1:09:58<02:06,  2.26s/it]2026-06-02 02:20:46,341 INFO Retrying request to /chat/completions in 0.425713 seconds
+2026-06-02 02:20:46,741 ERROR Exception raised in Job[156]: APIConnectionError(Connection error.)
+Evaluating:  86%|########5 | 325/380 [1:09:59<01:38,  1.80s/it]2026-06-02 02:20:48,345 INFO Retrying request to /chat/completions in 0.495880 seconds
+2026-06-02 02:20:48,844 ERROR Exception raised in Job[292]: APIConnectionError(Connection error.)
+Evaluating:  86%|########5 | 326/380 [1:10:01<01:42,  1.89s/it]2026-06-02 02:20:49,061 INFO Retrying request to /chat/completions in 0.494885 seconds
+2026-06-02 02:20:49,109 INFO Retrying request to /chat/completions in 0.884242 seconds
+2026-06-02 02:20:51,160 INFO Retrying request to /chat/completions in 0.497014 seconds
+2026-06-02 02:20:51,162 INFO Retrying request to /chat/completions in 0.785557 seconds
+2026-06-02 02:20:51,890 INFO Retrying request to /chat/completions in 0.938636 seconds
+2026-06-02 02:20:52,310 ERROR Exception raised in Job[21]: APIConnectionError(Connection error.)
+Evaluating:  86%|########6 | 327/380 [1:10:05<02:05,  2.37s/it]2026-06-02 02:20:54,007 INFO Retrying request to /chat/completions in 0.788245 seconds
+2026-06-02 02:20:54,256 ERROR Exception raised in Job[157]: APIConnectionError(Connection error.)
+Evaluating:  86%|########6 | 328/380 [1:10:07<01:56,  2.24s/it]2026-06-02 02:20:54,630 INFO Retrying request to /chat/completions in 0.421140 seconds
+2026-06-02 02:20:55,160 ERROR Exception raised in Job[293]: APIConnectionError(Connection error.)
+Evaluating:  87%|########6 | 329/380 [1:10:07<01:33,  1.84s/it]2026-06-02 02:20:56,590 INFO Retrying request to /chat/completions in 0.429449 seconds
+2026-06-02 02:20:57,119 ERROR Exception raised in Job[22]: APIConnectionError(Connection error.)
+Evaluating:  87%|########6 | 330/380 [1:10:09<01:33,  1.88s/it]2026-06-02 02:20:57,382 INFO Retrying request to /chat/completions in 0.878987 seconds
+2026-06-02 02:20:57,507 INFO Retrying request to /chat/completions in 0.439513 seconds
+2026-06-02 02:20:59,348 INFO Retrying request to /chat/completions in 0.923989 seconds
+2026-06-02 02:20:59,459 INFO Retrying request to /chat/completions in 0.375773 seconds
+2026-06-02 02:21:00,265 INFO Retrying request to /chat/completions in 0.948925 seconds
+2026-06-02 02:21:00,621 ERROR Exception raised in Job[158]: APIConnectionError(Connection error.)
+Evaluating:  87%|########7 | 331/380 [1:10:13<01:55,  2.36s/it]2026-06-02 02:21:02,146 INFO Retrying request to /chat/completions in 0.883860 seconds
+2026-06-02 02:21:02,607 ERROR Exception raised in Job[294]: APIConnectionError(Connection error.)
+Evaluating:  87%|########7 | 332/380 [1:10:15<01:48,  2.25s/it]2026-06-02 02:21:02,935 INFO Retrying request to /chat/completions in 0.402680 seconds
+2026-06-02 02:21:03,546 ERROR Exception raised in Job[23]: APIConnectionError(Connection error.)
+Evaluating:  88%|########7 | 333/380 [1:10:16<01:27,  1.86s/it]2026-06-02 02:21:04,927 INFO Retrying request to /chat/completions in 0.467865 seconds
+2026-06-02 02:21:05,364 ERROR Exception raised in Job[159]: APIConnectionError(Connection error.)
+Evaluating:  88%|########7 | 334/380 [1:10:18<01:24,  1.84s/it]2026-06-02 02:21:05,664 INFO Retrying request to /chat/completions in 0.873584 seconds
+2026-06-02 02:21:05,896 INFO Retrying request to /chat/completions in 0.427839 seconds
+2026-06-02 02:21:07,686 INFO Retrying request to /chat/completions in 0.387746 seconds
+2026-06-02 02:21:07,735 INFO Retrying request to /chat/completions in 0.993725 seconds
+2026-06-02 02:21:08,668 INFO Retrying request to /chat/completions in 0.950502 seconds
+2026-06-02 02:21:08,872 ERROR Exception raised in Job[295]: APIConnectionError(Connection error.)
+Evaluating:  88%|########8 | 335/380 [1:10:21<01:45,  2.34s/it]2026-06-02 02:21:10,410 INFO Retrying request to /chat/completions in 0.875492 seconds
+2026-06-02 02:21:11,048 ERROR Exception raised in Job[24]: APIConnectionError(Connection error.)
+Evaluating:  88%|########8 | 336/380 [1:10:23<01:41,  2.30s/it]2026-06-02 02:21:11,188 INFO Retrying request to /chat/completions in 0.421176 seconds
+2026-06-02 02:21:11,952 ERROR Exception raised in Job[160]: APIConnectionError(Connection error.)
+Evaluating:  89%|########8 | 337/380 [1:10:24<01:20,  1.88s/it]2026-06-02 02:21:13,356 INFO Retrying request to /chat/completions in 0.390830 seconds
+2026-06-02 02:21:13,637 ERROR Exception raised in Job[296]: APIConnectionError(Connection error.)
+Evaluating:  89%|########8 | 338/380 [1:10:26<01:16,  1.82s/it]2026-06-02 02:21:13,915 INFO Retrying request to /chat/completions in 0.987841 seconds
+2026-06-02 02:21:14,289 INFO Retrying request to /chat/completions in 0.477732 seconds
+2026-06-02 02:21:15,968 INFO Retrying request to /chat/completions in 0.437673 seconds
+2026-06-02 02:21:16,092 INFO Retrying request to /chat/completions in 0.927362 seconds
+2026-06-02 02:21:17,082 INFO Retrying request to /chat/completions in 0.799024 seconds
+2026-06-02 02:21:17,238 ERROR Exception raised in Job[25]: APIConnectionError(Connection error.)
+Evaluating:  89%|########9 | 339/380 [1:10:30<01:36,  2.35s/it]2026-06-02 02:21:18,730 INFO Retrying request to /chat/completions in 0.836732 seconds
+2026-06-02 02:21:19,340 ERROR Exception raised in Job[161]: APIConnectionError(Connection error.)
+Evaluating:  89%|########9 | 340/380 [1:10:32<01:31,  2.28s/it]2026-06-02 02:21:19,557 INFO Retrying request to /chat/completions in 0.441432 seconds
+2026-06-02 02:21:20,211 ERROR Exception raised in Job[297]: APIConnectionError(Connection error.)
+Evaluating:  90%|########9 | 341/380 [1:10:33<01:12,  1.86s/it]2026-06-02 02:21:21,639 INFO Retrying request to /chat/completions in 0.470983 seconds
+2026-06-02 02:21:21,900 ERROR Exception raised in Job[26]: APIConnectionError(Connection error.)
+Evaluating:  90%|######### | 342/380 [1:10:34<01:08,  1.81s/it]2026-06-02 02:21:22,333 INFO Retrying request to /chat/completions in 0.846808 seconds
+2026-06-02 02:21:22,536 INFO Retrying request to /chat/completions in 0.447920 seconds
+2026-06-02 02:21:24,229 INFO Retrying request to /chat/completions in 0.490225 seconds
+2026-06-02 02:21:24,417 INFO Retrying request to /chat/completions in 0.779938 seconds
+2026-06-02 02:21:25,300 INFO Retrying request to /chat/completions in 0.908198 seconds
+2026-06-02 02:21:25,535 ERROR Exception raised in Job[162]: APIConnectionError(Connection error.)
+Evaluating:  90%|######### | 343/380 [1:10:38<01:27,  2.36s/it]2026-06-02 02:21:27,061 INFO Retrying request to /chat/completions in 0.868977 seconds
+2026-06-02 02:21:27,529 ERROR Exception raised in Job[298]: APIConnectionError(Connection error.)
+Evaluating:  91%|######### | 344/380 [1:10:40<01:20,  2.25s/it]2026-06-02 02:21:27,870 INFO Retrying request to /chat/completions in 0.422387 seconds
+2026-06-02 02:21:28,554 ERROR Exception raised in Job[27]: APIConnectionError(Connection error.)
+Evaluating:  91%|######### | 345/380 [1:10:41<01:05,  1.88s/it]2026-06-02 02:21:29,863 INFO Retrying request to /chat/completions in 0.499609 seconds
+2026-06-02 02:21:30,250 ERROR Exception raised in Job[163]: APIConnectionError(Connection error.)
+Evaluating:  91%|#########1| 346/380 [1:10:43<01:02,  1.83s/it]2026-06-02 02:21:30,608 INFO Retrying request to /chat/completions in 0.873818 seconds
+2026-06-02 02:21:30,871 INFO Retrying request to /chat/completions in 0.443734 seconds
+2026-06-02 02:21:32,597 INFO Retrying request to /chat/completions in 0.491360 seconds
+2026-06-02 02:21:32,690 INFO Retrying request to /chat/completions in 0.772671 seconds
+2026-06-02 02:21:33,656 INFO Retrying request to /chat/completions in 0.997743 seconds
+2026-06-02 02:21:33,827 ERROR Exception raised in Job[299]: APIConnectionError(Connection error.)
+Evaluating:  91%|#########1| 347/380 [1:10:46<01:17,  2.35s/it]2026-06-02 02:21:35,414 INFO Retrying request to /chat/completions in 0.981035 seconds
+2026-06-02 02:21:35,806 ERROR Exception raised in Job[28]: APIConnectionError(Connection error.)
+Evaluating:  92%|#########1| 348/380 [1:10:48<01:11,  2.24s/it]2026-06-02 02:21:36,142 INFO Retrying request to /chat/completions in 0.439481 seconds
+2026-06-02 02:21:36,982 ERROR Exception raised in Job[164]: APIConnectionError(Connection error.)
+Evaluating:  92%|#########1| 349/380 [1:10:49<00:59,  1.92s/it]2026-06-02 02:21:38,117 INFO Retrying request to /chat/completions in 0.441370 seconds
+2026-06-02 02:21:38,757 ERROR Exception raised in Job[300]: APIConnectionError(Connection error.)
+Evaluating:  92%|#########2| 350/380 [1:10:51<00:56,  1.88s/it]2026-06-02 02:21:38,894 INFO Retrying request to /chat/completions in 0.990045 seconds
+2026-06-02 02:21:39,314 INFO Retrying request to /chat/completions in 0.483648 seconds
+2026-06-02 02:21:40,908 INFO Retrying request to /chat/completions in 0.779097 seconds
+2026-06-02 02:21:41,078 INFO Retrying request to /chat/completions in 0.408786 seconds
+2026-06-02 02:21:42,131 INFO Retrying request to /chat/completions in 0.911922 seconds
+2026-06-02 02:21:42,224 ERROR Exception raised in Job[29]: APIConnectionError(Connection error.)
+Evaluating:  92%|#########2| 351/380 [1:10:55<01:08,  2.35s/it]2026-06-02 02:21:43,812 INFO Retrying request to /chat/completions in 0.872418 seconds
+2026-06-02 02:21:44,030 ERROR Exception raised in Job[165]: APIConnectionError(Connection error.)
+Evaluating:  93%|#########2| 352/380 [1:10:56<01:01,  2.19s/it]2026-06-02 02:21:44,541 INFO Retrying request to /chat/completions in 0.377982 seconds
+2026-06-02 02:21:45,393 ERROR Exception raised in Job[301]: APIConnectionError(Connection error.)
+Evaluating:  93%|#########2| 353/380 [1:10:58<00:52,  1.95s/it]2026-06-02 02:21:46,360 INFO Retrying request to /chat/completions in 0.465537 seconds
+2026-06-02 02:21:47,016 ERROR Exception raised in Job[30]: APIConnectionError(Connection error.)
+Evaluating:  93%|#########3| 354/380 [1:10:59<00:47,  1.84s/it]2026-06-02 02:21:47,249 INFO Retrying request to /chat/completions in 0.943718 seconds
+2026-06-02 02:21:47,749 INFO Retrying request to /chat/completions in 0.442834 seconds
+2026-06-02 02:21:49,147 INFO Retrying request to /chat/completions in 0.995445 seconds
+2026-06-02 02:21:49,334 INFO Retrying request to /chat/completions in 0.424739 seconds
+2026-06-02 02:21:50,516 INFO Retrying request to /chat/completions in 0.932962 seconds
+2026-06-02 02:21:50,532 ERROR Exception raised in Job[166]: APIConnectionError(Connection error.)
+Evaluating:  93%|#########3| 355/380 [1:11:03<00:58,  2.35s/it]2026-06-02 02:21:52,092 INFO Retrying request to /chat/completions in 0.951379 seconds
+2026-06-02 02:21:52,483 ERROR Exception raised in Job[302]: APIConnectionError(Connection error.)
+Evaluating:  94%|#########3| 356/380 [1:11:05<00:53,  2.23s/it]2026-06-02 02:21:52,871 INFO Retrying request to /chat/completions in 0.476896 seconds
+2026-06-02 02:21:53,787 ERROR Exception raised in Job[31]: APIConnectionError(Connection error.)
+Evaluating:  94%|#########3| 357/380 [1:11:06<00:45,  1.96s/it]2026-06-02 02:21:54,817 INFO Retrying request to /chat/completions in 0.499949 seconds
+2026-06-02 02:21:55,375 ERROR Exception raised in Job[167]: APIConnectionError(Connection error.)
+Evaluating:  94%|#########4| 358/380 [1:11:08<00:40,  1.84s/it]2026-06-02 02:21:55,687 INFO Retrying request to /chat/completions in 0.844243 seconds
+2026-06-02 02:21:56,137 INFO Retrying request to /chat/completions in 0.377928 seconds
+2026-06-02 02:21:57,652 INFO Retrying request to /chat/completions in 0.917966 seconds
+2026-06-02 02:21:57,712 INFO Retrying request to /chat/completions in 0.394036 seconds
+2026-06-02 02:21:58,859 INFO Retrying request to /chat/completions in 0.756103 seconds
+2026-06-02 02:21:58,861 ERROR Exception raised in Job[303]: APIConnectionError(Connection error.)
+Evaluating:  94%|#########4| 359/380 [1:11:11<00:48,  2.33s/it]2026-06-02 02:22:00,431 INFO Retrying request to /chat/completions in 0.985071 seconds
+2026-06-02 02:22:00,898 ERROR Exception raised in Job[32]: APIConnectionError(Connection error.)
+Evaluating:  95%|#########4| 360/380 [1:11:13<00:44,  2.24s/it]2026-06-02 02:22:01,194 INFO Retrying request to /chat/completions in 0.485697 seconds
+2026-06-02 02:22:01,940 ERROR Exception raised in Job[168]: APIConnectionError(Connection error.)
+Evaluating:  95%|#########5| 361/380 [1:11:14<00:35,  1.88s/it]2026-06-02 02:22:03,217 INFO Retrying request to /chat/completions in 0.452606 seconds
+2026-06-02 02:22:03,732 ERROR Exception raised in Job[304]: APIConnectionError(Connection error.)
+Evaluating:  95%|#########5| 362/380 [1:11:16<00:33,  1.86s/it]2026-06-02 02:22:04,012 INFO Retrying request to /chat/completions in 0.919213 seconds
+2026-06-02 02:22:04,261 INFO Retrying request to /chat/completions in 0.485640 seconds
+2026-06-02 02:22:05,999 INFO Retrying request to /chat/completions in 0.774640 seconds
+2026-06-02 02:22:06,061 INFO Retrying request to /chat/completions in 0.449845 seconds
+2026-06-02 02:22:07,083 INFO Retrying request to /chat/completions in 0.930129 seconds
+2026-06-02 02:22:07,256 ERROR Exception raised in Job[33]: APIConnectionError(Connection error.)
+Evaluating:  96%|#########5| 363/380 [1:11:20<00:40,  2.35s/it]2026-06-02 02:22:08,840 INFO Retrying request to /chat/completions in 0.915896 seconds
+2026-06-02 02:22:09,092 ERROR Exception raised in Job[169]: APIConnectionError(Connection error.)
+Evaluating:  96%|#########5| 364/380 [1:11:21<00:35,  2.20s/it]2026-06-02 02:22:09,575 INFO Retrying request to /chat/completions in 0.479507 seconds
+2026-06-02 02:22:10,369 ERROR Exception raised in Job[305]: APIConnectionError(Connection error.)
+Evaluating:  96%|#########6| 365/380 [1:11:23<00:28,  1.93s/it]2026-06-02 02:22:11,422 INFO Retrying request to /chat/completions in 0.453072 seconds
+2026-06-02 02:22:12,076 ERROR Exception raised in Job[34]: APIConnectionError(Connection error.)
+Evaluating:  96%|#########6| 366/380 [1:11:24<00:26,  1.86s/it]2026-06-02 02:22:12,371 INFO Retrying request to /chat/completions in 0.821151 seconds
+2026-06-02 02:22:12,697 INFO Retrying request to /chat/completions in 0.395198 seconds
+2026-06-02 02:22:14,226 INFO Retrying request to /chat/completions in 0.805241 seconds
+2026-06-02 02:22:14,397 INFO Retrying request to /chat/completions in 0.463820 seconds
+2026-06-02 02:22:15,427 INFO Retrying request to /chat/completions in 0.802075 seconds
+2026-06-02 02:22:15,533 ERROR Exception raised in Job[170]: APIConnectionError(Connection error.)
+Evaluating:  97%|#########6| 367/380 [1:11:28<00:30,  2.34s/it]2026-06-02 02:22:17,171 INFO Retrying request to /chat/completions in 0.956664 seconds
+2026-06-02 02:22:17,359 ERROR Exception raised in Job[306]: APIConnectionError(Connection error.)
+Evaluating:  97%|#########6| 368/380 [1:11:30<00:26,  2.19s/it]2026-06-02 02:22:17,856 INFO Retrying request to /chat/completions in 0.454300 seconds
+2026-06-02 02:22:18,575 ERROR Exception raised in Job[35]: APIConnectionError(Connection error.)
+Evaluating:  97%|#########7| 369/380 [1:11:31<00:20,  1.89s/it]2026-06-02 02:22:19,708 INFO Retrying request to /chat/completions in 0.431943 seconds
+2026-06-02 02:22:20,470 ERROR Exception raised in Job[171]: APIConnectionError(Connection error.)
+Evaluating:  97%|#########7| 370/380 [1:11:33<00:18,  1.90s/it]2026-06-02 02:22:20,625 INFO Retrying request to /chat/completions in 0.850380 seconds
+2026-06-02 02:22:20,889 INFO Retrying request to /chat/completions in 0.400488 seconds
+2026-06-02 02:22:22,477 INFO Retrying request to /chat/completions in 0.779884 seconds
+2026-06-02 02:22:22,822 INFO Retrying request to /chat/completions in 0.489906 seconds
+2026-06-02 02:22:23,631 INFO Retrying request to /chat/completions in 0.798837 seconds
+2026-06-02 02:22:23,785 ERROR Exception raised in Job[307]: APIConnectionError(Connection error.)
+Evaluating:  98%|#########7| 371/380 [1:11:36<00:20,  2.32s/it]2026-06-02 02:22:25,556 ERROR Exception raised in Job[36]: APIConnectionError(Connection error.)
+Evaluating:  98%|#########7| 372/380 [1:11:38<00:17,  2.16s/it]2026-06-02 02:22:25,649 INFO Retrying request to /chat/completions in 0.795359 seconds
+2026-06-02 02:22:26,107 INFO Retrying request to /chat/completions in 0.432081 seconds
+2026-06-02 02:22:26,786 ERROR Exception raised in Job[172]: APIConnectionError(Connection error.)
+Evaluating:  98%|#########8| 373/380 [1:11:39<00:13,  1.88s/it]2026-06-02 02:22:27,889 INFO Retrying request to /chat/completions in 0.473679 seconds
+2026-06-02 02:22:28,775 ERROR Exception raised in Job[308]: APIConnectionError(Connection error.)
+Evaluating:  98%|#########8| 374/380 [1:11:41<00:11,  1.91s/it]2026-06-02 02:22:28,869 INFO Retrying request to /chat/completions in 0.845887 seconds
+2026-06-02 02:22:29,101 INFO Retrying request to /chat/completions in 0.442542 seconds
+2026-06-02 02:22:30,688 INFO Retrying request to /chat/completions in 0.821114 seconds
+2026-06-02 02:22:31,091 INFO Retrying request to /chat/completions in 0.455787 seconds
+2026-06-02 02:22:31,884 INFO Retrying request to /chat/completions in 0.952832 seconds
+2026-06-02 02:22:32,038 ERROR Exception raised in Job[37]: APIConnectionError(Connection error.)
+Evaluating:  99%|#########8| 375/380 [1:11:44<00:11,  2.32s/it]2026-06-02 02:22:33,829 ERROR Exception raised in Job[173]: APIConnectionError(Connection error.)
+Evaluating:  99%|#########8| 376/380 [1:11:46<00:08,  2.16s/it]2026-06-02 02:22:33,887 INFO Retrying request to /chat/completions in 0.788121 seconds
+2026-06-02 02:22:34,353 INFO Retrying request to /chat/completions in 0.375213 seconds
+2026-06-02 02:22:35,162 ERROR Exception raised in Job[309]: APIConnectionError(Connection error.)
+Evaluating:  99%|#########9| 377/380 [1:11:47<00:05,  1.91s/it]2026-06-02 02:22:36,172 INFO Retrying request to /chat/completions in 0.402272 seconds
+2026-06-02 02:22:36,997 ERROR Exception raised in Job[38]: APIConnectionError(Connection error.)
+Evaluating:  99%|#########9| 378/380 [1:11:49<00:03,  1.89s/it]2026-06-02 02:22:37,057 INFO Retrying request to /chat/completions in 0.973636 seconds
+2026-06-02 02:22:38,890 INFO Retrying request to /chat/completions in 0.795768 seconds
+2026-06-02 02:22:40,340 ERROR Exception raised in Job[174]: APIConnectionError(Connection error.)
+Evaluating: 100%|#########9| 379/380 [1:11:53<00:02,  2.32s/it]2026-06-02 02:22:42,018 ERROR Exception raised in Job[310]: APIConnectionError(Connection error.)
+Evaluating: 100%|##########| 380/380 [1:11:54<00:00,  2.13s/it]Evaluating: 100%|##########| 380/380 [1:11:54<00:00, 11.35s/it]
+Evaluated 95 questions. CSV: report.csv

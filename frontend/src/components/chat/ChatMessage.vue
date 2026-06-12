@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import CitationAnswer from './CitationAnswer.vue'
+import MarkdownRenderer from '../shared/MarkdownRenderer.vue'
 
 const props = defineProps({
   message: Object
@@ -62,7 +63,7 @@ const getMessageCitationTitle = (msg) => {
         
         <transition name="reasoning-expand">
           <div v-show="showReasoning" :id="`reasoning-content-${message.id}`" class="reasoning-content">
-            <div class="reasoning-text">{{ message.reasoning }}</div>
+            <MarkdownRenderer :content="message.reasoning" class="reasoning-markdown" />
           </div>
         </transition>
       </div>
@@ -73,6 +74,11 @@ const getMessageCitationTitle = (msg) => {
         :sentences="message.sentences"
         :sources="message.sources"
         :show-tooltip="true"
+      />
+      <MarkdownRenderer
+        v-else-if="message.role === 'assistant'"
+        :content="message.content"
+        class="assistant-markdown"
       />
       <template v-else>
         {{ message.content }}
@@ -209,6 +215,22 @@ const getMessageCitationTitle = (msg) => {
   border-left: 3px solid rgba(168, 85, 247, 0.4);
 }
 
+.reasoning-markdown {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.reasoning-markdown :deep(code) {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.reasoning-markdown :deep(pre) {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid rgba(168, 85, 247, 0.4);
+}
+
 /* Reasoning expand animation */
 .reasoning-expand-enter-active,
 .reasoning-expand-leave-active {
@@ -226,5 +248,87 @@ const getMessageCitationTitle = (msg) => {
 .reasoning-expand-leave-from {
   opacity: 1;
   max-height: 2000px;
+}
+
+/* Assistant Markdown Styling */
+.assistant-markdown {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-main);
+}
+
+.assistant-markdown :deep(h1),
+.assistant-markdown :deep(h2),
+.assistant-markdown :deep(h3),
+.assistant-markdown :deep(h4),
+.assistant-markdown :deep(h5),
+.assistant-markdown :deep(h6) {
+  color: var(--text-main);
+}
+
+.assistant-markdown :deep(ul),
+.assistant-markdown :deep(ol) {
+  margin: 8px 0;
+}
+
+.assistant-markdown :deep(li) {
+  margin: 4px 0;
+}
+
+.assistant-markdown :deep(strong) {
+  color: var(--text-main);
+}
+
+.assistant-markdown :deep(code) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(129, 140, 248, 0.1);
+  color: rgba(129, 140, 248, 0.9);
+}
+
+.assistant-markdown :deep(pre) {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.assistant-markdown :deep(pre code) {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85em;
+}
+
+.assistant-markdown :deep(blockquote) {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-left: 3px solid rgba(129, 140, 248, 0.5);
+  background: rgba(129, 140, 248, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.assistant-markdown :deep(table) {
+  margin: 12px 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.assistant-markdown :deep(th),
+.assistant-markdown :deep(td) {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.assistant-markdown :deep(th) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.assistant-markdown :deep(a) {
+  color: var(--accent, #6366f1);
 }
 </style>

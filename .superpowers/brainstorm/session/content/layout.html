@@ -1,0 +1,384 @@
+<h2>Proposed Dashboard Layout Design</h2>
+<p class="subtitle">A real-time monitor showing the step-by-step progress of RAG queries across the system.</p>
+
+<style>
+  .dashboard-mock {
+    display: flex;
+    gap: 16px;
+    height: 520px;
+    background: #0f172a;
+    border-radius: 12px;
+    padding: 16px;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Sidebar */
+  .feed-sidebar {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 1px solid #334155;
+    padding-right: 16px;
+    overflow-y: auto;
+  }
+  
+  .feed-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .feed-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .feed-card:hover {
+    border-color: #3b82f6;
+    background: #1e293b;
+  }
+  
+  .feed-card.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  .card-time {
+    font-size: 11px;
+    color: #64748b;
+  }
+  
+  .status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  
+  .status-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+  .status-generating { background: rgba(234, 179, 8, 0.2); color: #facc15; animation: pulse 1.5s infinite; }
+  .status-retrieving { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+  .status-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  
+  .card-query {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Details Pane */
+  .details-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-left: 8px;
+  }
+  
+  .details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .details-query-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  
+  .details-meta {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  
+  /* Pipeline Timeline */
+  .pipeline-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .pipeline-step {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .step-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #334155;
+    border: 2px solid #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #94a3b8;
+  }
+  
+  .pipeline-step.completed .step-dot {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+  }
+  
+  .pipeline-step.active .step-dot {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  }
+  
+  .step-line {
+    width: 2px;
+    flex: 1;
+    background: #334155;
+    margin-top: 8px;
+  }
+  
+  .step-content {
+    flex: 1;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  
+  .pipeline-step.active .step-content {
+    border-color: #3b82f6;
+  }
+  
+  .step-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #f1f5f9;
+  }
+  
+  .step-body {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  
+  /* Chunks styling */
+  .chunk-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .chunk-item {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 8px;
+  }
+  
+  .chunk-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  
+  .chunk-score {
+    color: #10b981;
+    font-weight: 600;
+  }
+  
+  .chunk-text {
+    font-style: italic;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .thinking-block {
+    background: #0f172a;
+    border-left: 3px solid #e2e8f0;
+    padding: 8px;
+    font-family: monospace;
+    color: #94a3b8;
+    margin-top: 6px;
+    border-radius: 0 6px 6px 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+
+<div class="dashboard-mock">
+  <!-- Live Queries Feed -->
+  <div class="feed-sidebar">
+    <div class="feed-title">
+      <span>Live RAG Feed</span>
+      <span style="color: #22c55e; font-size: 11px;">● Streaming</span>
+    </div>
+    
+    <div class="feed-card active">
+      <div class="card-header">
+        <span class="card-time">19:56:02</span>
+        <span class="status-badge status-generating">Generating</span>
+      </div>
+      <div class="card-query">How does the backpropagation algorithm compute gradients?</div>
+    </div>
+    
+    <div class="feed-card">
+      <div class="card-header">
+        <span class="card-time">19:55:18</span>
+        <span class="status-badge status-success">Success</span>
+      </div>
+      <div class="card-query">What is the learning rate in SGD?</div>
+    </div>
+    
+    <div class="feed-card">
+      <div class="card-header">
+        <span class="card-time">19:53:40</span>
+        <span class="status-badge status-error">Error</span>
+      </div>
+      <div class="card-query">List all algorithms mentioned in the syllabus</div>
+    </div>
+  </div>
+  
+  <!-- Detailed RAG Steps -->
+  <div class="details-pane">
+    <div class="details-header">
+      <div>
+        <div class="details-query-text">How does the backpropagation algorithm compute gradients?</div>
+        <div class="details-meta">ID: <code>req-8f921</code> • Started: 19:56:02</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 11px; color: #64748b;">Latency</div>
+        <div style="font-size: 16px; font-weight: bold; color: #facc15;">1.8s ...</div>
+      </div>
+    </div>
+    
+    <div class="pipeline-timeline">
+      <!-- Step 1 -->
+      <div class="pipeline-step completed">
+        <div class="step-marker">
+          <div class="step-dot">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Query Received & Embedded</div>
+          <div class="step-body">
+            Raw Query: <em>"How does the backpropagation algorithm compute gradients?"</em><br>
+            Embedding Model: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384 Dimensions)
+          </div>
+        </div>
+      </div>
+      
+      <!-- Step 2 -->
+      <div class="pipeline-step completed">
+        <div class="step-marker">
+          <div class="step-dot">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Hybrid Retrieval (FAISS + BM25)</div>
+          <div class="step-body">
+            Retrieved top 2 matching chunks:
+            <div class="chunk-list">
+              <div class="chunk-item">
+                <div class="chunk-meta">
+                  <span>📄 lecture3_neural_nets.pdf (Page 8)</span>
+                  <span class="chunk-score">Cosine Similarity: 0.852</span>
+                </div>
+                <div class="chunk-text">"Backpropagation uses the chain rule to calculate the gradient of the loss function with respect to..."</div>
+              </div>
+              <div class="chunk-item">
+                <div class="chunk-meta">
+                  <span>📄 lecture3_neural_nets.pdf (Page 9)</span>
+                  <span class="chunk-score">Cosine Similarity: 0.741</span>
+                </div>
+                <div class="chunk-text">"The derivative of the activation function must be computed during the backward pass..."</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="pipeline-step active">
+        <div class="step-marker">
+          <div class="step-dot">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">LLM Inference (Generating Answer) <span style="color: #3b82f6;">●</span></div>
+          <div class="step-body">
+            Model: <code>Qwen2.5-7B-Instruct</code> • Temp: <code>0.7</code> • Context: <code>1,540 chars</code>
+            <div class="thinking-block">
+              &lt;thinking&gt;
+              The user is asking about backpropagation gradients.
+              I should explain:
+              1. The forward pass (predictions and loss calculation).
+              2. The chain rule used in the backward pass.
+              3. Updating weights based on learning rate.
+              Let's write a structured response...
+            </div>
+            <div style="margin-top: 8px; color: #e2e8f0; font-size: 12px; line-height: 1.4;">
+              To compute the gradients, backpropagation applies the chain rule from calculus recursively. In the forward pass, the input propagates through... <span style="display:inline-block; width:6px; height:12px; background:#3b82f6; animation:pulse 0.8s infinite;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Do you approve this layout and theme direction?</h3>
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Approve Layout</h3>
+      <p>This layout looks great. Proceed with the detailed backend and frontend design.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="modify" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Request Modifications</h3>
+      <p>I would like some visual or layout changes (please specify in your chat reply).</p>
+    </div>
+  </div>
+</div>

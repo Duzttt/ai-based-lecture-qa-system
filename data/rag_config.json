@@ -1,1 +1,1 @@
-{"llm_model": "qwen2.5-3b", "top_k": 5, "temperature": 0.7}
+{"llm_model": "Qwen/Qwen2.5-3B-Instruct-GGUF:Q4_K_M", "top_k": 5, "temperature": 0.7}
